@@ -2,11 +2,11 @@
 const config = {
   semi: true,
   singleQuote: true,
-  trailingComma: "all",
-  printWidth: 150,
-  plugins: ["prettier-plugin-tailwindcss"],
-  tailwindStylesheet: "./src/app/globals.css",
-  tailwindFunctions: ["clsx", "cn", "cva"],
+  trailingComma: 'all',
+  printWidth: 100,
+  plugins: ['prettier-plugin-tailwindcss'],
+  tailwindStylesheet: './src/app/globals.css',
+  tailwindFunctions: ['clsx', 'cn', 'cva'],
 };
 
 export default config;

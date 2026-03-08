@@ -1,17 +1,17 @@
-import type { Metadata } from 'next';
-import localFont from 'next/font/local';
-import './globals.css';
+import type { Metadata } from "next";
+import localFont from "next/font/local";
+import "./globals.css";
 
 const pretendard = localFont({
-  src: '../styles/fonts/PretendardVariable.woff2',
-  display: 'swap',
-  weight: '100 900',
-  variable: '--font-pretendard',
+  src: "../styles/fonts/PretendardVariable.woff2",
+  display: "swap",
+  weight: "100 900",
+  variable: "--font-pretendard",
 });
 
 export const metadata: Metadata = {
-  title: 'chzzk-info',
-  description: 'chzzk-info',
+  title: "chzzk-info",
+  description: "chzzk-info",
 };
 
 export default function RootLayout({

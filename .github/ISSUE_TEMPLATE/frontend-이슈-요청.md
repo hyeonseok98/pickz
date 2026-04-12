@@ -1,9 +1,9 @@
 ---
-name: Backend 이슈 요청
-about: 백엔드 작업용 이슈 템플릿
-title: "[api] "
-labels: ෆ Backend ෆ
-assignees: "Eunbi-Choi"
+name: Frontend 이슈 요청
+about: 프론트 작업용 이슈 템플릿
+title: "[web] "
+labels: ღ Frontend ღ
+assignees: "hyeonseok98"
 ---
 
 ## 작업 유형
@@ -14,6 +14,7 @@ assignees: "Eunbi-Choi"
 - [ ] Fix: 버그 수정
 - [ ] Refactor: 구조 개선
 - [ ] Perf: 성능 개선
+- [ ] Style: UI/UX 개선
 - [ ] Chore: 빌드/설정/의존성 변경
 - [ ] Docs: 문서 작업
 - [ ] Test: 테스트 추가/수정
@@ -28,4 +29,4 @@ assignees: "Eunbi-Choi"
 
 ## 참고 자료
 
-> 관련 문서, 스크린샷, 예시 링크가 있다면 첨부해주세요.
+> 피그마, 기획서, 스크린샷, 예시 링크가 있다면 첨부해주세요.

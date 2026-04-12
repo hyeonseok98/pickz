@@ -5,14 +5,6 @@ import { cn } from "@/utils";
 import Link from "next/link";
 import { useState, type MouseEvent, type SVGProps } from "react";
 
-function CollapseIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
-      <path d="M15 6 9 12l6 6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function BrandIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
@@ -244,7 +236,7 @@ function ExampleSidebarNavItem({
 }
 
 export function MenuSidebarExample() {
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = false;
   const [activeKey, setActiveKey] = useState("home");
 
   const primaryItems = [
@@ -331,37 +323,18 @@ export function MenuSidebarExample() {
 
   return (
     <aside
-      className={cn(
-        "relative isolate flex min-h-[calc(100vh-48px)] shrink-0 px-6 py-6 transition-[width] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-        collapsed ? "w-[142px]" : "w-[356px]",
-      )}
+      className="fixed inset-y-0 left-0 z-40 isolate w-70 px-4 py-4"
     >
-      <div className="absolute inset-x-6 top-7 h-40 rounded-[36px] bg-[radial-gradient(circle_at_16%_12%,rgba(255,255,255,0.95),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(196,233,255,0.8),transparent_30%),radial-gradient(circle_at_58%_90%,rgba(255,227,214,0.7),transparent_36%)] blur-3xl" />
+      <div className="absolute inset-x-4 top-5 h-40 rounded-[36px] bg-[radial-gradient(circle_at_16%_12%,rgba(255,255,255,0.95),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(196,233,255,0.8),transparent_30%),radial-gradient(circle_at_58%_90%,rgba(255,227,214,0.7),transparent_36%)] blur-3xl" />
 
-      <div className="relative flex w-full flex-1 flex-col overflow-hidden rounded-[36px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.84)_0%,rgba(255,255,255,0.68)_100%)] shadow-[0_28px_60px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-[28px]">
+      <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[36px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.84)_0%,rgba(255,255,255,0.68)_100%)] shadow-[0_28px_60px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-[28px]">
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.52),rgba(255,255,255,0.16)_28%,rgba(255,255,255,0.22)_100%)]" />
         <div className="absolute -left-20 top-16 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.9),transparent_68%)] blur-3xl" />
         <div className="absolute -right-24 bottom-16 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(211,234,255,0.74),transparent_66%)] blur-3xl" />
         <div className="absolute right-12 top-48 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(255,230,214,0.65),transparent_72%)] blur-3xl" />
 
         <div className="relative px-5 pt-5">
-          <button
-            type="button"
-            onClick={() => {
-              setCollapsed((previousCollapsed) => {
-                return !previousCollapsed;
-              });
-            }}
-            className="absolute right-5 top-5 z-10 flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-2xl border border-black/6 bg-white/72 text-[#475569] shadow-[0_10px_24px_rgba(148,163,184,0.14),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition-all duration-300 hover:bg-white hover:text-[#111827]"
-            aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
-            aria-pressed={collapsed}
-          >
-            <CollapseIcon
-              className={cn("size-4 transition-transform duration-500", collapsed && "rotate-180")}
-            />
-          </button>
-
-          <div className="flex min-h-11 items-center pr-14">
+          <div className="flex min-h-11 items-center">
             <div className="flex min-w-0 items-center gap-3">
               <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#111827_0%,#334155_100%)] text-white shadow-[0_16px_32px_rgba(15,23,42,0.22)]">
                 <BrandIcon className="size-5" />

@@ -1,4 +1,4 @@
-package team.pickz.api.global.oauth2.attribute;
+package team.pickz.api.global.oauth2.attributes;
 
 import team.pickz.api.domain.member.domain.LoginProvider;
 

@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.member.domain.Member;
 import team.pickz.api.domain.member.domain.MemberRepository;
-import team.pickz.api.global.oauth2.attribute.NaverAuthAttributes;
-import team.pickz.api.global.oauth2.attribute.AuthAttributes;
+import team.pickz.api.global.oauth2.attributes.NaverAuthAttributes;
+import team.pickz.api.global.oauth2.attributes.AuthAttributes;
 
 import java.util.Map;
 

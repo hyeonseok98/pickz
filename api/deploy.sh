@@ -20,21 +20,23 @@ docker compose pull app-$TARGET_COLOR
 docker compose up -d app-$TARGET_COLOR
 
 echo ">> Health Check 시작..."
-for i in {1..10}
+for i in {1..20}
 do
   RESPONSE=$(curl -s http://127.0.0.1:$TARGET_PORT/api/actuator/health)
-  if echo "$RESPONSE" | grep -q "UP"; then
+
+  echo "[$i] 응답: $RESPONSE"
+
+  if echo "$RESPONSE" | grep -q '"status":"UP"'; then
     echo ">> Health Check 성공!"
-    break
+    exit 0
   fi
-  echo ">> 대기 중... ($i/10)"
+
   sleep 5
-  if [ $i -eq 10 ]; then
-    echo ">> 배포 실패. 새 컨테이너를 제거합니다."
-    docker compose stop app-$TARGET_COLOR
-    exit 1
-  fi
 done
+
+echo ">> 배포 실패. 새 컨테이너를 제거합니다."
+docker compose stop app-$TARGET_COLOR
+exit 1
 
 echo "set \$service_url http://127.0.0.1:$TARGET_PORT;" | sudo tee /etc/nginx/conf.d/service-url.inc
 sudo systemctl reload nginx

@@ -53,8 +53,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: "docker-compose.yml, deploy.sh"
+          source: "api/docker-compose.yml,deploy.sh"
           target: "/home/ubuntu/"
+          strip_components: 1
           
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.10

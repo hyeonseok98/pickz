@@ -18,9 +18,9 @@ services:
     container_name: blue
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/pickz_db
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - DB_URL=jdbc:mysql://db:3306/pickz_db
+      - DB_USERNAME=root
+      - DB_PASSWORD=${DB_PASSWORD}
       - SERVER_PORT=8080
     ports:
       - "8080:8080"
@@ -34,9 +34,9 @@ services:
     container_name: green
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/pickz_db
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - DB_URL=jdbc:mysql://db:3306/pickz_db
+      - DB_USERNAME=root
+      - DB_PASSWORD=${DB_PASSWORD}
       - SERVER_PORT=8081
     ports:
       - "8081:8081"

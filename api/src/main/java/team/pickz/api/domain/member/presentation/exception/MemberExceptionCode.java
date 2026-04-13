@@ -19,7 +19,7 @@ public enum MemberExceptionCode implements ExceptionCode {
 
     @Override
     public String getCode() {
-        return "";
+        return this.name();
     }
 
 }

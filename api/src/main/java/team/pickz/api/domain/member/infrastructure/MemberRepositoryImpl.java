@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 import team.pickz.api.domain.member.domain.LoginProvider;
 import team.pickz.api.domain.member.domain.Member;
 import team.pickz.api.domain.member.domain.MemberRepository;
+import team.pickz.api.domain.member.presentation.exception.MemberNotFoundException;
 
 import java.util.Optional;
 
@@ -26,7 +27,8 @@ public class MemberRepositoryImpl implements MemberRepository {
 
     @Override
     public Member findByMemberId(Long memberId) {
-        return memberJpaRepository.findById(memberId).orElse(null);
+        return memberJpaRepository.findById(memberId)
+                .orElseThrow(MemberNotFoundException::new);
     }
 
 }

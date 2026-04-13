@@ -31,8 +31,8 @@ public class AuthController {
 
         TokenDto newTokens = authService.reissueToken(refreshToken);
 
-        CookieUtil.addCookie(response, "access_token", newTokens.accessToken(), tokenProperties.expirationTime().accessToken() * 1000);
-        CookieUtil.addCookie(response, "refresh_token", newTokens.refreshToken(), tokenProperties.expirationTime().refreshToken() * 1000);
+        CookieUtil.addCookie(response, "access_token", newTokens.accessToken(), tokenProperties.expirationTime().accessToken());
+        CookieUtil.addCookie(response, "refresh_token", newTokens.refreshToken(), tokenProperties.expirationTime().refreshToken());
 
         return ResponseEntity.ok().build();
     }

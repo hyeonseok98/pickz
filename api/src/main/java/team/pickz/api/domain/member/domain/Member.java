@@ -8,6 +8,14 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_member_provider_external_id",
+                        columnNames = {"provider", "externalId"}
+                )
+        }
+)
 public class Member {
 
     @Id

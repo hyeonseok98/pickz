@@ -16,8 +16,8 @@ fi
 
 echo ">> [$TARGET_COLOR] 배포 시작 (Port: $TARGET_PORT)"
 
-docker-compose pull app-$TARGET_COLOR
-docker-compose up -d app-$TARGET_COLOR
+docker compose pull app-$TARGET_COLOR
+docker compose up -d app-$TARGET_COLOR
 
 echo ">> Health Check 시작..."
 for i in {1..10}
@@ -31,7 +31,7 @@ do
   sleep 5
   if [ $i -eq 10 ]; then
     echo ">> 배포 실패. 새 컨테이너를 제거합니다."
-    docker-compose stop app-$TARGET_COLOR
+    docker compose stop app-$TARGET_COLOR
     exit 1
   fi
 done
@@ -41,8 +41,8 @@ sudo systemctl reload nginx
 echo ">> Nginx 트래픽 전환 완료"
 
 echo ">> 기존 버전($CURRENT_COLOR) 컨테이너 종료"
-docker-compose stop app-$CURRENT_COLOR
-docker-compose rm -f app-$CURRENT_COLOR
+docker compose stop app-$CURRENT_COLOR
+docker compose rm -f app-$CURRENT_COLOR
 docker image prune -af
 
 echo ">> 무중단 배포 완료"

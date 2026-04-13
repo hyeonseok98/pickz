@@ -23,20 +23,21 @@ echo ">> Health Check 시작..."
 for i in {1..20}
 do
   RESPONSE=$(curl -s http://127.0.0.1:$TARGET_PORT/api/actuator/health)
-
   echo "[$i] 응답: $RESPONSE"
 
   if echo "$RESPONSE" | grep -q '"status":"UP"'; then
     echo ">> Health Check 성공!"
-    exit 0
+    break
+  fi
+
+  if [ $i -eq 20 ]; then
+      echo ">> 배포 실패. 새 컨테이너를 제거합니다."
+      docker compose stop app-$TARGET_COLOR
+      exit 1
   fi
 
   sleep 5
 done
-
-echo ">> 배포 실패. 새 컨테이너를 제거합니다."
-docker compose stop app-$TARGET_COLOR
-exit 1
 
 echo "set \$service_url http://127.0.0.1:$TARGET_PORT;" | sudo tee /etc/nginx/conf.d/service-url.inc
 sudo systemctl reload nginx

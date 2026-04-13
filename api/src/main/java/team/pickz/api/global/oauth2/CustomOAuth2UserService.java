@@ -44,9 +44,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private Member getOrSaveMember(AuthAttributes attributes) {
         return memberRepository.findByProviderAndExternalId(attributes.getProvider(), attributes.getExternalId())
                 .orElseGet(() -> {
+                    String safeEmail = (attributes.getEmail() != null) ? attributes.getEmail() : "no-email@" + attributes.getExternalId() + ".com";
+                    String safeNickname = (attributes.getNickname() != null) ? attributes.getNickname() : "PickZ유저_" + attributes.getExternalId().substring(0, 5);
+
                     Member newMember = Member.createSocialMember(
-                            attributes.getEmail(),
-                            attributes.getNickname(),
+                            safeEmail,
+                            safeNickname,
                             attributes.getProvider(),
                             attributes.getExternalId()
                     );

@@ -22,7 +22,7 @@ docker compose up -d app-$TARGET_COLOR
 echo ">> Health Check 시작..."
 for i in {1..10}
 do
-  RESPONSE=$(curl -s http://127.0.0.1:$TARGET_PORT/actuator/health)
+  RESPONSE=$(curl -s http://127.0.0.1:$TARGET_PORT/api/actuator/health)
   if echo "$RESPONSE" | grep -q "UP"; then
     echo ">> Health Check 성공!"
     break

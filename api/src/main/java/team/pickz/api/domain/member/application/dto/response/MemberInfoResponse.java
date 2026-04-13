@@ -10,7 +10,7 @@ public record MemberInfoResponse(
 
         String email,
 
-        String nickName
+        String nickname
 
 ) {
 
@@ -18,7 +18,7 @@ public record MemberInfoResponse(
         return MemberInfoResponse.builder()
                 .memberId(member.getId())
                 .email(member.getEmail())
-                .nickName(member.getNickname())
+                .nickname(member.getNickname())
                 .build();
     }
 

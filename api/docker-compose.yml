@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.4
+    container_name: pickz-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: pickz_db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    networks:
+      - backend-network
+
+  app-blue:
+    image: ${DOCKER_IMAGE}:latest
+    container_name: blue
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://db:3306/pickz_db
+      - DB_PASSWORD=${DB_PASSWORD}
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    networks:
+      - backend-network
+    depends_on:
+      - db
+
+  app-green:
+    image: ${DOCKER_IMAGE}:latest
+    container_name: green
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://db:3306/pickz_db
+      - DB_PASSWORD=${DB_PASSWORD}
+      - PORT=8081
+    ports:
+      - "8081:8081"
+    networks:
+      - backend-network
+    depends_on:
+      - db
+
+networks:
+  backend-network:
+    driver: bridge

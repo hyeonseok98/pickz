@@ -14,18 +14,23 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     private final RefreshTokenJpaRepository refreshTokenJpaRepository;
 
     @Override
-    public Optional<RefreshToken> findById(Long memberId) {
-        return refreshTokenJpaRepository.findById(memberId);
+    public void save(RefreshToken refreshToken) {
+        refreshTokenJpaRepository.save(refreshToken);
     }
 
     @Override
-    public RefreshToken save(RefreshToken refreshToken) {
-        return refreshTokenJpaRepository.save(refreshToken);
+    public Optional<RefreshToken> findByToken(String token) {
+        return refreshTokenJpaRepository.findByToken(token);
     }
 
     @Override
-    public void deleteById(Long memberId) {
-        refreshTokenJpaRepository.deleteById(memberId);
+    public void deleteByToken(String token) {
+        refreshTokenJpaRepository.deleteByToken(token);
+    }
+
+    @Override
+    public void deleteAllByMemberId(Long memberId) {
+        refreshTokenJpaRepository.deleteAllByMemberId(memberId);
     }
 
 }

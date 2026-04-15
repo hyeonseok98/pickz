@@ -11,7 +11,10 @@ import lombok.*;
 public class RefreshToken {
 
     @Id
-    @Column(name = "memberId")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
     private Long memberId;
 
     @Column(nullable = false, unique = true)

@@ -23,11 +23,11 @@ public class MemberIdArgumentResolver implements HandlerMethodArgumentResolver {
     }
 
     @Override
-    public @Nullable Object resolveArgument(
+    public  Object resolveArgument(
             MethodParameter parameter,
-            @Nullable ModelAndViewContainer mavContainer,
+            ModelAndViewContainer mavContainer,
             NativeWebRequest webRequest,
-            @Nullable WebDataBinderFactory binderFactory
+            WebDataBinderFactory binderFactory
     ) {
         return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
                 .map(Authentication::getName)

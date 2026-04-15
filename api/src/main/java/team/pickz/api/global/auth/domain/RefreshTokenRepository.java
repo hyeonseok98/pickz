@@ -4,10 +4,12 @@ import java.util.Optional;
 
 public interface RefreshTokenRepository {
 
-    Optional<RefreshToken> findById(Long memberId);
+    void save(RefreshToken refreshToken);
 
-    RefreshToken save(RefreshToken refreshToken);
+    Optional<RefreshToken> findByToken(String token);
 
-    void deleteById(Long memberId);
+    void deleteByToken(String token);
+
+    void deleteAllByMemberId(Long memberId);
 
 }

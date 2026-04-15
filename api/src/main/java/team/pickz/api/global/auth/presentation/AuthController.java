@@ -15,13 +15,13 @@ import team.pickz.api.global.jwt.config.TokenProperties;
 @RequiredArgsConstructor
 @RequestMapping("/auths")
 @RestController
-public class AuthController {
+public class AuthController implements AuthDocsController{
 
     private final AuthService authService;
 
     private final TokenProperties tokenProperties;
 
-    @PostMapping("/reissue")
+    @PostMapping("/token")
     public ResponseEntity<Void> reissue(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = CookieUtil.getCookieValue(request, "refresh_token");
 

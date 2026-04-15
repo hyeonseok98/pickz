@@ -12,7 +12,7 @@ import team.pickz.api.global.annotation.MemberId;
 @RequiredArgsConstructor
 @RequestMapping("/members")
 @RestController
-public class MemberController {
+public class MemberController implements MemberDocsController {
 
     private final MemberService memberService;
 

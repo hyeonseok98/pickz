@@ -28,11 +28,14 @@ public class SecurityConfig {
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthenticationEntryPoint authenticationEntryPoint;
+    private final CorsProperties corsProperties;
 
     private static final String[] PERMIT_ALL_PATTERNS = {
             "/", "/oauth2/**", "/auths/token","/actuator/**",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
     };
+    private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PATCH", "PUT", "DELETE");
+    private static final List<String> ALLOWED_HEADERS = List.of("*");
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -66,19 +69,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedOrigins(corsProperties.allowedOrigins());
+        config.setAllowedMethods(ALLOWED_METHODS);
+        config.setAllowedHeaders(ALLOWED_HEADERS);
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
-    }
-
-    private void configureExceptionHandler(HttpSecurity http) throws Exception {
-        http.exceptionHandling(exceptionHandler ->
-                exceptionHandler.authenticationEntryPoint(authenticationEntryPoint));
     }
 
 }

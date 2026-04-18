@@ -20,14 +20,15 @@ public class ChzzkClient {
     public List<ChzzkChannelResponse> getChannels(List<String> channelIds) {
         String channelIdsParam = String.join(",", channelIds);
 
-        return restClient.get()
+        ChzzkChannelResponseList response = restClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/open/v1/channels")
                         .queryParam("channelIds", channelIdsParam)
                         .build())
                 .retrieve()
-                .body(ChzzkChannelResponseList.class)
-                .getData();
+                .body(ChzzkChannelResponseList.class);
+
+        return response != null ? response.getData() : List.of();
     }
 
 }

@@ -23,6 +23,9 @@ public class StreamerSyncService {
 
     @Transactional
     public void syncStreamers(List<String> targetChannelIds) {
+        if(targetChannelIds == null || targetChannelIds.isEmpty()) {
+            return;
+        }
         List<List<String>> partitionedIds = partitionList(targetChannelIds, CHUNK_SIZE);
 
         for(List<String> chunk : partitionedIds) {
@@ -36,7 +39,7 @@ public class StreamerSyncService {
             for (ChzzkChannelResponse ext : externalChannels) {
                 Streamer existing = existingMap.get(ext.channelId());
                 if (existing != null) {
-                    existing.updateProfile(ext.channelName(), ext.channelName(), ext.channelImageUrl());
+                    existing.updateProfile(ext.channelId(), ext.channelName(), ext.channelImageUrl());
                 } else {
                     toSave.add(Streamer.from(ext.channelId(), ext.channelName(), ext.channelImageUrl()));
                 }

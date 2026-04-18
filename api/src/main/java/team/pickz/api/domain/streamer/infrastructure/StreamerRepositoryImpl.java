@@ -1,8 +1,6 @@
 package team.pickz.api.domain.streamer.infrastructure;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import team.pickz.api.domain.streamer.domain.Streamer;
 import team.pickz.api.domain.streamer.domain.StreamerRepository;
@@ -26,8 +24,8 @@ public class StreamerRepositoryImpl implements StreamerRepository {
     }
 
     @Override
-    public Page<Streamer> findByChannelNameContainingIgnoreCase(String keyword, Pageable pageable) {
-        return streamerJpaRepository.findByChannelNameContainingIgnoreCase(keyword, pageable);
+    public List<Streamer> findTop20ByChannelNameContainingIgnoreCaseOrderByChannelNameAsc(String keyword) {
+        return streamerJpaRepository.findTop20ByChannelNameContainingIgnoreCaseOrderByChannelNameAsc(keyword);
     }
 
 }

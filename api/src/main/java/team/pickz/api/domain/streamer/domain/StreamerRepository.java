@@ -1,8 +1,5 @@
 package team.pickz.api.domain.streamer.domain;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
 import java.util.List;
 
 public interface StreamerRepository {
@@ -11,6 +8,6 @@ public interface StreamerRepository {
 
     List<Streamer> findByChannelIdIn(List<String> channelIds);
 
-    Page<Streamer> findByChannelNameContainingIgnoreCase(String keyword, Pageable pageable);
+    List<Streamer> findTop20ByChannelNameContainingIgnoreCaseOrderByChannelNameAsc(String keyword);
 
 }

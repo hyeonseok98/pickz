@@ -32,6 +32,7 @@ public class DraftTimerService {
         };
 
         ScheduledFuture<?> future = taskScheduler.schedule(autoPickTask, Instant.now().plusSeconds(TURN_TIME_SECONDS));
+
         scheduledTasks.put(roomId, future);
     }
 

@@ -10,7 +10,7 @@ import team.pickz.api.domain.draft.application.dto.RoomCreateResponse;
 import team.pickz.api.global.annotation.MemberId;
 
 @RestController
-@RequestMapping("/api/v1/drafts/rooms")
+@RequestMapping("/drafts/rooms")
 @RequiredArgsConstructor
 public class DraftRoomController {
 
@@ -26,6 +26,7 @@ public class DraftRoomController {
                 request.maxParticipants(),
                 request.ruleName()
         );
+
         return ResponseEntity.ok(new RoomCreateResponse(inviteCode));
     }
 

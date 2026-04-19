@@ -22,6 +22,7 @@ public class DraftRoomService {
         draftRoomRepository.save(room);
 
         participantRepository.save(new DraftParticipant(room, hostId, 0));
+
         return room.getInviteCode();
     }
 

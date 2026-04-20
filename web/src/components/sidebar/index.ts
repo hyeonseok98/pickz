@@ -1,3 +1,3 @@
-export { MenuSidebar } from "./menu-sidebar";
-export { MenuSidebarExample } from "./menu-sidebar-example";
-export { MenuSidebarItem } from "./menu-sidebar-item";
+export { DesktopSidebar } from "./desktop-sidebar";
+export { MobileSidebar } from "./mobile-sidebar";
+export { SidebarLayout } from "./sidebar-layout";

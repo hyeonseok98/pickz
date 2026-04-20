@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body className={`${pretendard.className} ${pretendard.variable} antialiased`}>
         <QueryProvider>{children}</QueryProvider>
       </body>

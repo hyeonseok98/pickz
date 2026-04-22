@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { cn } from "@/utils";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
@@ -325,6 +326,7 @@ const participationModeOptions: Record<
 };
 
 export default function Page() {
+  const router = useRouter();
   const [selectedDraftType, setSelectedDraftType] = useState<DraftType>("snake");
   const [selectedParticipationMode, setSelectedParticipationMode] =
     useState<ParticipationMode>("party");
@@ -477,6 +479,14 @@ export default function Page() {
 
             <button
               type="button"
+              onClick={() => {
+                const params = new URLSearchParams({
+                  mode: selectedParticipationMode,
+                  type: selectedDraftType,
+                });
+
+                router.push(`/draft/create?${params.toString()}`);
+              }}
               className="mt-auto flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-950 text-sm font-bold text-white"
             >
               <span>방 생성하기</span>

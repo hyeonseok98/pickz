@@ -11,6 +11,7 @@ import team.pickz.api.domain.member.domain.Member;
 import team.pickz.api.domain.member.domain.MemberRepository;
 import team.pickz.api.global.oauth2.attributes.NaverAuthAttributes;
 import team.pickz.api.global.oauth2.attributes.AuthAttributes;
+import team.pickz.api.global.oauth2.exception.UnsupportedSocialLoginException;
 
 import java.util.Map;
 
@@ -38,7 +39,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             return NaverAuthAttributes.of(attributes);
         }
 
-        throw new IllegalArgumentException("지원하지 않는 소셜 로그인입니다: " + registrationId);
+        throw new UnsupportedSocialLoginException();
     }
 
     private Member getOrSaveMember(AuthAttributes attributes) {
@@ -53,6 +54,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                             attributes.getProvider(),
                             attributes.getExternalId()
                     );
+
                     return memberRepository.save(newMember);
                 });
     }

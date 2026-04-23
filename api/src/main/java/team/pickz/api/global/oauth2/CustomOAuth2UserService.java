@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.member.domain.Member;
 import team.pickz.api.domain.member.domain.MemberRepository;
+import team.pickz.api.global.auth.presentation.exception.UnsupportedProviderException;
 import team.pickz.api.global.oauth2.attributes.NaverAuthAttributes;
 import team.pickz.api.global.oauth2.attributes.AuthAttributes;
-import team.pickz.api.global.oauth2.exception.UnsupportedSocialLoginException;
 
 import java.util.Map;
 
@@ -39,7 +39,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             return NaverAuthAttributes.of(attributes);
         }
 
-        throw new UnsupportedSocialLoginException();
+        throw new UnsupportedProviderException();
     }
 
     private Member getOrSaveMember(AuthAttributes attributes) {

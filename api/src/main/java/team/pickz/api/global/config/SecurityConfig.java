@@ -33,7 +33,8 @@ public class SecurityConfig {
     private static final String[] PERMIT_ALL_PATTERNS = {
             "/", "/oauth2/**", "/admin/**","/actuator/**",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-            "/auths/reissue", "/auths/login", "/streamers/**"
+            "/auths/reissue", "/auths/login", "/streamers/**",
+            "/ws-draft/**"
     };
     private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PATCH", "PUT", "DELETE");
     private static final List<String> ALLOWED_HEADERS = List.of("*");

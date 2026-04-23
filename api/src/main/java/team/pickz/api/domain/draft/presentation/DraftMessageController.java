@@ -24,7 +24,11 @@ public class DraftMessageController {
 
         draftTimerService.cancelTimer(roomId);
 
+        System.out.println("[웹소켓 SEND] room Id: " + roomId);
+
         PickResult result = draftPickService.processPick(roomId, message.memberId(), message.streamerId());
+
+        System.out.println("[웹소켓 SEND] result: " + result);
 
         if (!result.isDraftDone()) {
             // TODO: nextTurnIndex를 통해 다음 유저의 memberId를 조회해와야 함

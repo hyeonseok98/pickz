@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>드래프트 웹소켓 테스트</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body style="padding: 20px;">
+    <h2>🎮 드래프트 STOMP 테스트</h2>
+    
+    <button onclick="connect()" style="padding: 10px; font-size: 16px;">1. 서버 연결하기 (Connect)</button>
+    <button onclick="sendPick()" style="padding: 10px; font-size: 16px;">2. 픽 데이터 보내기 (Send)</button>
+    
+    <div style="margin-top: 20px; padding: 10px; background: #f4f4f4; border-radius: 8px;">
+        <strong>콘솔 로그 (결과 확인창):</strong>
+        <div id="messages" style="margin-top: 10px; font-family: monospace; line-height: 1.5;"></div>
+    </div>
+
+    <script>
+        let stompClient = null;
+
+        function printLog(msg) {
+            document.getElementById('messages').innerHTML += '<div>' + msg + '</div>';
+        }
+
+        function connect() {
+            // 💡 앞서 로그에서 확인한 실제 서버 경로 적용
+            const socket = new SockJS('http://localhost:8080/api/ws-draft');
+            stompClient = Stomp.over(socket);
+
+            // StompJS가 내부적으로 알아서 Heartbeat와 Null Byte(\0)를 처리합니다!
+            stompClient.connect({}, function (frame) {
+                printLog('✅ <b>연결 성공!</b> (서버 문지기 통과)');
+                
+                // 1번 방 구독 (Subscribe)
+                stompClient.subscribe('/topic/draft/room/1', function (response) {
+                    const result = JSON.parse(response.body);
+                    printLog('📢 <b>서버 전체 방송 도착:</b> ' + JSON.stringify(result));
+                });
+            }, function(error) {
+                printLog('<span style="color:red">❌ 연결 실패:</span> ' + error + ' (로그인 쿠키가 있는지 확인하세요!)');
+            });
+        }
+
+        function sendPick() {
+            if (!stompClient) {
+                alert("먼저 서버에 연결해주세요!");
+                return;
+            }
+            
+            // 전송할 데이터 (이전에 포스트맨에서 보내려던 그 데이터)
+            const pickMessage = { streamerId: "75cbf189b3bb8f9f687d2aca0d0a382b" };
+            
+            // 발행 (Publish)
+            stompClient.send("/app/draft.pick.1", {}, JSON.stringify(pickMessage));
+            printLog('🚀 <b>픽(Pick) 요청 전송 완료!</b>');
+        }
+    </script>
+</body>
+</html>

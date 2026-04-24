@@ -1,18 +1,23 @@
 package team.pickz.api.global.auth.application;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import team.pickz.api.global.auth.application.dto.TokenDto;
+import team.pickz.api.global.auth.application.dto.TokenResponse;
 import team.pickz.api.global.auth.domain.RefreshToken;
 import team.pickz.api.global.auth.domain.RefreshTokenRepository;
+import team.pickz.api.global.auth.presentation.exception.RefreshTokenNotValidException;
+import team.pickz.api.global.jwt.CookieUtil;
 import team.pickz.api.global.jwt.JwtProvider;
+import team.pickz.api.global.jwt.config.TokenProperties;
 
 @RequiredArgsConstructor
 @Service
 public class AuthService {
 
     private final JwtProvider jwtProvider;
+    private final TokenProperties tokenProperties;
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Transactional
@@ -21,13 +26,13 @@ public class AuthService {
     }
 
     @Transactional
-    public TokenDto reissueToken(String oldRefreshToken) {
-        if(!jwtProvider.validateToken(oldRefreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 Refresh Token 입니다.");
+    public TokenResponse reissueToken(String oldRefreshToken, HttpServletResponse response) {
+        if(oldRefreshToken == null || !jwtProvider.validateToken(oldRefreshToken)) {
+            throw new RefreshTokenNotValidException();
         }
 
         RefreshToken savedToken = refreshTokenRepository.findByToken(oldRefreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("만료되거나 존재하지 않는 세션입니다."));
+                .orElseThrow(() -> new RefreshTokenNotValidException());
 
         Long memberId = jwtProvider.getMemberId(oldRefreshToken);
         String role = jwtProvider.getRole(oldRefreshToken);
@@ -37,7 +42,18 @@ public class AuthService {
 
         savedToken.updateToken(newRefreshToken);
 
-        return new TokenDto(newAccessToken, newRefreshToken);
+        CookieUtil.addCookie(response, "access_token", newAccessToken, (int)tokenProperties.expirationTime().accessToken() + 5);
+        CookieUtil.addCookie(response, "refresh_token", newRefreshToken, (int)tokenProperties.expirationTime().refreshToken() + 5);
+
+        return new TokenResponse(newAccessToken, newRefreshToken);
+    }
+
+    @Transactional
+    public void logout(Long memberId, HttpServletResponse response) {
+        CookieUtil.deleteCookie(response, "access_token");
+        CookieUtil.deleteCookie(response, "refresh_token");
+
+        refreshTokenRepository.deleteByMemberId(memberId);
     }
 
 }

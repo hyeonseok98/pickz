@@ -24,13 +24,8 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     }
 
     @Override
-    public void deleteByToken(String token) {
-        refreshTokenJpaRepository.deleteByToken(token);
-    }
-
-    @Override
-    public void deleteAllByMemberId(Long memberId) {
-        refreshTokenJpaRepository.deleteAllByMemberId(memberId);
+    public void deleteByMemberId(Long memberId) {
+        refreshTokenJpaRepository.deleteByMemberId(memberId);
     }
 
 }

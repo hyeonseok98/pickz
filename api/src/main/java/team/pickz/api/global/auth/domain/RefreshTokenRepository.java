@@ -8,8 +8,6 @@ public interface RefreshTokenRepository {
 
     Optional<RefreshToken> findByToken(String token);
 
-    void deleteByToken(String token);
-
-    void deleteAllByMemberId(Long memberId);
+    void deleteByMemberId(Long memberId);
 
 }

@@ -1,6 +1,6 @@
 package team.pickz.api.global.auth.application.dto;
 
-public record TokenDto(
+public record TokenResponse(
 
         String accessToken,
 

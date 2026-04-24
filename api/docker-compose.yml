@@ -14,6 +14,11 @@ services:
       - "3306:3306"
     networks:
       - backend-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app-blue:
     image: ${DOCKER_IMAGE}:latest
@@ -29,7 +34,9 @@ services:
     networks:
       - backend-network
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+          
 
   app-green:
     image: ${DOCKER_IMAGE}:latest
@@ -45,7 +52,8 @@ services:
     networks:
       - backend-network
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 networks:
   backend-network:

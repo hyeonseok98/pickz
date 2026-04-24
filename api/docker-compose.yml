@@ -29,6 +29,7 @@ services:
       - DB_USERNAME=root
       - DB_PASSWORD=${DB_PASSWORD}
       - SERVER_PORT=8080
+      - JAVA_OPTS=-Xms256m -Xmx350m -XX:MaxMetaspaceSize=256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseContainerSupport
     ports:
       - "8080:8080"
     networks:
@@ -47,6 +48,7 @@ services:
       - DB_USERNAME=root
       - DB_PASSWORD=${DB_PASSWORD}
       - SERVER_PORT=8081
+      - JAVA_OPTS=-Xms256m -Xmx350m -XX:MaxMetaspaceSize=256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseContainerSupport
     ports:
       - "8081:8081"
     networks:

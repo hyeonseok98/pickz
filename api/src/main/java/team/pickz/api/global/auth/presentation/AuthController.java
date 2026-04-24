@@ -18,8 +18,8 @@ public class AuthController implements AuthDocsController{
 
     private final AuthService authService;
 
-    @PostMapping("/token")
-    public ResponseEntity<TokenResponse> reissue(
+    @PostMapping("/reissue")
+    public ResponseEntity<TokenResponse> reissueToken(
             @CookieValue(value = "refresh_token", required = false) String refreshToken,
             HttpServletResponse response
     ) {

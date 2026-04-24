@@ -30,7 +30,7 @@ public interface AuthDocsController {
     })
     @SecurityRequirements(value = {})
     @PostMapping("/token")
-    ResponseEntity<TokenResponse> reissue(
+    ResponseEntity<TokenResponse> reissueToken(
             @CookieValue(value = "refresh_token", required = false) String refreshToken,
             HttpServletResponse response
     );

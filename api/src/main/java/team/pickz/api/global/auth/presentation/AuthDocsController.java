@@ -29,7 +29,7 @@ public interface AuthDocsController {
             @ApiResponse(responseCode = "401", description = "리프레시 토큰 누락/유효하지 않음")
     })
     @SecurityRequirements(value = {})
-    @PostMapping("/token")
+    @PostMapping("/reissue")
     ResponseEntity<TokenResponse> reissueToken(
             @CookieValue(value = "refresh_token", required = false) String refreshToken,
             HttpServletResponse response

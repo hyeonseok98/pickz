@@ -1,16 +1,15 @@
 package team.pickz.api.global.auth.presentation;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import team.pickz.api.global.annotation.MemberId;
 import team.pickz.api.global.auth.application.AuthService;
-import team.pickz.api.global.auth.application.dto.TokenDto;
-import team.pickz.api.global.jwt.CookieUtil;
-import team.pickz.api.global.jwt.config.TokenProperties;
+import team.pickz.api.global.auth.application.dto.TokenResponse;
 
 @RequiredArgsConstructor
 @RequestMapping("/auths")
@@ -19,20 +18,19 @@ public class AuthController implements AuthDocsController{
 
     private final AuthService authService;
 
-    private final TokenProperties tokenProperties;
-
     @PostMapping("/token")
-    public ResponseEntity<Void> reissue(HttpServletRequest request, HttpServletResponse response) {
-        String refreshToken = CookieUtil.getCookieValue(request, "refresh_token");
+    public ResponseEntity<TokenResponse> reissue(
+            @CookieValue(value = "refresh_token", required = false) String refreshToken,
+            HttpServletResponse response
+    ) {
+        TokenResponse newTokenResponse = authService.reissueToken(refreshToken, response);
 
-        if(refreshToken == null) {
-            return ResponseEntity.status(401).build();
-        }
+        return ResponseEntity.ok(newTokenResponse);
+    }
 
-        TokenDto newTokens = authService.reissueToken(refreshToken);
-
-        CookieUtil.addCookie(response, "access_token", newTokens.accessToken(), tokenProperties.expirationTime().accessToken());
-        CookieUtil.addCookie(response, "refresh_token", newTokens.refreshToken(), tokenProperties.expirationTime().refreshToken());
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@MemberId Long memberId, HttpServletResponse response) {
+        authService.logout(memberId, response);
 
         return ResponseEntity.ok().build();
     }

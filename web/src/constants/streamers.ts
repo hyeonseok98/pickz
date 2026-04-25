@@ -7,16 +7,12 @@ export interface StreamerDirectoryItem {
   name: string;
 }
 
-function createAvatarDataUrl(name: string, backgroundColor: string) {
-  const initial = name.slice(0, 1);
+function createAvatarDataUrl(backgroundColor: string) {
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
       <rect width="96" height="96" rx="48" fill="${backgroundColor}" />
       <circle cx="48" cy="36" r="18" fill="#ffffff" fill-opacity="0.92" />
       <path d="M21 79c4-15 16-23 27-23s23 8 27 23" fill="#ffffff" fill-opacity="0.92" />
-      <text x="48" y="86" text-anchor="middle" font-size="14" font-family="sans-serif" font-weight="700" fill="#0f172a">
-        ${initial}
-      </text>
     </svg>
   `;
 
@@ -25,7 +21,7 @@ function createAvatarDataUrl(name: string, backgroundColor: string) {
 
 function createStreamer(id: string, name: string, line: StreamerLine, backgroundColor: string) {
   return {
-    avatarDataUrl: createAvatarDataUrl(name, backgroundColor),
+    avatarDataUrl: createAvatarDataUrl(backgroundColor),
     id,
     line,
     name,

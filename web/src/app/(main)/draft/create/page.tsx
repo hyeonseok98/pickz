@@ -16,6 +16,7 @@ import {
   STREAMER_DIRECTORY_BY_ID,
   STREAMER_DIRECTORY_BY_NAME,
 } from "@/constants/streamers";
+import { DraftStreamerCard } from "@/components/draft/streamer-card";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { cn } from "@/utils";
 
@@ -271,15 +272,6 @@ function SearchIcon() {
   );
 }
 
-function CloseIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="size-3.5" aria-hidden="true">
-      <path d="m6 6 8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="m14 6-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 function CopyIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
@@ -393,10 +385,12 @@ function FieldLabel({ children }: { children: ReactNode }) {
 function StatusChip({
   active,
   children,
+  className,
   tone = "default",
 }: {
   active?: boolean;
   children: ReactNode;
+  className?: string;
   tone?: "default" | "muted";
 }) {
   return (
@@ -408,6 +402,7 @@ function StatusChip({
           : tone === "muted"
             ? "border-border bg-surface-muted text-text-secondary"
             : "border-border bg-surface text-text-secondary",
+        className,
       )}
     >
       {children}
@@ -415,75 +410,20 @@ function StatusChip({
   );
 }
 
-function StreamerBadge({
-  active,
-  avatarDataUrl,
-  name,
-  onClick,
-  onRemove,
-  onDragEnd,
-  onDragStart,
-}: {
-  active?: boolean;
-  avatarDataUrl: string;
-  name: string;
-  onClick: () => void;
-  onRemove?: () => void;
-  onDragEnd: () => void;
-  onDragStart: (event: DragEvent<HTMLButtonElement>) => void;
-}) {
-  return (
-    <div
-      className={cn(
-        "relative rounded-2xl border px-3 py-2.5 transition-colors",
-        active ? "border-violet-300 bg-violet-100 text-violet-700" : "border-border bg-surface-muted text-text-primary",
-      )}
-    >
-      {onRemove ? (
-        <button
-          type="button"
-          onClick={onRemove}
-          className="absolute right-2 top-2 flex size-5 cursor-pointer items-center justify-center rounded-full bg-surface text-text-secondary"
-          aria-label={`${name} 참여 스트리머에서 제거`}
-        >
-          <CloseIcon />
-        </button>
-      ) : null}
-      <button
-        type="button"
-        draggable
-        onClick={onClick}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-        className="flex w-full cursor-grab items-center gap-3 pr-7 text-left active:cursor-grabbing"
-      >
-        <Image
-          src={avatarDataUrl}
-          alt={name}
-          width={44}
-          height={52}
-          unoptimized
-          className="h-14 w-11 shrink-0 rounded-xl bg-surface object-cover"
-        />
-        <span className="min-w-0 truncate whitespace-nowrap text-sm font-semibold text-text-primary">
-          {name}
-        </span>
-      </button>
-    </div>
-  );
-}
-
 interface BoardSlotProps {
   draggable?: boolean;
   dropReady?: boolean;
+  isMobileViewport?: boolean;
   onDropStreamer: (event: DragEvent<HTMLDivElement>) => void;
   onPlaceSelected?: () => void;
+  onSelectStreamer?: () => void;
   onDragEnter: (event: DragEvent<HTMLDivElement>) => void;
   onDragLeave: () => void;
   onDragOver: (event: DragEvent<HTMLDivElement>) => void;
-  onStreamerDragEnd?: () => void;
-  onStreamerDragStart?: (event: DragEvent<HTMLButtonElement>) => void;
+  onStreamerDragEnd?: (event: DragEvent<HTMLDivElement>) => void;
+  onStreamerDragStart?: (event: DragEvent<HTMLDivElement>) => void;
   onClear?: () => void;
+  selected?: boolean;
   streamer?: Streamer;
   touchReady?: boolean;
 }
@@ -491,17 +431,41 @@ interface BoardSlotProps {
 function BoardSlot({
   draggable = false,
   dropReady = false,
+  isMobileViewport = false,
   onClear,
   onDropStreamer,
   onPlaceSelected,
+  onSelectStreamer,
   onDragEnter,
   onDragLeave,
   onDragOver,
   onStreamerDragEnd,
   onStreamerDragStart,
+  selected = false,
   streamer,
   touchReady = false,
 }: BoardSlotProps) {
+  if (streamer) {
+    return (
+      <DraftStreamerCard
+        avatarDataUrl={streamer.avatarDataUrl}
+        interaction={isMobileViewport ? "select" : draggable ? "drag" : "static"}
+        name={streamer.name}
+        onClick={onSelectStreamer}
+        onDragEnd={onStreamerDragEnd}
+        onDragEnter={onDragEnter}
+        onDragLeave={onDragLeave}
+        onDragOver={onDragOver}
+        onDragStart={onStreamerDragStart}
+        onDrop={onDropStreamer}
+        onRemove={onClear}
+        removeLabel={`${streamer.name} 제거`}
+        size="slot"
+        tone={selected ? "active" : dropReady || touchReady ? "drop" : "default"}
+      />
+    );
+  }
+
   return (
     <div
       onDrop={onDropStreamer}
@@ -515,50 +479,18 @@ function BoardSlot({
           : "border-border bg-surface hover:border-violet-200",
       )}
     >
-      {streamer && onClear ? (
-        <button
-          type="button"
-          onClick={onClear}
-          className="absolute right-3 top-3 flex size-7 cursor-pointer items-center justify-center rounded-full border border-border bg-surface text-text-secondary transition-colors hover:text-text-primary"
-          aria-label={`${streamer.name} 제거`}
-        >
-          <CloseIcon />
-        </button>
-      ) : null}
-
       <button
         type="button"
-        draggable={draggable}
         onClick={onPlaceSelected}
-        onDragStart={onStreamerDragStart}
-        onDragEnd={onStreamerDragEnd}
-        className="flex min-h-20 w-full cursor-pointer flex-col items-center justify-center rounded-2xl px-2 text-center"
-      >
-        {streamer ? (
-          <>
-            <Image
-              src={streamer.avatarDataUrl}
-              alt={streamer.name}
-              width={40}
-              height={48}
-              unoptimized
-              className="h-12 w-10 rounded-xl bg-surface object-cover"
-            />
-            <p className="mt-2 max-w-full truncate whitespace-nowrap text-xs font-semibold text-text-primary">
-              {streamer.name}
-            </p>
-            <p className="mt-2 text-[10px] font-semibold text-violet-700">
-              {dropReady ? "여기에 드롭" : touchReady ? "탭해서 교체" : "드롭해서 교체"}
-            </p>
-          </>
-        ) : (
-          <>
-            <span className="text-xl font-light text-text-muted">+</span>
-            <p className="mt-1 text-[10px] font-semibold text-text-secondary">
-              {dropReady ? "여기에 드롭" : touchReady ? "탭해서 배치" : "스트리머 배치"}
-            </p>
-          </>
+        className={cn(
+          "flex min-h-20 w-full flex-col items-center justify-center rounded-2xl px-2 text-center",
+          onPlaceSelected ? "cursor-pointer" : "cursor-default",
         )}
+      >
+        <span className="text-xl font-light text-text-muted">+</span>
+        <p className="mt-1 text-xs font-semibold text-text-secondary">
+          {dropReady ? "여기에 드롭" : touchReady ? "탭해서 배치" : "스트리머 배치"}
+        </p>
       </button>
     </div>
   );
@@ -626,6 +558,7 @@ export default function DraftCreatePage() {
   const [copied, setCopied] = useState(false);
   const [draggingStreamerId, setDraggingStreamerId] = useState<string | null>(null);
   const [highlightedSearchIndex, setHighlightedSearchIndex] = useState(-1);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [selectedStreamerId, setSelectedStreamerId] = useState<string | null>(null);
   const [hoveredSlot, setHoveredSlot] = useState<{ index: number; line: LineKey } | null>(null);
 
@@ -662,16 +595,15 @@ export default function DraftCreatePage() {
       return [];
     }
 
-    return STREAMER_DIRECTORY.filter((streamer) => {
-      if (participantIdSet.has(streamer.id)) {
-        return false;
-      }
-
-      return streamer.name.toLowerCase().includes(normalizedQuery);
-    })
+    return STREAMER_DIRECTORY.filter((streamer) => streamer.name.toLowerCase().includes(normalizedQuery))
+      .map((streamer) => ({
+        ...streamer,
+        isParticipant: participantIdSet.has(streamer.id),
+        isPlaced: placedIds.has(streamer.id),
+      }))
       .sort((left, right) => left.name.localeCompare(right.name))
       .slice(0, 8);
-  }, [participantIdSet, searchQuery]);
+  }, [participantIdSet, placedIds, searchQuery]);
 
   const participantStreamers = useMemo(
     () =>
@@ -716,6 +648,25 @@ export default function DraftCreatePage() {
     };
   }, [copied]);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+
+    const syncViewport = () => {
+      setIsMobileViewport(mediaQuery.matches);
+
+      if (!mediaQuery.matches) {
+        setSelectedStreamerId(null);
+      }
+    };
+
+    syncViewport();
+    mediaQuery.addEventListener("change", syncViewport);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncViewport);
+    };
+  }, []);
+
   const updateState = <Key extends keyof DraftCreateEditableState>(
     key: Key,
     value: DraftCreateEditableState[Key],
@@ -756,12 +707,12 @@ export default function DraftCreatePage() {
       };
     });
 
-    if (selectedStreamerId === streamerId) {
-      setSelectedStreamerId(null);
-    }
-
     if (draggingStreamerId === streamerId) {
       setDraggingStreamerId(null);
+    }
+
+    if (selectedStreamerId === streamerId) {
+      setSelectedStreamerId(null);
     }
   };
 
@@ -809,8 +760,8 @@ export default function DraftCreatePage() {
       tournamentId: tournament.id,
     }));
     setDraggingStreamerId(null);
-    setSelectedStreamerId(null);
     setHoveredSlot(null);
+    setSelectedStreamerId(null);
   };
 
   const clearAllSlots = () => {
@@ -819,8 +770,8 @@ export default function DraftCreatePage() {
       board: createEmptyBoard(),
     }));
     setDraggingStreamerId(null);
-    setSelectedStreamerId(null);
     setHoveredSlot(null);
+    setSelectedStreamerId(null);
   };
 
   const clearSlot = (line: LineKey, index: number) => {
@@ -859,15 +810,14 @@ export default function DraftCreatePage() {
       };
     });
     setDraggingStreamerId(null);
-    setSelectedStreamerId(null);
     setHoveredSlot(null);
+    setSelectedStreamerId(null);
   };
 
-  const handleChipDragStart = (event: DragEvent<HTMLButtonElement>, streamerId: string) => {
+  const handleChipDragStart = (event: DragEvent<HTMLDivElement>, streamerId: string) => {
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", streamerId);
     setDraggingStreamerId(streamerId);
-    setSelectedStreamerId(streamerId);
   };
 
   const handleChipDragEnd = () => {
@@ -876,7 +826,35 @@ export default function DraftCreatePage() {
   };
 
   const handleChipSelect = (streamerId: string) => {
+    if (!isMobileViewport) {
+      return;
+    }
+
     setSelectedStreamerId((current) => (current === streamerId ? null : streamerId));
+  };
+
+  const renderSearchResultStatus = (isParticipant: boolean, isPlaced: boolean) => {
+    if (isPlaced) {
+      return (
+        <StatusChip className="border-text-primary bg-text-primary text-text-inverse">
+          배치됨
+        </StatusChip>
+      );
+    }
+
+    if (isParticipant) {
+      return (
+        <StatusChip className="border-violet-300 bg-violet-100 text-violet-700">
+          대기중
+        </StatusChip>
+      );
+    }
+
+    return (
+      <StatusChip className="border-border bg-surface text-text-secondary">
+        추가 가능
+      </StatusChip>
+    );
   };
 
   const handleSearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -911,7 +889,7 @@ export default function DraftCreatePage() {
           ? searchResults[activeSearchIndex]
           : searchResults[0];
 
-      if (!targetStreamer) {
+      if (!targetStreamer || targetStreamer.isParticipant) {
         return;
       }
 
@@ -967,7 +945,7 @@ export default function DraftCreatePage() {
   };
 
   const handleSlotTap = (line: LineKey, index: number) => {
-    if (!selectedStreamerId) {
+    if (!isMobileViewport || !selectedStreamerId) {
       return;
     }
 
@@ -1076,11 +1054,11 @@ export default function DraftCreatePage() {
           </div>
         </section>
 
-        <div className="grid gap-5 xl:grid-cols-12">
+        <div className="grid gap-5 xl:grid-cols-11">
 
           {isPartyMode ? (
             <SectionCard
-              className="xl:col-span-12"
+              className="xl:col-span-11"
               title="참여 상태 및 공유"
               description="같이하기에서는 링크 공유와 현재 참여자 상태를 위쪽에서 바로 확인합니다."
             >
@@ -1205,7 +1183,7 @@ export default function DraftCreatePage() {
                     }}
                     onKeyDown={handleSearchKeyDown}
                     placeholder="스트리머 이름으로 검색"
-                    className="h-12 w-full rounded-2xl border border-border bg-surface px-4 pl-11 text-sm text-text-primary outline-none transition focus:border-violet-300"
+                    className="h-12 w-full rounded-2xl border border-border bg-surface px-4 pl-11 pr-11 text-sm text-text-primary outline-none transition focus:border-violet-300"
                     role="combobox"
                     aria-expanded={showSearchDropdown}
                     aria-controls="streamer-search-results"
@@ -1215,6 +1193,22 @@ export default function DraftCreatePage() {
                         : undefined
                     }
                   />
+                  {searchQuery.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setHighlightedSearchIndex(-1);
+                      }}
+                      className="absolute right-3 top-1/2 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-surface-muted text-text-secondary transition-colors hover:text-text-primary"
+                      aria-label="검색어 지우기"
+                    >
+                      <svg viewBox="0 0 20 20" fill="none" className="size-3.5" aria-hidden="true">
+                        <path d="m6 6 8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        <path d="m14 6-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  ) : null}
                   {showSearchDropdown ? (
                     <div
                       id="streamer-search-results"
@@ -1228,16 +1222,26 @@ export default function DraftCreatePage() {
                       ) : (
                         <div className="max-h-72 overflow-y-auto p-2">
                           {searchResults.map((streamer, index) => (
-                            <div
+                            <button
+                              type="button"
                               id={`streamer-search-result-${streamer.id}`}
                               key={streamer.id}
                               role="option"
                               aria-selected={activeSearchIndex === index}
+                              disabled={streamer.isParticipant}
                               onMouseEnter={() => {
                                 setHighlightedSearchIndex(index);
                               }}
+                              onClick={() => {
+                                if (streamer.isParticipant) {
+                                  return;
+                                }
+
+                                addParticipant(streamer.id);
+                              }}
                               className={cn(
-                                "flex items-center justify-between gap-3 rounded-xl px-3 py-3 transition-colors",
+                                "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors",
+                                streamer.isParticipant && "cursor-default opacity-80",
                                 activeSearchIndex === index ? "bg-surface-muted" : "hover:bg-surface-muted",
                               )}
                             >
@@ -1245,31 +1249,27 @@ export default function DraftCreatePage() {
                                 <Image
                                   src={streamer.avatarDataUrl}
                                   alt={streamer.name}
-                                  width={36}
+                                  width={44}
                                   height={44}
                                   unoptimized
-                                  className="h-11 w-9 rounded-xl bg-surface-muted object-cover"
+                                  className="size-11 shrink-0 rounded-full bg-surface-muted object-contain"
                                 />
                                 <div className="min-w-0">
                                   <p className="truncate text-sm font-semibold text-text-primary">
                                     {streamer.name}
                                   </p>
                                   <p className="mt-1 text-xs text-text-secondary">
-                                    참여 스트리머 목록에 추가
+                                    {streamer.isPlaced
+                                      ? "현재 보드에 배치된 스트리머"
+                                      : streamer.isParticipant
+                                        ? "참여 스트리머 목록에서 대기 중"
+                                        : "선택하면 참여 스트리머에 추가됩니다."}
                                   </p>
                                 </div>
                               </div>
 
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  addParticipant(streamer.id);
-                                }}
-                                className="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center rounded-2xl border border-border bg-surface-muted px-3 text-xs font-semibold text-text-primary"
-                              >
-                                추가
-                              </button>
-                            </div>
+                              {renderSearchResultStatus(streamer.isParticipant, streamer.isPlaced)}
+                            </button>
                           ))}
                         </div>
                       )}
@@ -1296,12 +1296,12 @@ export default function DraftCreatePage() {
                       : "현재 참여 스트리머가 모두 보드에 배치되어 있습니다."}
                   </div>
                 ) : (
-                  <div className="mt-3 grid grid-cols-1 gap-2">
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                     {filteredStreamers.map((streamer) => (
-                      <StreamerBadge
+                      <DraftStreamerCard
                         key={streamer.id}
-                        active={selectedStreamerId === streamer.id || draggingStreamerId === streamer.id}
                         avatarDataUrl={streamer.avatarDataUrl}
+                        interaction={isMobileViewport ? "select" : "drag"}
                         name={streamer.name}
                         onClick={() => {
                           handleChipSelect(streamer.id);
@@ -1313,6 +1313,12 @@ export default function DraftCreatePage() {
                         onDragStart={(event) => {
                           handleChipDragStart(event, streamer.id);
                         }}
+                        tone={
+                          draggingStreamerId === streamer.id ||
+                          (isMobileViewport && selectedStreamerId === streamer.id)
+                            ? "active"
+                            : "default"
+                        }
                       />
                     ))}
                   </div>
@@ -1322,7 +1328,7 @@ export default function DraftCreatePage() {
           </SectionCard>
 
           <SectionCard
-            className="xl:col-span-8"
+            className="xl:col-span-7"
             title="라인별 스트리머 배치"
             description="우측 보드는 현재 팀 개수와 팀당 인원 설정에 맞춰 필요한 라인과 슬롯만 보여줍니다."
           >
@@ -1390,6 +1396,7 @@ export default function DraftCreatePage() {
                           key={`${line.key}-${index}`}
                           draggable={Boolean(streamerId)}
                           dropReady={hoveredSlot?.line === line.key && hoveredSlot.index === index}
+                          isMobileViewport={false}
                           onDragEnter={(event) => {
                             handleSlotDragEnter(event, line.key, index);
                           }}
@@ -1409,9 +1416,8 @@ export default function DraftCreatePage() {
                                 }
                               : undefined
                           }
-                          onPlaceSelected={() => {
-                            handleSlotTap(line.key, index);
-                          }}
+                          onPlaceSelected={undefined}
+                          onSelectStreamer={undefined}
                           onStreamerDragEnd={handleChipDragEnd}
                           onStreamerDragStart={
                             streamerId
@@ -1420,8 +1426,9 @@ export default function DraftCreatePage() {
                                 }
                               : undefined
                           }
+                          selected={false}
                           streamer={streamerId ? streamerMap.get(streamerId) : undefined}
-                          touchReady={selectedStreamerId !== null}
+                          touchReady={false}
                         />
                       )),
                     ];
@@ -1448,6 +1455,7 @@ export default function DraftCreatePage() {
                           key={`${line.key}-mobile-${index}`}
                           draggable={Boolean(streamerId)}
                           dropReady={hoveredSlot?.line === line.key && hoveredSlot.index === index}
+                          isMobileViewport
                           onDragEnter={(event) => {
                             handleSlotDragEnter(event, line.key, index);
                           }}
@@ -1470,6 +1478,13 @@ export default function DraftCreatePage() {
                           onPlaceSelected={() => {
                             handleSlotTap(line.key, index);
                           }}
+                          onSelectStreamer={
+                            streamerId
+                              ? () => {
+                                  handleChipSelect(streamerId);
+                                }
+                              : undefined
+                          }
                           onStreamerDragEnd={handleChipDragEnd}
                           onStreamerDragStart={
                             streamerId
@@ -1478,6 +1493,7 @@ export default function DraftCreatePage() {
                                 }
                               : undefined
                           }
+                          selected={streamerId !== null && selectedStreamerId === streamerId}
                           streamer={streamerId ? streamerMap.get(streamerId) : undefined}
                           touchReady={selectedStreamerId !== null}
                         />

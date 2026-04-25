@@ -58,23 +58,24 @@ export function DraftStreamerCard({
   size = "default",
   tone = "default",
 }: DraftStreamerCardProps) {
+  const showAvatar = size !== "slot";
+
   const cardContent = (
     <>
-      <Image
-        src={avatarDataUrl}
-        alt={name}
-        width={48}
-        height={48}
-        unoptimized
-        className={cn(
-          "rounded-full bg-surface object-cover",
-          size === "slot" ? "size-10" : "size-11",
-        )}
-      />
+      {showAvatar ? (
+        <Image
+          src={avatarDataUrl}
+          alt={name}
+          width={48}
+          height={48}
+          unoptimized
+          className="size-11 rounded-full bg-surface object-cover"
+        />
+      ) : null}
       <span
         className={cn(
           "block max-w-full truncate whitespace-nowrap text-xs font-semibold text-text-primary",
-          size === "slot" ? "mt-2" : "mt-3",
+          showAvatar ? "mt-3" : "",
         )}
       >
         {name}

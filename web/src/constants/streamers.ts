@@ -84,7 +84,7 @@ export const STREAMER_DIRECTORY = [
   createStreamer("danuri", "다누리", "adc", "#fef3c7"),
   createStreamer("smalladc", "하꼬원딜", "adc", "#fef3c7"),
   createStreamer("runner", "러너", "adc", "#fef3c7"),
-  createStreamer("ambitionbot", "앰비션봇", "adc", "#fef3c7"),
+  createStreamer("ambition", "앰비션", "adc", "#fef3c7"),
   createStreamer("keria", "Keria", "support", "#ede9fe"),
   createStreamer("delight", "Delight", "support", "#ede9fe"),
   createStreamer("beryl", "BeryL", "support", "#ede9fe"),

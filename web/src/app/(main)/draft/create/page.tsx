@@ -18,7 +18,7 @@ import {
 } from "@/constants/streamers";
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
-import { cn } from "@/utils";
+import { cn, matchesStreamerSearchQuery } from "@/utils";
 
 type DraftType = "snake" | "auction";
 type ParticipationMode = "solo" | "party";
@@ -595,7 +595,9 @@ export default function DraftCreatePage() {
       return [];
     }
 
-    return STREAMER_DIRECTORY.filter((streamer) => streamer.name.toLowerCase().includes(normalizedQuery))
+    return STREAMER_DIRECTORY.filter((streamer) =>
+      matchesStreamerSearchQuery(streamer.name, normalizedQuery),
+    )
       .map((streamer) => ({
         ...streamer,
         isParticipant: participantIdSet.has(streamer.id),
@@ -1241,7 +1243,7 @@ export default function DraftCreatePage() {
                               }}
                               className={cn(
                                 "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors",
-                                streamer.isParticipant && "cursor-default opacity-80",
+                                streamer.isParticipant ? "cursor-default opacity-80" : "cursor-pointer",
                                 activeSearchIndex === index ? "bg-surface-muted" : "hover:bg-surface-muted",
                               )}
                             >

@@ -58,24 +58,23 @@ export function DraftStreamerCard({
   size = "default",
   tone = "default",
 }: DraftStreamerCardProps) {
-  const showAvatar = size !== "slot";
-
   const cardContent = (
     <>
-      {showAvatar ? (
-        <Image
-          src={avatarDataUrl}
-          alt={name}
-          width={48}
-          height={48}
-          unoptimized
-          className="size-11 rounded-full bg-surface object-cover"
-        />
-      ) : null}
+      <Image
+        src={avatarDataUrl}
+        alt={name}
+        width={48}
+        height={48}
+        unoptimized
+        className={cn(
+          "rounded-full bg-surface object-cover",
+          size === "slot" ? "size-10" : "size-11",
+        )}
+      />
       <span
         className={cn(
           "block max-w-full truncate whitespace-nowrap text-xs font-semibold text-text-primary",
-          showAvatar ? "mt-3" : "",
+          size === "slot" ? "mt-2" : "mt-3",
         )}
       >
         {name}
@@ -100,7 +99,7 @@ export function DraftStreamerCard({
       onDragOver={onDragOver}
       className={cn(
         "relative rounded-3xl border transition-all",
-        size === "slot" ? "p-2.5" : "p-2.5",
+        "p-2.5",
         interaction === "drag" && "cursor-grab active:cursor-grabbing",
         tone === "active"
           ? "border-violet-300 bg-violet-100 shadow-sm"

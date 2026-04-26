@@ -561,7 +561,6 @@ export default function DraftCreatePage() {
   const [highlightedSearchIndex, setHighlightedSearchIndex] = useState(-1);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
-  const [pinnedSearchResultIds, setPinnedSearchResultIds] = useState<string[]>([]);
   const [selectedStreamerId, setSelectedStreamerId] = useState<string | null>(null);
   const [hoveredSlot, setHoveredSlot] = useState<{ index: number; line: LineKey } | null>(null);
   const searchFieldRef = useRef<HTMLDivElement | null>(null);
@@ -572,10 +571,6 @@ export default function DraftCreatePage() {
   const activeLineRows = useMemo(() => getActiveLineRows(state.membersPerTeam), [state.membersPerTeam]);
   const visibleColumnCount = Number(state.teamCount);
   const participantIdSet = useMemo(() => new Set(state.participantIds), [state.participantIds]);
-  const pinnedSearchResultIdSet = useMemo(
-    () => new Set(pinnedSearchResultIds),
-    [pinnedSearchResultIds],
-  );
   const streamerMap = STREAMER_DIRECTORY_BY_ID;
 
   const placedIds = useMemo(() => {
@@ -610,8 +605,8 @@ export default function DraftCreatePage() {
         isPlaced: placedIds.has(streamer.id),
       }))
       .sort((left, right) => {
-        const leftPriority = left.isParticipant && !pinnedSearchResultIdSet.has(left.id) ? 1 : 0;
-        const rightPriority = right.isParticipant && !pinnedSearchResultIdSet.has(right.id) ? 1 : 0;
+        const leftPriority = left.isParticipant ? 1 : 0;
+        const rightPriority = right.isParticipant ? 1 : 0;
 
         if (leftPriority !== rightPriority) {
           return leftPriority - rightPriority;
@@ -620,7 +615,7 @@ export default function DraftCreatePage() {
         return left.name.localeCompare(right.name);
       })
       .slice(0, 8);
-  }, [participantIdSet, pinnedSearchResultIdSet, placedIds, searchQuery]);
+  }, [participantIdSet, placedIds, searchQuery]);
 
   const participantStreamers = useMemo(
     () =>
@@ -635,7 +630,7 @@ export default function DraftCreatePage() {
       .filter((streamer) => !placedIds.has(streamer.id))
       .sort((left, right) => left.name.localeCompare(right.name));
   }, [participantStreamers, placedIds]);
-  const showSearchDropdown = isSearchDropdownOpen;
+  const showSearchDropdown = isSearchDropdownOpen && searchQuery.trim().length > 0;
   const activeSearchIndex =
     highlightedSearchIndex < 0
       ? -1
@@ -652,7 +647,6 @@ export default function DraftCreatePage() {
   const closeSearchDropdown = () => {
     setIsSearchDropdownOpen(false);
     setHighlightedSearchIndex(-1);
-    setPinnedSearchResultIds([]);
   };
 
   useUnsavedChangesGuard(isDirty, leaveMessage);
@@ -725,11 +719,12 @@ export default function DraftCreatePage() {
         participantIds: [...current.participantIds, streamerId],
       };
     });
-    setPinnedSearchResultIds((current) =>
-      current.includes(streamerId) ? current : [...current, streamerId],
-    );
-    setIsSearchDropdownOpen(true);
-    searchInputRef.current?.focus();
+    setSearchQuery("");
+    setHighlightedSearchIndex(-1);
+    setIsSearchDropdownOpen(false);
+    window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+    });
   };
 
   const removeParticipant = (streamerId: string) => {
@@ -754,8 +749,6 @@ export default function DraftCreatePage() {
     if (selectedStreamerId === streamerId) {
       setSelectedStreamerId(null);
     }
-
-    setPinnedSearchResultIds((current) => current.filter((id) => id !== streamerId));
   };
 
   const updateTeamCount = (teamCount: TeamCount) => {
@@ -925,22 +918,15 @@ export default function DraftCreatePage() {
     }
 
     if (event.key === "Enter") {
-      const targetIndex = activeSearchIndex >= 0 ? activeSearchIndex : 0;
       const targetStreamer =
         activeSearchIndex >= 0 ? searchResults[activeSearchIndex] : searchResults[0];
 
-      if (!targetStreamer) {
+      if (!targetStreamer || targetStreamer.isParticipant) {
         return;
       }
 
       event.preventDefault();
-      setHighlightedSearchIndex(targetIndex);
-
-      if (targetStreamer.isParticipant) {
-        removeParticipant(targetStreamer.id);
-      } else {
-        addParticipant(targetStreamer.id);
-      }
+      addParticipant(targetStreamer.id);
 
       return;
     }
@@ -1230,7 +1216,9 @@ export default function DraftCreatePage() {
                       setIsSearchDropdownOpen(true);
                     }}
                     onFocus={() => {
-                      setIsSearchDropdownOpen(true);
+                      if (searchQuery.trim().length > 0) {
+                        setIsSearchDropdownOpen(true);
+                      }
                     }}
                     onKeyDown={handleSearchKeyDown}
                     placeholder="스트리머 이름으로 검색"
@@ -1250,7 +1238,7 @@ export default function DraftCreatePage() {
                       onClick={() => {
                         setSearchQuery("");
                         setHighlightedSearchIndex(-1);
-                        setIsSearchDropdownOpen(true);
+                        setIsSearchDropdownOpen(false);
                         searchInputRef.current?.focus();
                       }}
                       className="absolute right-3 top-1/2 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-surface-muted text-text-secondary transition-colors hover:text-text-primary"
@@ -1281,22 +1269,18 @@ export default function DraftCreatePage() {
                               key={streamer.id}
                               role="option"
                               aria-selected={activeSearchIndex === index}
+                              disabled={streamer.isParticipant}
                               onMouseEnter={() => {
                                 setHighlightedSearchIndex(index);
                               }}
                               onClick={() => {
-                                setHighlightedSearchIndex(index);
-
-                                if (streamer.isParticipant) {
-                                  removeParticipant(streamer.id);
-                                } else {
+                                if (!streamer.isParticipant) {
                                   addParticipant(streamer.id);
                                 }
                               }}
                               className={cn(
                                 "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors",
-                                "cursor-pointer",
-                                streamer.isParticipant && "opacity-80",
+                                streamer.isParticipant ? "cursor-default opacity-80" : "cursor-pointer",
                                 activeSearchIndex === index ? "bg-surface-muted" : "hover:bg-surface-muted",
                               )}
                             >
@@ -1315,9 +1299,9 @@ export default function DraftCreatePage() {
                                   </p>
                                   <p className="mt-1 text-xs text-text-secondary">
                                     {streamer.isPlaced
-                                      ? "선택하면 참여 스트리머와 보드에서 제거됩니다."
+                                      ? "현재 보드에 배치된 스트리머"
                                       : streamer.isParticipant
-                                        ? "선택하면 참여 스트리머에서 제거됩니다."
+                                        ? "참여 스트리머 목록에서 대기 중"
                                         : "선택하면 참여 스트리머에 추가됩니다."}
                                   </p>
                                 </div>

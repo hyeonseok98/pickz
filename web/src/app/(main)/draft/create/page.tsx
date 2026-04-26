@@ -223,7 +223,7 @@ function sanitizeDraftType(value: string | null): DraftType {
 }
 
 function sanitizeParticipationMode(value: string | null): ParticipationMode {
-  return value === "solo" ? "solo" : "party";
+  return value === "party" ? "party" : "solo";
 }
 
 function sanitizeTournamentId(value: string | null): string {

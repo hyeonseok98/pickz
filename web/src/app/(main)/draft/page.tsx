@@ -329,7 +329,7 @@ export default function Page() {
   const router = useRouter();
   const [selectedDraftType, setSelectedDraftType] = useState<DraftType>("snake");
   const [selectedParticipationMode, setSelectedParticipationMode] =
-    useState<ParticipationMode>("party");
+    useState<ParticipationMode>("solo");
 
   const summaryFeatures = useMemo(() => {
     if (selectedDraftType === "snake" && selectedParticipationMode === "party") {

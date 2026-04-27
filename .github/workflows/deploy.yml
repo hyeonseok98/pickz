@@ -1,6 +1,8 @@
 name: CI/CD Pipeline
 
 on:
+  schedule:
+    - cron: '50 9 * * *'
   push:
     branches: [ "main" ]
     paths:

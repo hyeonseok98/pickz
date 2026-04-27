@@ -198,8 +198,8 @@ const tournamentMap = new Map(tournamentOptions.map((tournament) => [tournament.
 
 const partyParticipants = [
   { id: "host", name: "나", status: "방장" },
-  { id: "guest-1", name: "Player456", status: "초대 링크 확인" },
-  { id: "guest-2", name: "Gamer789", status: "입장 대기" },
+  { id: "guest-1", name: "귀여운 Pickz1", status: "초대 링크 확인" },
+  { id: "guest-2", name: "반짝이는 Pickz2", status: "입장 대기" },
 ];
 
 function createAutoBoard(tournament: Tournament, teamCount: TeamCount, teamSize: TeamSize): BoardState {
@@ -570,6 +570,12 @@ export default function DraftCreatePage() {
   const currentTournament = tournamentMap.get(state.tournamentId) ?? customTournament;
   const activeLineRows = useMemo(() => getActiveLineRows(state.membersPerTeam), [state.membersPerTeam]);
   const visibleColumnCount = Number(state.teamCount);
+  const maxPartyParticipants = Number(state.teamCount);
+  const visiblePartyParticipants = partyParticipants.slice(0, maxPartyParticipants);
+  const partyParticipantSlots = Array.from(
+    { length: maxPartyParticipants },
+    (_, index) => visiblePartyParticipants[index] ?? null,
+  );
   const participantIdSet = useMemo(() => new Set(state.participantIds), [state.participantIds]);
   const streamerMap = STREAMER_DIRECTORY_BY_ID;
 
@@ -1008,15 +1014,15 @@ export default function DraftCreatePage() {
           <div className="mt-5 flex flex-wrap items-center gap-2 text-text-muted">
             <StepPill label="1. 방식 선택" />
             <span className="text-xs">›</span>
-            <StepPill label="2. 참여 모드" />
+            <StepPill active label="2. 방 설정" />
             <span className="text-xs">›</span>
-            <StepPill active label="3. 생성 완료" />
+            <StepPill label="3. 생성 완료" />
           </div>
 
           <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
             <div className="max-w-4xl">
               <h1 className="text-3xl font-bold tracking-[-0.04em] text-text-primary sm:text-4xl">
-                드래프트 방 설정
+                방 설정
               </h1>
             </div>
 
@@ -1094,103 +1100,156 @@ export default function DraftCreatePage() {
               title="참여 상태 및 공유"
               description="같이하기에서는 링크 공유와 현재 참여자 상태를 위쪽에서 바로 확인합니다."
             >
-              <div className="space-y-4">
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <button
-                    type="button"
+              <div className="grid gap-3 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)]">
+                <div className="space-y-3">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <button
+                      type="button"
                       onClick={() => {
                         updateState("visibility", "public");
                         updateState("password", "");
                       }}
                       className={cn(
-                        "flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-colors",
+                        "flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 text-left transition-colors",
                         state.visibility === "public"
                           ? "border-violet-300 bg-violet-100"
                           : "border-border bg-surface",
-                    )}
-                  >
-                    <span className="mt-0.5 flex size-9 items-center justify-center rounded-2xl bg-surface text-text-primary">
-                      <GlobeIcon />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-semibold text-text-primary">공개 방</span>
-                      <span className="mt-1 block text-xs leading-5 text-text-secondary">
-                        링크를 받은 사용자가 바로 입장할 수 있습니다.
+                      )}
+                    >
+                      <span className="mt-0.5 flex size-8 items-center justify-center rounded-2xl bg-surface text-text-primary">
+                        <GlobeIcon />
                       </span>
-                    </span>
-                  </button>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-text-primary">공개 방</span>
+                        <span className="mt-0.5 block text-xs leading-5 text-text-secondary">
+                          링크를 받은 사용자가 바로 입장할 수 있습니다.
+                        </span>
+                      </span>
+                    </button>
 
-                  <button
-                    type="button"
+                    <button
+                      type="button"
                       onClick={() => {
                         updateState("visibility", "private");
                       }}
                       className={cn(
-                        "flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-colors",
+                        "flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 text-left transition-colors",
                         state.visibility === "private"
                           ? "border-violet-300 bg-violet-100"
                           : "border-border bg-surface",
-                    )}
-                  >
-                    <span className="mt-0.5 flex size-9 items-center justify-center rounded-2xl bg-surface text-text-primary">
-                      <LockIcon />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-semibold text-text-primary">비공개 방</span>
-                      <span className="mt-1 block text-xs leading-5 text-text-secondary">
-                        비밀번호를 입력한 사람만 입장할 수 있습니다.
-                      </span>
-                    </span>
-                  </button>
-                </div>
-
-                {state.visibility === "private" ? (
-                  <div className="space-y-2">
-                    <FieldLabel>비밀번호</FieldLabel>
-                    <input
-                      type="password"
-                      value={state.password}
-                      onChange={(event) => {
-                        updateState("password", event.target.value);
-                      }}
-                      placeholder="4자 이상 입력"
-                      className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-text-primary outline-none transition focus:border-violet-300"
-                    />
-                  </div>
-                ) : null}
-
-                <div className="rounded-2xl border border-border bg-surface-muted px-4 py-4">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-text-primary">참여 링크</p>
-                      <p className="mt-2 break-all text-sm leading-6 text-text-secondary">
-                        {inviteLink}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={copyInviteLink}
-                      className="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-text-primary"
+                      )}
                     >
-                      <CopyIcon />
-                      <span>{copied ? "복사 완료" : "링크 복사"}</span>
+                      <span className="mt-0.5 flex size-8 items-center justify-center rounded-2xl bg-surface text-text-primary">
+                        <LockIcon />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-text-primary">비공개 방</span>
+                        <span className="mt-0.5 block text-xs leading-5 text-text-secondary">
+                          비밀번호를 입력한 사람만 입장할 수 있습니다.
+                        </span>
+                      </span>
                     </button>
                   </div>
+
+                  {state.visibility === "private" ? (
+                    <div className="space-y-2">
+                      <FieldLabel>비밀번호</FieldLabel>
+                      <input
+                        type="password"
+                        value={state.password}
+                        onChange={(event) => {
+                          updateState("password", event.target.value);
+                        }}
+                        placeholder="4자 이상 입력"
+                        className="h-11 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-text-primary outline-none transition focus:border-violet-300"
+                      />
+                    </div>
+                  ) : null}
+
+                  <div className="rounded-2xl border border-border bg-surface-muted px-4 py-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-text-primary">참여 링크</p>
+                        <p className="mt-1 break-all text-sm leading-6 text-text-secondary">
+                          {inviteLink}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={copyInviteLink}
+                        className="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-text-primary"
+                      >
+                        <CopyIcon />
+                        <span>{copied ? "복사 완료" : "링크 복사"}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="grid gap-2">
-                  {partyParticipants.map((participant) => (
-                    <div
-                      key={participant.id}
-                      className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface-muted px-4 py-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-text-primary">{participant.name}</p>
-                        <p className="mt-1 text-xs text-text-secondary">{participant.status}</p>
-                      </div>
-                      <StatusChip tone="muted">연결 준비</StatusChip>
+                <div className="rounded-2xl border border-border bg-surface-muted p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-text-primary">입장 현황</p>
+                      <p className="mt-1 text-xs text-text-secondary">
+                        참여 인원은 현재 팀 개수 기준으로 입장하며, 링크를 받은 사용자만 순서대로 들어옵니다.
+                      </p>
                     </div>
-                  ))}
+                    <StatusChip tone="muted">
+                      {visiblePartyParticipants.length} / {maxPartyParticipants} 입장
+                    </StatusChip>
+                  </div>
+
+                  <div className="mt-3 rounded-2xl border border-border bg-surface px-3 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold text-text-secondary">참여자 슬롯</p>
+                        <p className="mt-1 text-base font-bold text-text-primary">
+                          {visiblePartyParticipants.length} / {maxPartyParticipants}
+                        </p>
+                      </div>
+                      <StatusChip tone="muted">팀 개수 기준</StatusChip>
+                    </div>
+                    <p className="mt-2 text-xs text-text-secondary">
+                      최대 {maxPartyParticipants}명까지 입장 가능하며, 인원이 모이는 대로 바로 시작할 수 있습니다.
+                    </p>
+                  </div>
+
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {partyParticipantSlots.map((participant, index) =>
+                      participant ? (
+                        <div
+                          key={participant.id}
+                          className="rounded-2xl border border-border bg-surface px-3 py-3"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-text-primary">
+                                {participant.name}
+                              </p>
+                              <p className="mt-1 text-xs text-text-secondary">
+                                {participant.status}
+                              </p>
+                            </div>
+                            <StatusChip className="shrink-0" tone="muted">
+                              입장
+                            </StatusChip>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          key={`party-slot-${index + 1}`}
+                          className="rounded-2xl border border-dashed border-border bg-surface px-3 py-3"
+                        >
+                          <p className="text-sm font-semibold text-text-secondary">
+                            참여자 슬롯 {index + 1}
+                          </p>
+                          <p className="mt-1 text-xs text-text-muted">
+                            링크 공유 후 순서대로 입장합니다.
+                          </p>
+                        </div>
+                      ),
+                    )}
+                  </div>
                 </div>
               </div>
             </SectionCard>

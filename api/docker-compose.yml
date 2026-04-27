@@ -18,6 +18,7 @@ services:
   app-blue:
     image: ${DOCKER_IMAGE}:latest
     container_name: blue
+    restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - DB_URL=jdbc:mysql://db:3306/pickz_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
@@ -34,6 +35,7 @@ services:
   app-green:
     image: ${DOCKER_IMAGE}:latest
     container_name: green
+    restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - DB_URL=jdbc:mysql://db:3306/pickz_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8

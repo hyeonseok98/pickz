@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import team.pickz.api.global.annotation.MemberId;
@@ -21,6 +22,16 @@ import team.pickz.api.global.exception.ExceptionResponse;
 @Tag(name = "Auth", description = "인증 관련 API")
 @RequestMapping("/auths")
 public interface AuthDocsController {
+
+    @Operation(
+            summary = "네이버 로그인 요청",
+            description = "네이버 인증 페이지로 리다이렉트합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "302", description = "네이버 인증 페이지로 Redirection")
+    })
+    @GetMapping("/login")
+    String login();
 
     @Operation(summary = "access 토큰 재발급", description = "access 토큰 만료 시 refresh 토큰으로 재발급합니다.")
     @Parameter(name = "refresh_token", description = "쿠키에 저장된 리프레시 토큰", in = ParameterIn.COOKIE, required = true)

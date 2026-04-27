@@ -31,9 +31,9 @@ public class SecurityConfig {
     private final CorsProperties corsProperties;
 
     private static final String[] PERMIT_ALL_PATTERNS = {
-            "/", "/oauth2/**", "/auths/token","/actuator/**",
+            "/", "/oauth2/**", "/admin/**","/actuator/**",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-            "/admin/**", "/streamers/**"
+            "/auths/token", "/auths/login", "/streamers/**"
     };
     private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PATCH", "PUT", "DELETE");
     private static final List<String> ALLOWED_HEADERS = List.of("*");

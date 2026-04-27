@@ -3,20 +3,23 @@ package team.pickz.api.global.auth.presentation;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 import team.pickz.api.global.annotation.MemberId;
 import team.pickz.api.global.auth.application.AuthService;
 import team.pickz.api.global.auth.application.dto.TokenResponse;
 
 @RequiredArgsConstructor
 @RequestMapping("/auths")
-@RestController
+@Controller
 public class AuthController implements AuthDocsController{
 
     private final AuthService authService;
+
+    @GetMapping("/login")
+    public String login() {
+        return "redirect:/oauth2/authorization/naver";
+    }
 
     @PostMapping("/reissue")
     public ResponseEntity<TokenResponse> reissueToken(

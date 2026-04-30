@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import team.pickz.api.domain.streamer.application.dto.StreamerSearchResponse;
+import team.pickz.api.domain.streamer.application.dto.StreamerResponse;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public interface StreamerDocsController {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
     })
     @GetMapping("/search")
-    ResponseEntity<List<StreamerSearchResponse>> searchStreamers(
+    ResponseEntity<List<StreamerResponse>> searchStreamers(
             @RequestParam(name = "keyword") String keyword
     );
 

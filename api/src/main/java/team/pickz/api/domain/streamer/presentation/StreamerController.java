@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import team.pickz.api.domain.streamer.application.StreamerSearchService;
-import team.pickz.api.domain.streamer.application.dto.StreamerSearchResponse;
+import team.pickz.api.domain.streamer.application.dto.StreamerResponse;
 
 import java.util.List;
 
@@ -19,12 +19,12 @@ public class StreamerController implements StreamerDocsController{
     private final StreamerSearchService streamerSearchService;
 
     @GetMapping("/search")
-    public ResponseEntity<List<StreamerSearchResponse>> searchStreamers(
+    public ResponseEntity<List<StreamerResponse>> searchStreamers(
             @RequestParam(name = "keyword") String keyword
     ) {
-        List<StreamerSearchResponse> result = streamerSearchService.searchByKeyword(keyword);
+        List<StreamerResponse> response = streamerSearchService.searchByKeyword(keyword);
 
-        return ResponseEntity.status(200).body(result);
+        return ResponseEntity.status(200).body(response);
     }
 
 }

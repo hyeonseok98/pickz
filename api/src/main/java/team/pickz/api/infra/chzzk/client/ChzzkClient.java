@@ -54,7 +54,8 @@ public class ChzzkClient {
                             uriBuilder.path("/open/v1/lives")
                                     .queryParam("size", 20);
                             if(finalNextToken != null) {
-                                uriBuilder.queryParam("next", finalNextToken);
+                                uriBuilder.queryParam("next", "{next}");
+                                return uriBuilder.build(finalNextToken);
                             }
                             return uriBuilder.build();
                         })
@@ -76,7 +77,6 @@ public class ChzzkClient {
                     log.warn("치지직 API 페이지 토큰이 반복되어 조회를 중단합니다. nextToken={}", nextToken);
                     break;
                 }
-                log.info("이미 본 토큰: seenTokens={}", seenTokens);
 
             } catch (HttpClientErrorException e) {
                 log.warn("치지직 API 잘못된 요청 (next 토큰 오류 추정): {}", e.getResponseBodyAsString());

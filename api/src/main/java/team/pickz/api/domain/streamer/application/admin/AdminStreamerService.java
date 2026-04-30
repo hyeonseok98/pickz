@@ -1,4 +1,4 @@
-package team.pickz.api.domain.streamer.application;
+package team.pickz.api.domain.streamer.application.admin;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -7,6 +7,7 @@ import team.pickz.api.domain.streamer.domain.Streamer;
 import team.pickz.api.domain.streamer.domain.StreamerRepository;
 import team.pickz.api.infra.chzzk.client.ChzzkClient;
 import team.pickz.api.infra.chzzk.dto.ChzzkChannelResponse;
+import team.pickz.api.infra.chzzk.dto.ChzzkLiveResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,14 +16,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class StreamerSyncService {
+public class AdminStreamerService {
 
     private final ChzzkClient chzzkClient;
     private final StreamerRepository streamerRepository;
     private static final int CHUNK_SIZE = 20;
 
     @Transactional
-    public void syncStreamers(List<String> targetChannelIds) {
+    public void registerStreamers(List<String> targetChannelIds) {
         if(targetChannelIds == null || targetChannelIds.isEmpty()) {
             return;
         }
@@ -57,6 +58,10 @@ public class StreamerSyncService {
             partitions.add(new ArrayList<>(list.subList(i, Math.min(list.size(), i + size))));
         }
         return partitions;
+    }
+
+    public List<ChzzkLiveResponse> getLiveStreamers() {
+        return chzzkClient.getLives();
     }
 
 }

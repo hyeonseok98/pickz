@@ -5,7 +5,7 @@ import lombok.Builder;
 import java.util.List;
 
 @Builder
-public record ChzzkChannelResponseList(
+public record ChzzkChannelListResponse(
 
         int code,
 
@@ -17,7 +17,8 @@ public record ChzzkChannelResponseList(
 
     public record Content(
             List<ChzzkChannelResponse> data
-    ) {}
+    ) {
+    }
 
     public List<ChzzkChannelResponse> getData() {
         return content != null && content.data != null ? content.data : List.of();

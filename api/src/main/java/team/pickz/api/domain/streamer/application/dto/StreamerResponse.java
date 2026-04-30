@@ -2,7 +2,7 @@ package team.pickz.api.domain.streamer.application.dto;
 
 import team.pickz.api.domain.streamer.domain.Streamer;
 
-public record StreamerSearchResponse(
+public record StreamerResponse(
 
         Long id,
 
@@ -14,8 +14,8 @@ public record StreamerSearchResponse(
 
 ) {
 
-    public static StreamerSearchResponse from(Streamer streamer) {
-        return new StreamerSearchResponse(
+    public static StreamerResponse from(Streamer streamer) {
+        return new StreamerResponse(
                 streamer.getId(),
                 streamer.getChannelId(),
                 streamer.getChannelName(),

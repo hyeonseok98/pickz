@@ -1,12 +1,19 @@
 package team.pickz.api.domain.draft.application.dto;
 
+import lombok.Builder;
+
+@Builder
 public record PickResult(
+
         Long roomId,
-        Long pickedMemberId,
+
+        String pickedNickname,
+
         String pickedStreamerId,
 
-        boolean isDraftDone,
-        Integer nextTurnIndex,
-        int currentRound
+        String nextTurnNickname,
+
+        boolean isDraftDone
+
 ) {
 }

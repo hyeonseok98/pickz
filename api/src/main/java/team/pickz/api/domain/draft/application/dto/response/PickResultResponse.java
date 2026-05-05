@@ -1,9 +1,9 @@
-package team.pickz.api.domain.draft.application.dto;
+package team.pickz.api.domain.draft.application.dto.response;
 
 import lombok.Builder;
 
 @Builder
-public record PickResult(
+public record PickResultResponse(
 
         Long roomId,
 

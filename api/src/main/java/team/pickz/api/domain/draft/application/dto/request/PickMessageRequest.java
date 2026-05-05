@@ -1,11 +1,11 @@
-package team.pickz.api.domain.draft.application.dto;
+package team.pickz.api.domain.draft.application.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 @Builder
-public record PickMessage(
+public record PickMessageRequest(
 
         @NotNull(message = "참여자 토큰은 필수입니다.")
         String participantToken,

@@ -64,7 +64,7 @@ public class DraftRoomService {
                 .isHost(false).build();
         draftParticipantRepository.save(participant);
 
-        messagingTemplate.convertAndSend("/topic/draft/room/" + room.getId() + "/lobby", "NEW_PARTICIPANT_JOINED");
+        messagingTemplate.convertAndSend("/topic/draft/rooms/" + room.getId() + "/lobby", "NEW_PARTICIPANT_JOINED");
 
         return ParticipantTokenResponse.builder()
                         .participantToken(participant.getParticipantToken())
@@ -92,7 +92,7 @@ public class DraftRoomService {
             participants.get(i).assignTurnOrder(i);
         }
 
-        messagingTemplate.convertAndSend("/topic/draft/room/" + roomId, "DRAFT_STARTED");
+        messagingTemplate.convertAndSend("/topic/draft/rooms/" + roomId, "DRAFT_STARTED");
     }
 
 }

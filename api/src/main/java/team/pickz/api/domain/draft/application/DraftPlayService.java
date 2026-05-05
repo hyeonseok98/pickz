@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import team.pickz.api.domain.draft.application.dto.PickResult;
+import team.pickz.api.domain.draft.application.dto.response.PickResultResponse;
 import team.pickz.api.domain.draft.domain.RoomStatus;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftPick;
@@ -69,14 +69,15 @@ public class DraftPlayService {
             nextTurnNickname = participants.get(nextExpectedTurnIndex).getNickname();
         }
 
-        PickResult result = PickResult.builder()
+        PickResultResponse result = PickResultResponse.builder()
+                .roomId(roomId)
                 .pickedNickname(requestor.getNickname())
                 .pickedStreamerId(streamerId)
                 .nextTurnNickname(nextTurnNickname) // 다음 차례 유저의 닉네임을 UI에 표시
                 .isDraftDone(room.getStatus() == RoomStatus.DONE)
                 .build();
 
-        messagingTemplate.convertAndSend("/topic/draft-pick", result);
+        messagingTemplate.convertAndSend("/topic/draft/rooms/" + roomId + "/pick", result);
     }
 
 }

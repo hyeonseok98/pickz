@@ -11,8 +11,8 @@ import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
-import team.pickz.api.domain.draft.application.dto.PickMessage; // 작성하신 패키지에 맞게 변경
-import team.pickz.api.domain.draft.application.dto.PickResult;   // 작성하신 패키지에 맞게 변경
+import team.pickz.api.domain.draft.application.dto.request.PickMessageRequest; // 작성하신 패키지에 맞게 변경
+import team.pickz.api.domain.draft.application.dto.response.PickResultResponse;   // 작성하신 패키지에 맞게 변경
 
 import java.lang.reflect.Type;
 import java.util.concurrent.CompletableFuture;
@@ -46,7 +46,7 @@ class DraftWebSocketTest {
         StompSession session = stompClient.connectAsync(url, new StompSessionHandlerAdapter() {}).get(1, TimeUnit.SECONDS);
 
         // 비동기 결과를 받을 CompletableFuture
-        CompletableFuture<PickResult> resultFuture = new CompletableFuture<>();
+        CompletableFuture<PickResultResponse> resultFuture = new CompletableFuture<>();
 
         // 2. 결과 채널(Topic) 구독
         // 프론트엔드가 결과를 받기 위해 리스닝하고 있는 경로
@@ -54,23 +54,23 @@ class DraftWebSocketTest {
             @Override
             public Type getPayloadType(StompHeaders headers) {
                 // 메시지를 변환할 대상 클래스 타입 지정
-                return PickResult.class;
+                return PickResultResponse.class;
             }
 
             @Override
             public void handleFrame(StompHeaders headers, Object payload) {
                 // 서버로부터 메시지를 받으면 Future를 완료시킴
-                resultFuture.complete((PickResult) payload);
+                resultFuture.complete((PickResultResponse) payload);
             }
         });
 
         // 3. 서버로 픽 메시지 발행(Send)
         // memberId 대신 participantToken을 사용하는 방식 적용
-        PickMessage message = new PickMessage("test-participant-token-123", "dkfhoihewoid1235");
+        PickMessageRequest message = new PickMessageRequest("test-participant-token-123", "dkfhoihewoid1235");
         session.send("/app/draft/room/1/pick", message);
 
         // 4. 서버 응답 검증 (최대 3초 대기)
-        PickResult result = resultFuture.get(3, TimeUnit.SECONDS);
+        PickResultResponse result = resultFuture.get(3, TimeUnit.SECONDS);
 
         // Assertions
         assertThat(result).isNotNull();

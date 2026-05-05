@@ -7,7 +7,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import team.pickz.api.domain.draft.application.DraftPlayService;
-import team.pickz.api.domain.draft.application.dto.PickMessage;
+import team.pickz.api.domain.draft.application.dto.request.PickMessageRequest;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -16,10 +16,10 @@ public class DraftMessageController {
 
     private final DraftPlayService draftPlayService;
 
-    @MessageMapping("/draft/room/{roomId}/pick")
+    @MessageMapping("/draft/rooms/{roomId}/pick")
     public void pickStreamer(
             @DestinationVariable Long roomId,
-            @Payload PickMessage message // Security 컨텍스트나 STOMP 헤더에서 memberId를 추출하는 것이 더 안전합니다.
+            @Payload PickMessageRequest message
     ) {
         log.info("Pick request. RoomId: {}, MemberId: {}, StreamerId: {}",
                 roomId, message.participantToken(), message.streamerId());

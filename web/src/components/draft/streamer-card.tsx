@@ -19,7 +19,7 @@ function CloseIcon() {
 
 type StreamerCardTone = "default" | "active" | "drop";
 type StreamerCardInteraction = "drag" | "select" | "static";
-type StreamerCardSize = "default" | "slot";
+type StreamerCardSize = "default" | "slot" | "snake";
 
 interface DraftStreamerCardProps {
   avatarDataUrl: string;
@@ -68,13 +68,21 @@ export function DraftStreamerCard({
         unoptimized
         className={cn(
           "rounded-full bg-surface object-cover",
-          size === "slot" ? "size-10" : "size-11",
+          size === "snake"
+            ? "size-9"
+            : size === "slot"
+              ? "size-10"
+              : "size-11",
         )}
       />
       <span
         className={cn(
-          "block max-w-full truncate whitespace-nowrap text-xs font-semibold text-text-primary",
-          size === "slot" ? "mt-2" : "mt-3",
+          "block max-w-full truncate whitespace-nowrap font-semibold text-text-primary",
+          size === "snake"
+            ? "mt-1.5 text-xs leading-4"
+            : size === "slot"
+              ? "mt-2 text-xs"
+              : "mt-3 text-xs",
         )}
       >
         {name}
@@ -129,7 +137,11 @@ export function DraftStreamerCard({
           onClick={onClick}
           className={cn(
             "flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl px-2 text-center",
-            size === "slot" ? "min-h-20" : "min-h-22",
+            size === "snake"
+              ? "h-full min-h-0 px-1.5"
+              : size === "slot"
+                ? "min-h-20"
+                : "min-h-22",
           )}
         >
           {cardContent}
@@ -138,7 +150,11 @@ export function DraftStreamerCard({
         <div
           className={cn(
             "flex w-full flex-col items-center justify-center rounded-2xl px-2 text-center",
-            size === "slot" ? "min-h-20" : "min-h-22",
+            size === "snake"
+              ? "h-full min-h-0 px-1.5"
+              : size === "slot"
+                ? "min-h-20"
+                : "min-h-22",
             interaction === "drag" && "pointer-events-none",
           )}
         >

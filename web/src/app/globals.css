@@ -47,6 +47,10 @@
 
 :root {
   color-scheme: light;
+  --header-height: 80px;
+  --desktop-sidebar-width: 280px;
+  --desktop-sidebar-collapsed-width: 80px;
+  --mobile-sidebar-max-width: 320px;
 
   --raw-white: #ffffff;
   --raw-black: #121212;

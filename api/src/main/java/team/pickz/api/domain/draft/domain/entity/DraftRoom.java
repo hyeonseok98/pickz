@@ -2,6 +2,7 @@ package team.pickz.api.domain.draft.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import team.pickz.api.domain.draft.domain.RoomStatus;
@@ -20,46 +21,42 @@ public class DraftRoom {
     @Column(nullable = false, unique = true)
     private String inviteCode;
 
-    private Long hostId;
-    private int maxParticipants;
-    private String ruleName;
-
     @Enumerated(EnumType.STRING)
     private RoomStatus status;
 
-    private int currentRound;
-    private int currentPickInRound;
-    private int currentTurnIndex;
+    private String draftMode;
 
-    @Version
-    private Long version;
+    private String draftRuleType;
 
-    public static DraftRoom create(Long hostId, int maxParticipants, String ruleName) {
-        DraftRoom room = new DraftRoom();
-        room.hostId = hostId;
-        room.inviteCode = UUID.randomUUID().toString().substring(0, 8);
-        room.maxParticipants = maxParticipants;
-        room.ruleName = ruleName;
-        room.status = RoomStatus.WAITING;
-        room.currentRound = 1;
-        room.currentPickInRound = 0;
-        room.currentTurnIndex = 0;
-        return room;
+    private int teamCount;
+
+    private int teamSize;
+
+    private int currentPickCount;
+
+    @Builder
+    public DraftRoom(String draftMode, String draftRuleType, int teamCount, int teamSize) {
+        this.inviteCode = UUID.randomUUID().toString().substring(0, 8);
+        this.status = RoomStatus.WAITING;
+        this.draftMode = draftMode;
+        this.draftRuleType = draftRuleType;
+        this.teamCount = teamCount;
+        this.teamSize = teamSize;
+        this.currentPickCount = 0;
     }
 
     public void start() {
-        if (this.status != RoomStatus.WAITING) throw new IllegalStateException("이미 시작되었거나 종료된 방입니다.");
+        if (this.status != RoomStatus.WAITING) {
+            throw new IllegalStateException("이미 시작되었거나 종료된 드래프트입니다.");
+        }
         this.status = RoomStatus.IN_PROGRESS;
     }
 
-    public void advanceTurn(int nextRound, int nextPickInRound, int nextTurnIndex) {
-        this.currentRound = nextRound;
-        this.currentPickInRound = nextPickInRound;
-        this.currentTurnIndex = nextTurnIndex;
-    }
-
-    public void finish() {
-        this.status = RoomStatus.DONE;
+    public void incrementPickCount() {
+        this.currentPickCount++;
+        if (this.currentPickCount >= (this.teamCount * this.teamSize)) {
+            this.status = RoomStatus.DONE;
+        }
     }
 
 }

@@ -2,6 +2,7 @@ package team.pickz.api.domain.draft.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -17,19 +18,20 @@ public class DraftPick {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long draftRoomId;
+    private Long roomId;
 
-    private Long memberId;
+    private Long participantId;
 
     private String streamerId; // 치지직 채널 ID
 
-    private int pickedRound; // 몇 라운드에 뽑았는지
+    private int roundIndex; // 몇 라운드에 뽑았는지
 
-    public DraftPick(Long draftRoomId, Long memberId, String streamerId, int pickedRound) {
-        this.draftRoomId = draftRoomId;
-        this.memberId = memberId;
+    @Builder
+    public DraftPick(Long roomId, Long participantId, String streamerId, int roundIndex) {
+        this.roomId = roomId;
+        this.participantId = participantId;
         this.streamerId = streamerId;
-        this.pickedRound = pickedRound;
+        this.roundIndex = roundIndex;
     }
 
 }

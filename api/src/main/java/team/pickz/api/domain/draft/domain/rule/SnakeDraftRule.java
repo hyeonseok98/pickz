@@ -1,12 +1,23 @@
 package team.pickz.api.domain.draft.domain.rule;
 
-public class SnakeDraftRule implements DraftRule{
+import org.springframework.stereotype.Component;
+
+@Component
+public class SnakeDraftRule implements DraftRule {
 
     @Override
-    public int calculateNextTurn(int currentRound, int currentPickInRound, int totalParticipants) {
-        return (currentRound % 2 != 0)
-                ? currentPickInRound
-                : (totalParticipants - 1) - currentPickInRound;
+    public int calculateNextTurn(int currentPickCount, int teamCount) {
+        if (teamCount <= 0) return 0;
+
+        int round = currentPickCount / teamCount;
+        int indexInRound = currentPickCount % teamCount;
+
+        if (round % 2 == 0) {
+            return indexInRound;
+        }
+        else {
+            return teamCount - 1 - indexInRound;
+        }
     }
 
     @Override

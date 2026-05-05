@@ -2,30 +2,46 @@ package team.pickz.api.domain.draft.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Entity
+import java.util.UUID;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
 public class DraftParticipant {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "draft_room_id")
-    private DraftRoom draftRoom;
+    @Column(name = "room_id")
+    private Long roomId;
 
     private Long memberId;
 
-    private int turnIndex;
+    @Column(nullable = false, unique = true)
+    private String participantToken;
 
-    public DraftParticipant(DraftRoom draftRoom, Long memberId, int turnIndex) {
-        this.draftRoom = draftRoom;
+    private String nickname;
+
+    private boolean isHost;
+
+    private Integer turnOrder;
+
+    @Builder
+    public DraftParticipant(Long roomId, Long memberId, String nickname, boolean isHost) {
+        this.roomId = roomId;
         this.memberId = memberId;
-        this.turnIndex = turnIndex;
+        this.participantToken = UUID.randomUUID().toString();
+        this.nickname = nickname;
+        this.isHost = isHost;
+    }
+
+    public void assignTurnOrder(int turnOrder) {
+        this.turnOrder = turnOrder;
     }
 
 }

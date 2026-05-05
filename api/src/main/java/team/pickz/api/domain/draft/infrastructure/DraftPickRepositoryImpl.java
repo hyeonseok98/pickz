@@ -12,8 +12,8 @@ public class DraftPickRepositoryImpl implements DraftPickRepository {
     private final DraftPickJpaRepository draftPickJpaRepository;
 
     @Override
-    public Boolean existsByDraftRoomIdAndStreamerId(Long roomId, String streamerId) {
-        return draftPickJpaRepository.existsByDraftRoomIdAndStreamerId(roomId, streamerId);
+    public Boolean existsByRoomIdAndStreamerId(Long roomId, String streamerId) {
+        return draftPickJpaRepository.existsByRoomIdAndStreamerId(roomId, streamerId);
     }
 
     @Override

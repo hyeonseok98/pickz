@@ -34,7 +34,7 @@ public class SecurityConfig {
             "/", "/oauth2/**", "/admin/**","/actuator/**",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
             "/auths/reissue", "/auths/login", "/streamers/**",
-            "/ws-draft/**"
+            "/ws-draft/**", "/drafts/**"
     };
     private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PATCH", "PUT", "DELETE");
     private static final List<String> ALLOWED_HEADERS = List.of("*");

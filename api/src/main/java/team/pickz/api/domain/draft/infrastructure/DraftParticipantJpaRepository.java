@@ -4,10 +4,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
 
+import java.util.List;
+
 public interface DraftParticipantJpaRepository extends JpaRepository<DraftParticipant, Long> {
 
-    DraftParticipant findByDraftRoomAndTurnIndex(DraftRoom room, int turnIndex);
+    Long countByRoomId(Long roomId);
 
-    Long countByDraftRoom(DraftRoom room);
+    DraftParticipant findByParticipantToken(String participantToken);
+
+    List<DraftParticipant> findAllByRoomIdOrderByTurnOrderAsc(Long roomId);
 
 }

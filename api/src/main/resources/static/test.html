@@ -1,61 +1,166 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>드래프트 웹소켓 테스트</title>
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <title>WebSocket Draft Test</title>
+    <!-- Stomp.js 라이브러리 로드 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: 'Pretendard', Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { font-size: 24px; color: #333; }
+        .section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        .section:last-child { border-bottom: none; }
+        label { display: inline-block; width: 120px; font-weight: bold; margin-bottom: 8px; }
+        input[type="text"], input[type="number"] { width: calc(100% - 140px); padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; }
+        button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+        .btn-blue { background-color: #007bff; color: white; }
+        .btn-red { background-color: #dc3545; color: white; }
+        .btn-green { background-color: #28a745; color: white; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #messages { height: 300px; overflow-y: auto; background: #222; color: #0f0; padding: 10px; font-family: monospace; border-radius: 4px; white-space: pre-wrap; }
+    </style>
 </head>
-<body style="padding: 20px;">
-    <h2>🎮 드래프트 STOMP 테스트</h2>
-    
-    <button onclick="connect()" style="padding: 10px; font-size: 16px;">1. 서버 연결하기 (Connect)</button>
-    <button onclick="sendPick()" style="padding: 10px; font-size: 16px;">2. 픽 데이터 보내기 (Send)</button>
-    
-    <div style="margin-top: 20px; padding: 10px; background: #f4f4f4; border-radius: 8px;">
-        <strong>콘솔 로그 (결과 확인창):</strong>
-        <div id="messages" style="margin-top: 10px; font-family: monospace; line-height: 1.5;"></div>
+<body>
+
+<div class="container">
+    <h1>웹소켓 드래프트 테스트 (STOMP)</h1>
+
+    <!-- 연결 설정 섹션 -->
+    <div class="section">
+        <h3>1. Connection (연결)</h3>
+        <label for="wsUrl">WebSocket URL:</label>
+        <input type="text" id="wsUrl" value="ws://localhost:8080/ws/draft" placeholder="ws://localhost:8080/ws/draft"><br>
+
+        <label for="jwtToken">JWT Token:</label>
+        <input type="text" id="jwtToken" placeholder="Bearer 없이 토큰만 입력하거나 구조에 맞게 입력"><br>
+
+        <button id="connectBtn" class="btn-blue" onclick="connect()">Connect</button>
+        <button id="disconnectBtn" class="btn-red" onclick="disconnect()" disabled>Disconnect</button>
     </div>
 
-    <script>
-        let stompClient = null;
+    <!-- 구독 및 픽 액션 섹션 -->
+    <div class="section">
+        <h3>2. Draft Action (구독 및 픽)</h3>
+        <label for="roomId">Room ID:</label>
+        <input type="number" id="roomId" value="1" placeholder="방 번호 입력"><br>
 
-        function printLog(msg) {
-            document.getElementById('messages').innerHTML += '<div>' + msg + '</div>';
+        <label for="participantToken">Participant Token:</label>
+        <input type="text" id="participantToken" placeholder="DraftParticipant의 토큰 (또는 Member ID)"><br>
+
+        <label for="streamerId">Streamer ID:</label>
+        <input type="text" id="streamerId" placeholder="픽할 스트리머 ID"><br>
+
+        <button id="subscribeBtn" class="btn-blue" onclick="subscribe()" disabled>방 구독하기</button>
+        <button id="pickBtn" class="btn-green" onclick="sendPick()" disabled>픽(Pick) 전송</button>
+    </div>
+
+    <!-- 로그 출력 섹션 -->
+    <div class="section">
+        <h3>3. Messages / Logs</h3>
+        <div id="messages"></div>
+    </div>
+</div>
+
+<script>
+    let stompClient = null;
+    let currentSubscription = null;
+
+    // 로그 출력용 헬퍼 함수
+    function logMessage(message) {
+        const messageDiv = document.getElementById('messages');
+        const time = new Date().toLocaleTimeString();
+        messageDiv.innerHTML += `[${time}] ${message}\n`;
+        messageDiv.scrollTop = messageDiv.scrollHeight;
+    }
+
+    // 버튼 상태 제어
+    function setConnected(connected) {
+        document.getElementById('connectBtn').disabled = connected;
+        document.getElementById('disconnectBtn').disabled = !connected;
+        document.getElementById('subscribeBtn').disabled = !connected;
+        document.getElementById('pickBtn').disabled = !connected;
+    }
+
+    // 1. 웹소켓 연결
+    function connect() {
+        const url = document.getElementById('wsUrl').value;
+        const token = document.getElementById('jwtToken').value;
+
+        logMessage("연결 시도 중... URL: " + url);
+        stompClient = Stomp.client(url);
+
+        // 콘솔에 디버그 로그 출력 (선택 사항)
+        stompClient.debug = function(str) {
+            console.log(str);
+        };
+
+        // STOMP 헤더에 JWT 토큰 추가 (서버의 ChannelInterceptor에서 읽을 수 있음)
+        const headers = {
+            'Authorization': 'Bearer ' + token
+        };
+
+        stompClient.connect(headers, function (frame) {
+            setConnected(true);
+            logMessage("웹소켓 연결 성공! Frame: " + frame);
+        }, function (error) {
+            logMessage("웹소켓 연결 실패 또는 에러 발생: " + error);
+            setConnected(false);
+        });
+    }
+
+    // 연결 종료
+    function disconnect() {
+        if (stompClient !== null) {
+            stompClient.disconnect();
+        }
+        setConnected(false);
+        currentSubscription = null;
+        logMessage("웹소켓 연결 종료됨.");
+    }
+
+    // 2. 특정 드래프트 방 채널 구독 (수정된 브로드캐스트 경로 적용)
+    function subscribe() {
+        const roomId = document.getElementById('roomId').value;
+        // 서버에서 messagingTemplate.convertAndSend("/topic/draft/rooms/" + roomId + "/pick", result) 로 보낸다고 가정
+        const topicUrl = `/topic/draft/rooms/${roomId}/pick`;
+
+        // 이전 구독이 있다면 취소
+        if (currentSubscription) {
+            currentSubscription.unsubscribe();
         }
 
-        function connect() {
-            // 💡 앞서 로그에서 확인한 실제 서버 경로 적용
-            const socket = new SockJS('http://localhost:8080/api/ws-draft');
-            stompClient = Stomp.over(socket);
+        logMessage(`구독 시도 중... 대상: ${topicUrl}`);
+        currentSubscription = stompClient.subscribe(topicUrl, function (response) {
+            // 서버로부터 메시지를 받았을 때 실행되는 콜백
+            const data = JSON.parse(response.body);
+            logMessage("수신된 메시지: \n" + JSON.stringify(data, null, 2));
+        });
 
-            // StompJS가 내부적으로 알아서 Heartbeat와 Null Byte(\0)를 처리합니다!
-            stompClient.connect({}, function (frame) {
-                printLog('✅ <b>연결 성공!</b> (서버 문지기 통과)');
-                
-                // 1번 방 구독 (Subscribe)
-                stompClient.subscribe('/topic/draft/room/1', function (response) {
-                    const result = JSON.parse(response.body);
-                    printLog('📢 <b>서버 전체 방송 도착:</b> ' + JSON.stringify(result));
-                });
-            }, function(error) {
-                printLog('<span style="color:red">❌ 연결 실패:</span> ' + error + ' (로그인 쿠키가 있는지 확인하세요!)');
-            });
-        }
+        logMessage(`구독 완료! 이제 다른 사람의 픽 정보를 받을 수 있습니다.`);
+    }
 
-        function sendPick() {
-            if (!stompClient) {
-                alert("먼저 서버에 연결해주세요!");
-                return;
-            }
-            
-            // 전송할 데이터 (이전에 포스트맨에서 보내려던 그 데이터)
-            const pickMessage = { streamerId: "75cbf189b3bb8f9f687d2aca0d0a382b" };
-            
-            // 발행 (Publish)
-            stompClient.send("/app/draft.pick.1", {}, JSON.stringify(pickMessage));
-            printLog('🚀 <b>픽(Pick) 요청 전송 완료!</b>');
-        }
-    </script>
+    // 3. 픽(Pick) 메시지 전송
+    function sendPick() {
+        const roomId = document.getElementById('roomId').value;
+        const participantToken = document.getElementById('participantToken').value;
+        const streamerId = document.getElementById('streamerId').value;
+
+        // 서버의 @MessageMapping("/draft/room/{roomId}/pick") 경로로 매핑 (Prefix '/app' 적용)
+        const destination = `/app/draft/rooms/${roomId}/pick`;
+
+        const payload = {
+            participantToken: participantToken,
+            streamerId: streamerId
+        };
+
+        logMessage(`픽 전송 중... 대상: ${destination}`);
+        logMessage(`페이로드: ${JSON.stringify(payload)}`);
+
+        // 전송 (헤더가 필요하다면 두 번째 인자에 객체로 추가)
+        stompClient.send(destination, {}, JSON.stringify(payload));
+    }
+</script>
+
 </body>
 </html>

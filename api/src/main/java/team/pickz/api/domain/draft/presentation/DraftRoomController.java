@@ -18,7 +18,7 @@ import java.net.URI;
 @RequiredArgsConstructor
 @RequestMapping("/drafts/rooms")
 @RestController
-public class DraftRoomController {
+public class DraftRoomController implements DraftRoomDocsController {
 
     private final DraftRoomService draftRoomService;
 

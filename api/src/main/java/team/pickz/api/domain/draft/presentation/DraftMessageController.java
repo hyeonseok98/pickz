@@ -12,7 +12,7 @@ import team.pickz.api.domain.draft.application.dto.request.PickMessageRequest;
 @Slf4j
 @RequiredArgsConstructor
 @Controller
-public class DraftMessageController {
+public class DraftMessageController implements DraftMessageDocsController {
 
     private final DraftPlayService draftPlayService;
 

@@ -4,6 +4,7 @@ import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface DraftParticipantRepository {
 
@@ -11,8 +12,10 @@ public interface DraftParticipantRepository {
 
     Long countByRoomId(Long roomId);
 
-    DraftParticipant findByParticipantToken(String participantToken);
+    Optional<DraftParticipant> findByParticipantToken(String participantToken);
 
     List<DraftParticipant> findAllByRoomIdOrderByTurnOrderAsc(Long roomId);
+
+    List<DraftParticipant> findAllByRoomId(Long roomId);
 
 }

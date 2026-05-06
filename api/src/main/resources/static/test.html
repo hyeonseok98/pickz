@@ -30,7 +30,7 @@
     <div class="section">
         <h3>1. Connection (연결)</h3>
         <label for="wsUrl">WebSocket URL:</label>
-        <input type="text" id="wsUrl" value="ws://localhost:8080/ws/draft" placeholder="ws://localhost:8080/ws/draft"><br>
+        <input type="text" id="wsUrl" value="ws://localhost:8080/ws/drafts" placeholder="ws://localhost:8080/ws/drafts"><br>
 
         <label for="jwtToken">JWT Token:</label>
         <input type="text" id="jwtToken" placeholder="Bearer 없이 토큰만 입력하거나 구조에 맞게 입력"><br>
@@ -122,8 +122,8 @@
     // 2. 특정 드래프트 방 채널 구독 (수정된 브로드캐스트 경로 적용)
     function subscribe() {
         const roomId = document.getElementById('roomId').value;
-        // 서버에서 messagingTemplate.convertAndSend("/topic/draft/rooms/" + roomId + "/pick", result) 로 보낸다고 가정
-        const topicUrl = `/topic/draft/rooms/${roomId}/pick`;
+        // 서버에서 messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId + "/pick", result) 로 보낸다고 가정
+        const topicUrl = `/topic/drafts/rooms/${roomId}/pick`;
 
         // 이전 구독이 있다면 취소
         if (currentSubscription) {
@@ -146,8 +146,8 @@
         const participantToken = document.getElementById('participantToken').value;
         const streamerId = document.getElementById('streamerId').value;
 
-        // 서버의 @MessageMapping("/draft/room/{roomId}/pick") 경로로 매핑 (Prefix '/app' 적용)
-        const destination = `/app/draft/rooms/${roomId}/pick`;
+        // 서버의 @MessageMapping("/drafts/rooms/{roomId}/pick") 경로로 매핑 (Prefix '/app' 적용)
+        const destination = `/app/drafts/rooms/${roomId}/pick`;
 
         const payload = {
             participantToken: participantToken,

@@ -16,7 +16,7 @@ public class DraftMessageController {
 
     private final DraftPlayService draftPlayService;
 
-    @MessageMapping("/draft/rooms/{roomId}/pick")
+    @MessageMapping("/drafts/rooms/{roomId}/pick")
     public void pickStreamer(
             @DestinationVariable Long roomId,
             @Payload PickMessageRequest message

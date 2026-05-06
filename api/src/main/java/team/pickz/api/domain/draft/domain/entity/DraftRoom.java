@@ -59,4 +59,9 @@ public class DraftRoom {
         }
     }
 
+    public void updateSettings(int teamCount, int teamSize) {
+        this.teamCount = teamCount;
+        this.teamSize = teamSize;
+    }
+
 }

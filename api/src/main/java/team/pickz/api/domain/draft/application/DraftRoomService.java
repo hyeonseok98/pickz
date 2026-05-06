@@ -4,13 +4,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import team.pickz.api.domain.draft.application.dto.ParticipantUpdateEvent;
+import team.pickz.api.domain.draft.application.dto.RoomStatusEvent;
+import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
 import team.pickz.api.domain.draft.application.dto.response.ParticipantTokenResponse;
-import team.pickz.api.domain.draft.application.dto.response.RoomCreateResponse;
+import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
+import team.pickz.api.domain.draft.application.util.RandomNicknameGenerator;
 import team.pickz.api.domain.draft.domain.RoomStatus;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
 import team.pickz.api.domain.draft.domain.repository.DraftParticipantRepository;
 import team.pickz.api.domain.draft.domain.repository.DraftRoomRepository;
+import team.pickz.api.domain.member.domain.Member;
+import team.pickz.api.domain.member.domain.MemberRepository;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,25 +26,34 @@ import java.util.UUID;
 @Service
 public class DraftRoomService {
 
+    private final MemberRepository memberRepository;
     private final DraftRoomRepository draftRoomRepository;
     private final DraftParticipantRepository draftParticipantRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final RoomSequenceManager roomSequenceManager;
 
     @Transactional
-    public RoomCreateResponse createRoom(Long hostMemberId, String mode, String rule, int teamCount, int teamSize) {
+    public RoomInitResponse initRoom(Long hostMemberId, String mode, String ruleName) {
+        Member member = memberRepository.findByMemberId(hostMemberId);
+
         DraftRoom room = DraftRoom.builder()
-                .draftMode(mode).draftRuleType(rule)
-                .teamCount(teamCount).teamSize(teamSize).build();
+                .draftMode(mode)
+                .draftRuleType(ruleName)
+                .build();
+
         draftRoomRepository.save(room);
 
         DraftParticipant host = DraftParticipant.builder()
                 .roomId(room.getId())
-                .memberId(hostMemberId)
-                .nickname("방장")
-                .isHost(true).build();
+                .memberId(member.getId())
+                .nickname(member.getNickname())
+                .isHost(true)
+                .build();
+
         draftParticipantRepository.save(host);
 
-        return RoomCreateResponse.builder()
+        return RoomInitResponse.builder()
+                .roomId(room.getId())
                 .inviteCode(room.getInviteCode())
                 .participantToken(host.getParticipantToken())
                 .build();
@@ -46,41 +61,62 @@ public class DraftRoomService {
 
     @Transactional
     public ParticipantTokenResponse joinRoom(String inviteCode) {
-        DraftRoom room = draftRoomRepository.findByInviteCode(inviteCode);
-
-        long currentParticipants = draftParticipantRepository.countByRoomId(room.getId());
-        if (currentParticipants >= room.getTeamCount()) {
-            throw new IllegalStateException("방의 인원이 가득 찼습니다.");
-        }
+        DraftRoom room = draftRoomRepository.findByInviteCode(inviteCode)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
 
         if (room.getStatus() != RoomStatus.WAITING) {
             throw new IllegalStateException("이미 게임이 시작된 방입니다.");
         }
 
-        String nickname = "PICKZ_" + UUID.randomUUID();
+//        long currentParticipants = draftParticipantRepository.countByRoomId(room.getId());
+//        if (currentParticipants >= room.getTeamCount()) {
+//            throw new IllegalStateException("방의 인원이 가득 찼습니다.");
+//        }
+
+        int sequence = roomSequenceManager.getNextSequence(room.getId());
+        String nickname = RandomNicknameGenerator.generate(sequence);
+
         DraftParticipant participant = DraftParticipant.builder()
                 .roomId(room.getId())
                 .nickname(nickname)
-                .isHost(false).build();
+                .isHost(false)
+                .build();
+
         draftParticipantRepository.save(participant);
 
-        messagingTemplate.convertAndSend("/topic/draft/rooms/" + room.getId() + "/lobby", "NEW_PARTICIPANT_JOINED");
+        List<DraftParticipant> participants = draftParticipantRepository.findAllByRoomId(room.getId());
+        List<String> nicknames = participants.stream()
+                .map(DraftParticipant::getNickname)
+                .toList();
+
+        ParticipantUpdateEvent event = ParticipantUpdateEvent.builder()
+                .totalCount(nicknames.size())
+                .nicknames(nicknames)
+                .newParticipant(nickname)
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/drafts/rooms/" + room.getId() + "/participants", event);
 
         return ParticipantTokenResponse.builder()
-                        .participantToken(participant.getParticipantToken())
+                .participantToken(participant.getParticipantToken())
                 .build(); // 클라이언트는 이 토큰 저장해야 함
     }
 
     @Transactional
-    public void startDraft(Long roomId, String participantToken) {
-        DraftRoom room = draftRoomRepository.findById(roomId);
-        DraftParticipant requestor = draftParticipantRepository.findByParticipantToken(participantToken);
+    public void configureAndStartRoom(Long roomId, String participantToken, RoomConfigureRequest request) {
+        DraftRoom room = draftRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+
+        DraftParticipant requestor = draftParticipantRepository.findByParticipantToken(participantToken)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 참여자입니다."));
 
         if (!requestor.isHost()) {
             throw new IllegalArgumentException("방장만 드래프트를 시작할 수 있습니다.");
         }
 
-        List<DraftParticipant> participants = draftParticipantRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);
+        room.updateSettings(request.teamCount(), request.teamSize());
+
+        List<DraftParticipant> participants = draftParticipantRepository.findAllByRoomId(roomId);
         if (participants.size() != room.getTeamCount()) {
             throw new IllegalStateException("설정된 팀 개수만큼 참여자가 모여야 시작할 수 있습니다.");
         }
@@ -92,7 +128,12 @@ public class DraftRoomService {
             participants.get(i).assignTurnOrder(i);
         }
 
-        messagingTemplate.convertAndSend("/topic/draft/rooms/" + roomId, "DRAFT_STARTED");
+        RoomStatusEvent event = RoomStatusEvent.builder()
+                .roomStatus(room.getStatus())
+                .redirectUrl("/drafts/" + roomId + "/play")
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId, event);
     }
 
 }

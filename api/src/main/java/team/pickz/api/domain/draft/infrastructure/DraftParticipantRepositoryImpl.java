@@ -7,6 +7,7 @@ import team.pickz.api.domain.draft.domain.entity.DraftRoom;
 import team.pickz.api.domain.draft.domain.repository.DraftParticipantRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -25,13 +26,18 @@ public class DraftParticipantRepositoryImpl implements DraftParticipantRepositor
     }
 
     @Override
-    public DraftParticipant findByParticipantToken(String participantToken) {
+    public Optional<DraftParticipant> findByParticipantToken(String participantToken) {
         return draftParticipantJpaRepository.findByParticipantToken(participantToken);
     }
 
     @Override
     public List<DraftParticipant> findAllByRoomIdOrderByTurnOrderAsc(Long roomId) {
         return draftParticipantJpaRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);
+    }
+
+    @Override
+    public List<DraftParticipant> findAllByRoomId(Long roomId) {
+        return draftParticipantJpaRepository.findAllByRoomId(roomId);
     }
 
 }

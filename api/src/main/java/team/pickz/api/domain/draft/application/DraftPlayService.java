@@ -28,7 +28,8 @@ public class DraftPlayService {
 
     @Transactional
     public void processPick(Long roomId, String participantToken, String streamerId) {
-        DraftRoom room = draftRoomRepository.findById(roomId);
+        DraftRoom room = draftRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
 
         if (room.getStatus() != RoomStatus.IN_PROGRESS) {
             throw new IllegalStateException("진행 중인 드래프트가 아닙니다.");
@@ -77,7 +78,7 @@ public class DraftPlayService {
                 .isDraftDone(room.getStatus() == RoomStatus.DONE)
                 .build();
 
-        messagingTemplate.convertAndSend("/topic/draft/rooms/" + roomId + "/pick", result);
+        messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId + "/pick", result);
     }
 
 }

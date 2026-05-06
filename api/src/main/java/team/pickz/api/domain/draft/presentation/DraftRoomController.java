@@ -2,52 +2,63 @@ package team.pickz.api.domain.draft.presentation;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import team.pickz.api.domain.draft.application.DraftRoomService;
-import team.pickz.api.domain.draft.application.dto.request.RoomCreateRequest;
+import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
+import team.pickz.api.domain.draft.application.dto.request.RoomInitRequest;
 import team.pickz.api.domain.draft.application.dto.response.ParticipantTokenResponse;
-import team.pickz.api.domain.draft.application.dto.response.RoomCreateResponse;
+import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
 import team.pickz.api.global.annotation.MemberId;
 
-@RestController
-@RequestMapping("/drafts/rooms")
+import java.net.URI;
+
 @RequiredArgsConstructor
+@RequestMapping("/drafts/rooms")
+@RestController
 public class DraftRoomController {
 
     private final DraftRoomService draftRoomService;
 
     @PostMapping
-    public ResponseEntity<RoomCreateResponse> createRoom(
+    public ResponseEntity<RoomInitResponse> initRoom(
             @MemberId Long hostId,
-            @Valid @RequestBody RoomCreateRequest request
+            @Valid @RequestBody RoomInitRequest request
     ) {
-        RoomCreateResponse response = draftRoomService.createRoom(
+        RoomInitResponse response = draftRoomService.initRoom(
                 hostId,
                 request.mode(),
-                request.ruleName(),
-                request.teamCount(),
-                request.teamSize()
+                request.ruleName()
         );
 
-        return ResponseEntity.status(200).body(response);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{roomId}")
+                .buildAndExpand(response.roomId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(response);
     }
 
-    @PostMapping("/{inviteCode}/join")
+    @PostMapping("invites/{inviteCode}/participants")
     public ResponseEntity<ParticipantTokenResponse> joinRoom(
             @PathVariable("inviteCode") String inviteCode
     ) {
         ParticipantTokenResponse response = draftRoomService.joinRoom(inviteCode);
-        return ResponseEntity.status(200).body(response);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/{roomId}/start")
-    public ResponseEntity<Void> startDraft(
+    @PatchMapping("/{roomId}/settings")
+    public ResponseEntity<Void> configureAndStartRoom(
             @PathVariable("roomId") Long roomId,
-            @RequestHeader("X-Participant-Token") String participantToken // 방장 토큰
+            @RequestHeader("X-Participant-Token") String participantToken, // 방장 토큰
+            @Valid @RequestBody RoomConfigureRequest request
     ) {
-        draftRoomService.startDraft(roomId, participantToken);
-        return ResponseEntity.ok().build();
+        draftRoomService.configureAndStartRoom(roomId, participantToken, request);
+
+        return ResponseEntity.noContent().build();
     }
 
 }

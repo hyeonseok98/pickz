@@ -2,12 +2,14 @@ package team.pickz.api.domain.draft.domain.repository;
 
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
 
+import java.util.Optional;
+
 public interface DraftRoomRepository {
 
     void save(DraftRoom draftRoom);
 
-    DraftRoom findById(Long roomId);
+    Optional<DraftRoom> findById(Long roomId);
 
-    DraftRoom findByInviteCode(String inviteCode);
+    Optional<DraftRoom> findByInviteCode(String inviteCode);
 
 }

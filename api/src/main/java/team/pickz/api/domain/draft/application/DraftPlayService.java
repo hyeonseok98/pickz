@@ -31,10 +31,6 @@ public class DraftPlayService {
         DraftRoom room = draftRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
 
-        if (room.getStatus() != RoomStatus.IN_PROGRESS) {
-            throw new IllegalStateException("진행 중인 드래프트가 아닙니다.");
-        }
-
         List<DraftParticipant> participants = draftParticipantRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);
 
         DraftParticipant requestor = participants.stream()
@@ -60,6 +56,7 @@ public class DraftPlayService {
                 .streamerId(streamerId)
                 .roundIndex(currentRound)
                 .build();
+
         draftPickRepository.save(pick);
 
         room.incrementPickCount();

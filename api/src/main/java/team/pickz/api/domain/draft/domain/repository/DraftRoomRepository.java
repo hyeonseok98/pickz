@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public interface DraftRoomRepository {
 
-    void save(DraftRoom draftRoom);
+    DraftRoom save(DraftRoom draftRoom);
 
     Optional<DraftRoom> findById(Long roomId);
 

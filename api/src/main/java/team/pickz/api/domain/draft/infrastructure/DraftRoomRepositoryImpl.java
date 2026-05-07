@@ -14,8 +14,8 @@ public class DraftRoomRepositoryImpl implements DraftRoomRepository {
     private final DraftRoomJpaRepository draftRoomJpaRepository;
 
     @Override
-    public void save(DraftRoom draftRoom) {
-        draftRoomJpaRepository.save(draftRoom);
+    public DraftRoom save(DraftRoom draftRoom) {
+        return draftRoomJpaRepository.save(draftRoom);
     }
 
     @Override

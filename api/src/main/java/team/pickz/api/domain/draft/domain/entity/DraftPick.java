@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"draft_room_id", "streamerId"})
+        @UniqueConstraint(columnNames = {"draft_room_id", "streamer_id"})
 })
 public class DraftPick {
 

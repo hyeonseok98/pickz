@@ -114,6 +114,10 @@ public class DraftRoomService {
             throw new IllegalArgumentException("방장만 드래프트를 시작할 수 있습니다.");
         }
 
+        if(!requestor.getRoomId().equals(roomId)) {
+            throw new IllegalArgumentException("해당 방의 방장이 아닙니다.");
+        }
+
         room.updateSettings(request.teamCount(), request.teamSize());
 
         List<DraftParticipant> participants = draftParticipantRepository.findAllByRoomId(roomId);

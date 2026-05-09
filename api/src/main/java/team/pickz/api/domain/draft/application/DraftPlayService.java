@@ -28,7 +28,7 @@ public class DraftPlayService {
 
     @Transactional
     public void processPick(Long roomId, String participantToken, String streamerId) {
-        DraftRoom room = draftRoomRepository.findById(roomId)
+        DraftRoom room = draftRoomRepository.findByIdForUpdate(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
 
         List<DraftParticipant> participants = draftParticipantRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);

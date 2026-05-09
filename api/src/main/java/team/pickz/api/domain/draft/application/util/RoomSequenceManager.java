@@ -1,4 +1,4 @@
-package team.pickz.api.domain.draft.application;
+package team.pickz.api.domain.draft.application.util;
 
 import org.springframework.stereotype.Component;
 

@@ -10,6 +10,8 @@ public interface DraftRoomRepository {
 
     Optional<DraftRoom> findById(Long roomId);
 
+    Optional<DraftRoom> findByIdForUpdate(Long roomId);
+
     Optional<DraftRoom> findByInviteCode(String inviteCode);
 
 }

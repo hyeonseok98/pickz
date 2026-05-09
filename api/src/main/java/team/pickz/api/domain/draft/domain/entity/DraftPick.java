@@ -6,12 +6,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(uniqueConstraints = {
         @UniqueConstraint(columnNames = {"draft_room_id", "streamer_id"})
 })
+@Entity
 public class DraftPick {
 
     @Id

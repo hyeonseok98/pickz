@@ -24,6 +24,11 @@ public class DraftRoomRepositoryImpl implements DraftRoomRepository {
     }
 
     @Override
+    public Optional<DraftRoom> findByIdForUpdate(Long roomId) {
+        return draftRoomJpaRepository.findByIdForUpdate(roomId);
+    }
+
+    @Override
     public Optional<DraftRoom> findByInviteCode(String inviteCode) {
         return draftRoomJpaRepository.findByInviteCode(inviteCode);
     }

@@ -10,6 +10,7 @@ import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
 import team.pickz.api.domain.draft.application.dto.response.ParticipantTokenResponse;
 import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
 import team.pickz.api.domain.draft.application.util.RandomNicknameGenerator;
+import team.pickz.api.domain.draft.application.util.RoomSequenceManager;
 import team.pickz.api.domain.draft.domain.RoomStatus;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
@@ -20,7 +21,6 @@ import team.pickz.api.domain.member.domain.MemberRepository;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service

@@ -1,6 +1,5 @@
 package team.pickz.api.domain.draft.application.dto.request;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 
 public record RoomInitRequest(

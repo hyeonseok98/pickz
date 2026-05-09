@@ -14,5 +14,4 @@ public record PickMessageRequest(
         String streamerId
 
 ) {
-
 }

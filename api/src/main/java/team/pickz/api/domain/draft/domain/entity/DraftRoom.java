@@ -9,9 +9,9 @@ import team.pickz.api.domain.draft.domain.RoomStatus;
 
 import java.util.UUID;
 
-@Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
 public class DraftRoom {
 
     @Id

@@ -21,6 +21,7 @@ public class DraftMessageController implements DraftMessageDocsController {
             @DestinationVariable Long roomId,
             @Payload PickMessageRequest message
     ) {
+        // 실제 운영 시 로그 제거 필요
         log.info("Pick request. RoomId: {}, MemberId: {}, StreamerId: {}",
                 roomId, message.participantToken(), message.streamerId());
 

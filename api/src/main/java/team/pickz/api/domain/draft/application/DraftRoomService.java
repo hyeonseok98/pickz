@@ -96,6 +96,7 @@ public class DraftRoomService {
                 ParticipantJoinedEvent.builder()
                         .roomId(room.getId())
                         .payload(event)
+                        .build()
         );
 
         return ParticipantTokenResponse.builder()

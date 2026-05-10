@@ -70,11 +70,6 @@ public class DraftRoomService {
             throw new IllegalStateException("이미 게임이 시작된 방입니다.");
         }
 
-//        long currentParticipants = draftParticipantRepository.countByRoomId(room.getId());
-//        if (currentParticipants >= room.getTeamCount()) {
-//            throw new IllegalStateException("방의 인원이 가득 찼습니다.");
-//        }
-
         int sequence = roomSequenceManager.getNextSequence(room.getId());
         String nickname = RandomNicknameGenerator.generate(sequence);
 

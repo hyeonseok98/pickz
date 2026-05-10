@@ -33,7 +33,10 @@ public interface AuthDocsController {
     @GetMapping("/login")
     String login();
 
-    @Operation(summary = "access 토큰 재발급", description = "access 토큰 만료 시 refresh 토큰으로 재발급합니다.")
+    @Operation(
+            summary = "access 토큰 재발급",
+            description = "access 토큰 만료 시 refresh 토큰으로 재발급합니다."
+    )
     @Parameter(name = "refresh_token", description = "쿠키에 저장된 리프레시 토큰", in = ParameterIn.COOKIE, required = true)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "토큰 발급 성공"),

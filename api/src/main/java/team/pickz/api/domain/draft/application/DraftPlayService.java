@@ -1,10 +1,11 @@
 package team.pickz.api.domain.draft.application;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.draft.application.dto.response.PickResultResponse;
+import team.pickz.api.domain.draft.application.event.DraftPickedEvent;
 import team.pickz.api.domain.draft.domain.RoomStatus;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftPick;
@@ -24,7 +25,7 @@ public class DraftPlayService {
     private final DraftParticipantRepository draftParticipantRepository;
     private final DraftPickRepository draftPickRepository;
     private final DraftRule snakeDraftRule;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public void processPick(Long roomId, String participantToken, String streamerId) {
@@ -75,7 +76,12 @@ public class DraftPlayService {
                 .isDraftDone(room.getStatus() == RoomStatus.DONE)
                 .build();
 
-        messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId + "/pick", result);
+        applicationEventPublisher.publishEvent(
+                DraftPickedEvent.builder()
+                        .roomId(roomId)
+                        .result(result)
+                        .build()
+        );
     }
 
 }

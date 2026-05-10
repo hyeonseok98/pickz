@@ -1,11 +1,13 @@
 package team.pickz.api.domain.draft.application;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import team.pickz.api.domain.draft.application.dto.ParticipantUpdateEvent;
-import team.pickz.api.domain.draft.application.dto.RoomStatusEvent;
+import team.pickz.api.domain.draft.application.event.DraftRoomStartedEvent;
+import team.pickz.api.domain.draft.application.event.ParticipantJoinedEvent;
+import team.pickz.api.domain.draft.application.event.ParticipantUpdateEvent;
+import team.pickz.api.domain.draft.application.event.RoomStatusEvent;
 import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
 import team.pickz.api.domain.draft.application.dto.response.ParticipantTokenResponse;
 import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
@@ -29,8 +31,8 @@ public class DraftRoomService {
     private final MemberRepository memberRepository;
     private final DraftRoomRepository draftRoomRepository;
     private final DraftParticipantRepository draftParticipantRepository;
-    private final SimpMessagingTemplate messagingTemplate;
     private final RoomSequenceManager roomSequenceManager;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public RoomInitResponse initRoom(Long hostMemberId, String mode, String ruleName) {
@@ -95,7 +97,13 @@ public class DraftRoomService {
                 .newParticipant(nickname)
                 .build();
 
-        messagingTemplate.convertAndSend("/topic/drafts/rooms/" + room.getId() + "/participants", event);
+        //messagingTemplate.convertAndSend("/topic/drafts/rooms/" + room.getId() + "/participants", event);
+
+        applicationEventPublisher.publishEvent(
+                ParticipantJoinedEvent.builder()
+                        .roomId(room.getId())
+                        .payload(event)
+        );
 
         return ParticipantTokenResponse.builder()
                 .participantToken(participant.getParticipantToken())
@@ -137,7 +145,13 @@ public class DraftRoomService {
                 .redirectUrl("/drafts/" + roomId + "/play")
                 .build();
 
-        messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId, event);
+        //messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId, event);
+        applicationEventPublisher.publishEvent(
+                DraftRoomStartedEvent.builder()
+                        .roomId(roomId)
+                        .payload(event)
+                        .build()
+        );
     }
 
 }

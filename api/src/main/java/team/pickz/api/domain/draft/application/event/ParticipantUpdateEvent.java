@@ -1,4 +1,4 @@
-package team.pickz.api.domain.draft.application.dto;
+package team.pickz.api.domain.draft.application.event;
 
 import lombok.Builder;
 

@@ -16,7 +16,7 @@ public class DraftMessageController implements DraftMessageDocsController {
 
     private final DraftPlayService draftPlayService;
 
-    @MessageMapping("/drafts/rooms/{roomId}/pick")
+    @MessageMapping("/drafts/rooms/{roomId}")
     public void pickStreamer(
             @DestinationVariable Long roomId,
             @Payload PickMessageRequest message

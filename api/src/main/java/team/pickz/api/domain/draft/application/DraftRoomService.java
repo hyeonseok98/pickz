@@ -92,8 +92,6 @@ public class DraftRoomService {
                 .newParticipant(nickname)
                 .build();
 
-        //messagingTemplate.convertAndSend("/topic/drafts/rooms/" + room.getId() + "/participants", event);
-
         applicationEventPublisher.publishEvent(
                 ParticipantJoinedEvent.builder()
                         .roomId(room.getId())
@@ -140,7 +138,6 @@ public class DraftRoomService {
                 .redirectUrl("/drafts/" + roomId + "/play")
                 .build();
 
-        //messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId, event);
         applicationEventPublisher.publishEvent(
                 DraftRoomStartedEvent.builder()
                         .roomId(roomId)

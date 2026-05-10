@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.draft.application.dto.response.PickResultResponse;
 import team.pickz.api.domain.draft.application.event.DraftPickedEvent;
+import team.pickz.api.domain.draft.application.util.RoomSequenceManager;
 import team.pickz.api.domain.draft.domain.RoomStatus;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftPick;
@@ -26,6 +27,7 @@ public class DraftPlayService {
     private final DraftPickRepository draftPickRepository;
     private final DraftRule snakeDraftRule;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final RoomSequenceManager roomSequenceManager;
 
     @Transactional
     public void processPick(Long roomId, String participantToken, String streamerId) {
@@ -61,6 +63,9 @@ public class DraftPlayService {
         draftPickRepository.save(pick);
 
         room.incrementPickCount();
+        if (room.getStatus() == RoomStatus.DONE) {
+            roomSequenceManager.removeRoomSequence(roomId);
+        }
 
         String nextTurnNickname = null;
         if (room.getStatus() != RoomStatus.DONE) {

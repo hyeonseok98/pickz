@@ -1,13 +1,16 @@
 package team.pickz.api.domain.draft.presentation;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.*;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessageType;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import team.pickz.api.domain.draft.application.DraftPlayService;
 import team.pickz.api.domain.draft.application.dto.request.PickMessageRequest;
+import team.pickz.api.domain.draft.application.dto.response.WebSocketErrorResponse;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -15,25 +18,34 @@ import team.pickz.api.domain.draft.application.dto.request.PickMessageRequest;
 public class DraftMessageController implements DraftMessageDocsController {
 
     private final DraftPlayService draftPlayService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/drafts/rooms/{roomId}")
     public void pickStreamer(
             @DestinationVariable Long roomId,
-            @Payload PickMessageRequest message
+            @Valid @Payload PickMessageRequest message
     ) {
-        // 실제 운영 시 로그 제거 필요
-        log.info("Pick request. RoomId: {}, MemberId: {}, StreamerId: {}",
-                roomId, message.participantToken(), message.streamerId());
+        draftPlayService.processPick(roomId, message.participantToken(), message.streamerId());
+    }
 
-        try {
-            draftPlayService.processPick(roomId, message.participantToken(), message.streamerId());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.warn("Invalid pick request: {}", e.getMessage());
-            // 필요한 경우 요청한 사용자에게만 에러를 전송하는 로직 추가
-            // messagingTemplate.convertAndSendToUser(...)
-        } catch (Exception e) {
-            log.error("Error processing pick", e);
-        }
+    @MessageExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public void handlePickException(RuntimeException e, SimpMessageHeaderAccessor headerAccessor) {
+        log.warn("Invalid pick request: {}", e.getMessage());
+
+        WebSocketErrorResponse errorResponse = WebSocketErrorResponse.of("PICK_FAILED", e.getMessage());
+
+        String sessionId = headerAccessor.getSessionId();
+
+        SimpMessageHeaderAccessor accessor = SimpMessageHeaderAccessor.create(SimpMessageType.MESSAGE);
+        accessor.setSessionId(sessionId);
+        accessor.setLeaveMutable(true);
+
+        messagingTemplate.convertAndSendToUser(
+                sessionId,
+                "/queue/errors",
+                errorResponse,
+                accessor.getMessageHeaders()
+        );
     }
 
 }

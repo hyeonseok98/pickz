@@ -34,6 +34,10 @@ public class DraftPlayService {
         DraftRoom room = draftRoomRepository.findByIdForUpdate(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
 
+        if(room.getStatus() == RoomStatus.DONE) {
+            throw new IllegalArgumentException("드래프트가 종료되었습니다.");
+        }
+
         List<DraftParticipant> participants = draftParticipantRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);
 
         DraftParticipant requestor = participants.stream()

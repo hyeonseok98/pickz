@@ -492,6 +492,16 @@ export default function Page() {
               <span>방 생성하기</span>
               <ArrowRightIcon />
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                router.push("/draft/api-test");
+              }}
+              className="mt-3 flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700"
+            >
+              API 연동 테스트
+            </button>
           </aside>
         </div>
       </div>

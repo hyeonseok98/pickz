@@ -9,8 +9,6 @@ public interface DraftParticipantRepository {
 
     DraftParticipant save(DraftParticipant draftParticipant);
 
-    Long countByRoomId(Long roomId);
-
     Optional<DraftParticipant> findByParticipantToken(String participantToken);
 
     List<DraftParticipant> findAllByRoomIdOrderByTurnOrderAsc(Long roomId);

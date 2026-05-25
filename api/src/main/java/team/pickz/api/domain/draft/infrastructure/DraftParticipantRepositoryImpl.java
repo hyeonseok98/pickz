@@ -3,7 +3,6 @@ package team.pickz.api.domain.draft.infrastructure;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
-import team.pickz.api.domain.draft.domain.entity.DraftRoom;
 import team.pickz.api.domain.draft.domain.repository.DraftParticipantRepository;
 
 import java.util.List;
@@ -18,11 +17,6 @@ public class DraftParticipantRepositoryImpl implements DraftParticipantRepositor
     @Override
     public DraftParticipant save(DraftParticipant draftParticipant) {
         return draftParticipantJpaRepository.save(draftParticipant);
-    }
-
-    @Override
-    public Long countByRoomId(Long roomId) {
-        return draftParticipantJpaRepository.countByRoomId(roomId);
     }
 
     @Override

@@ -31,7 +31,7 @@ public interface DraftRoomDocsController {
     })
     @PostMapping
     ResponseEntity<RoomInitResponse> initRoom(
-            @Parameter(hidden = true) @MemberId Long hostId,
+            //@Parameter(hidden = true) @MemberId Long hostId,
             @Valid @RequestBody RoomInitRequest request
     );
 

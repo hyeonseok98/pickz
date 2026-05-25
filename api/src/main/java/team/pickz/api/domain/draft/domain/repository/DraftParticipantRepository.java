@@ -1,7 +1,6 @@
 package team.pickz.api.domain.draft.domain.repository;
 
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
-import team.pickz.api.domain.draft.domain.entity.DraftRoom;
 
 import java.util.List;
 import java.util.Optional;

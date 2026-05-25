@@ -24,11 +24,11 @@ public class DraftRoomController implements DraftRoomDocsController {
 
     @PostMapping
     public ResponseEntity<RoomInitResponse> initRoom(
-            @MemberId Long hostId,
+            //@MemberId Long hostId,
             @Valid @RequestBody RoomInitRequest request
     ) {
         RoomInitResponse response = draftRoomService.initRoom(
-                hostId,
+                //hostId,
                 request.mode(),
                 request.ruleName()
         );

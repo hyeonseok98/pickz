@@ -17,4 +17,6 @@ public interface DraftParticipantRepository {
 
     List<DraftParticipant> findAllByRoomId(Long roomId);
 
+    Optional<DraftParticipant> findByRoomIdAndParticipantToken(Long roomId, String participantToken);
+
 }

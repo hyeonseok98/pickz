@@ -17,4 +17,6 @@ public interface DraftParticipantJpaRepository extends JpaRepository<DraftPartic
 
     List<DraftParticipant> findAllByRoomIdOrderByTurnOrderAsc(Long roomId);
 
+    Optional<DraftParticipant> findByRoomIdAndParticipantToken(Long roomId, String participantToken);
+
 }

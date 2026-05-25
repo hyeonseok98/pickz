@@ -35,8 +35,8 @@ public class DraftRoomService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
-    public RoomInitResponse initRoom(Long hostMemberId, String mode, String ruleName) {
-        Member member = memberRepository.findByMemberId(hostMemberId);
+    public RoomInitResponse initRoom(/**Long hostMemberId,**/ String mode, String ruleName) {
+        //Member member = memberRepository.findByMemberId(hostMemberId);
 
         DraftRoom room = DraftRoom.builder()
                 .draftMode(mode)
@@ -47,8 +47,8 @@ public class DraftRoomService {
 
         DraftParticipant host = DraftParticipant.builder()
                 .roomId(room.getId())
-                .memberId(member.getId())
-                .nickname(member.getNickname())
+                //.memberId(member.getId())
+                //.nickname(member.getNickname())
                 .isHost(true)
                 .build();
 

@@ -17,7 +17,6 @@ public class DraftChatEventListener {
     @EventListener
     public void handleChatEvent(DraftChatEvent event) {
         String destination = String.format("/topic/drafts/rooms/%d/chat", event.roomId());
-        log.debug("채팅 브로드캐스팅 [Room: {}]: {}", event.roomId(), event.chatMessage().content());
 
         messagingTemplate.convertAndSend(destination, event.chatMessage());
     }

@@ -6,7 +6,7 @@ services:
     container_name: pickz-db
     restart: always
     environment:
-      MYSQL_DATABASE: pickz_db
+      MYSQL_DATABASE: ${DB_NAME}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     volumes:
       - ./mysql/data:/var/lib/mysql
@@ -26,8 +26,8 @@ services:
     restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DB_URL=jdbc:mysql://db:3306/pickz_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-      - DB_USERNAME=root
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - SERVER_PORT=8080
       - JAVA_OPTS=-Xms256m -Xmx350m -XX:MaxMetaspaceSize=256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseContainerSupport
@@ -46,8 +46,8 @@ services:
     restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DB_URL=jdbc:mysql://db:3306/pickz_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-      - DB_USERNAME=root
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - SERVER_PORT=8081
       - JAVA_OPTS=-Xms256m -Xmx350m -XX:MaxMetaspaceSize=256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseContainerSupport

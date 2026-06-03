@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
+import { Suspense, useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
 import { STREAMER_DIRECTORY_BY_ID } from "@/constants/streamers";
@@ -188,7 +188,7 @@ function cloneAssignments(assignments: BoardAssignments): BoardAssignments {
   return nextAssignments;
 }
 
-export default function SnakeDraftPage() {
+function SnakeDraftPageContent() {
   const searchParams = useSearchParams();
   const snapshot = useMemo(() => parseDraftRoomSnapshot(searchParams.get("config")), [searchParams]);
   const [boardAssignments, setBoardAssignments] = useState<BoardAssignments>({});
@@ -841,5 +841,21 @@ export default function SnakeDraftPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function SnakeDraftPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-[calc(100dvh-var(--header-height))] bg-background px-6 py-6 xl:px-8">
+          <section className="rounded-3xl border border-border bg-surface p-6 text-sm font-semibold text-text-secondary shadow-sm">
+            드래프트 정보를 불러오는 중입니다.
+          </section>
+        </main>
+      }
+    >
+      <SnakeDraftPageContent />
+    </Suspense>
   );
 }

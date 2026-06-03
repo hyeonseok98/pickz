@@ -502,6 +502,16 @@ export default function Page() {
             >
               API 연동 테스트
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                router.push("/drafts/ws-test");
+              }}
+              className="mt-2 flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-slate-200 bg-white text-sm font-semibold text-slate-700"
+            >
+              웹 소켓 연동 테스트
+            </button>
           </aside>
         </div>
       </div>

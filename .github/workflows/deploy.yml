@@ -69,8 +69,11 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu
-            
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
+
+            echo "DB_NAME=${{ secrets.DB_NAME }}" > .env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+            echo "DB_URL=${{ secrets.DB_URL }}" >> .env
+            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
             echo "DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/pickz" >> .env
             
             chmod +x ./deploy.sh

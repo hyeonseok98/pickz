@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Draft Room Test API & WebSocket</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: 'Pretendard', Arial, sans-serif; padding: 20px; background-color: #f4f4f9; color: #333;}
+        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { font-size: 24px; color: #222; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h3 { color: #555; }
+        .section { margin-bottom: 25px; padding: 15px; background: #fafafa; border: 1px solid #ddd; border-radius: 6px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        label { font-size: 13px; font-weight: bold; display: block; margin-bottom: 4px; color: #555; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px;}
+        button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .btn-blue { background-color: #007bff; color: white; }
+        .btn-red { background-color: #dc3545; color: white; }
+        .btn-green { background-color: #28a745; color: white; }
+        .btn-purple { background-color: #6f42c1; color: white; }
+        .btn-yellow { background-color: #ffc107; color: #333; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #messages { height: 350px; overflow-y: auto; background: #1e1e1e; padding: 15px; font-family: monospace; font-size: 13px; border-radius: 4px; white-space: pre-wrap; line-height: 1.4; }
+        .log-time { color: #888; }
+        .log-info { color: #00ff00; }  /* 정상 메시지 초록색 */
+        .log-error { color: #ff4444; font-weight: bold; } /* 에러 메시지 빨간색 */
+        .log-chat { color: #00d2ff; } /* 채팅 메시지 하늘색 */
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏆 드래프트 방 통합 테스트 도구 (에러 & 채팅 수신 포함)</h1>
+
+    <div class="section">
+        <h3>1. 기본 설정 (API & WS)</h3>
+        <div class="grid-2">
+            <div>
+                <label>API Base URL</label>
+                <input type="text" id="apiUrl" value="https://pickz.co.kr/api/drafts/rooms">
+            </div>
+            <div>
+                <label>WebSocket URL</label>
+                <input type="text" id="wsUrl" value="wss://pickz.co.kr/api/ws/drafts">
+            </div>
+        </div>
+        <label>User JWT Token (Bearer 제외)</label>
+        <input type="text" id="jwtToken" placeholder="API 호출 및 WS 연결 시 사용될 회원 토큰">
+    </div>
+
+    <div class="section">
+        <h3>2. REST API 액션</h3>
+
+        <div class="grid-2">
+            <div style="border-right: 1px solid #ddd; padding-right: 10px;">
+                <h4>👉 1단계: 방 생성 (Init)</h4>
+                <button class="btn-blue" onclick="initRoom()">방 생성 API 호출</button>
+            </div>
+
+            <div style="padding-left: 10px;">
+                <h4>👉 (선택) 방 참가 (Join)</h4>
+                <label>Invite Code</label>
+                <input type="text" id="inviteCodeInput" placeholder="방 생성 후 자동 채워짐">
+                <button class="btn-blue" onclick="joinRoom()">참가 API 호출</button>
+            </div>
+        </div>
+
+        <hr style="border:0; border-top: 1px dashed #ccc; margin: 15px 0;">
+
+        <div>
+            <h4>👉 2단계: 방 설정 및 시작 (Configure & Start)</h4>
+            <div class="grid-2">
+                <div><label>Team Count</label><input type="number" id="teamCount" value="2"></div>
+                <div><label>Team Size</label><input type="number" id="teamSize" value="5"></div>
+            </div>
+            <button class="btn-purple" onclick="configureAndStartRoom()">설정 및 시작 API 호출 (방장 전용)</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>3. 웹소켓 실시간 테스트</h3>
+        <div class="grid-2">
+            <div>
+                <label>Room ID (자동 입력)</label>
+                <input type="number" id="roomIdInput">
+            </div>
+            <div>
+                <label>Participant Token (자동 입력)</label>
+                <input type="text" id="participantTokenInput" placeholder="방장 또는 참가자 토큰">
+            </div>
+        </div>
+
+        <button id="connectBtn" class="btn-green" onclick="connectAndSubscribe()">WS 연결 및 방 구독</button>
+        <button id="disconnectBtn" class="btn-red" onclick="disconnect()" disabled>연결 해제</button>
+
+        <hr style="border:0; border-top: 1px dashed #ccc; margin: 15px 0;">
+
+        <div>
+            <h4>🎯 스트리머 픽 (Pick)</h4>
+            <div class="grid-2">
+                <div>
+                    <input type="text" id="streamerIdInput" placeholder="픽할 스트리머 ID 입력">
+                </div>
+                <div>
+                    <button id="pickBtn" class="btn-purple" onclick="sendPick()" disabled style="margin-top: 0;">픽(Pick) 전송 (STOMP)</button>
+                </div>
+            </div>
+        </div>
+
+        <hr style="border:0; border-top: 1px dashed #ccc; margin: 15px 0;">
+
+        <div>
+            <h4>💬 실시간 채팅</h4>
+            <div class="grid-2">
+                <div>
+                    <input type="text" id="chatMessageInput" placeholder="채팅 메시지 입력" onkeypress="if(event.keyCode===13) sendChat()">
+                </div>
+                <div>
+                    <button id="chatBtn" class="btn-yellow" onclick="sendChat()" disabled style="margin-top: 0;">채팅 전송 (STOMP)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section" style="background: none; border: none; padding: 0;">
+        <h3>4. 실행 로그</h3>
+        <div id="messages"></div>
+    </div>
+</div>
+
+<script>
+    let stompClient = null;
+    let subscriptions = [];
+
+    // 로그 출력 함수 (타입별 색상 구분)
+    function logMessage(msg, type = "info") {
+        const messageDiv = document.getElementById('messages');
+        const time = new Date().toLocaleTimeString();
+        let textClass = "log-info";
+
+        if (type === "error") textClass = "log-error";
+        else if (type === "chat") textClass = "log-chat";
+
+        messageDiv.innerHTML += `<span class="log-time">[${time}]</span> <span class="${textClass}">${msg}</span>\n`;
+        messageDiv.scrollTop = messageDiv.scrollHeight; // 자동 스크롤
+    }
+
+    function getAuthHeaders() {
+        const token = document.getElementById('jwtToken').value;
+        return token ? { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+            : { 'Content-Type': 'application/json' };
+    }
+
+    // --- REST API 호출 함수들 ---
+
+    async function initRoom() {
+        const apiUrl = document.getElementById('apiUrl').value;
+        logMessage("HTTP POST / 방 생성 요청 중...");
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ mode: "TOGETHER", ruleName: "SNAKE" })
+            });
+            const data = await response.json();
+            logMessage(`✅ 방 생성 완료! 응답:\n${JSON.stringify(data, null, 2)}`);
+
+            if(data.roomId) document.getElementById('roomIdInput').value = data.roomId;
+            if(data.inviteCode) document.getElementById('inviteCodeInput').value = data.inviteCode;
+            if(data.participantToken) document.getElementById('participantTokenInput').value = data.participantToken;
+        } catch (error) {
+            logMessage(`❌ 방 생성 API 에러: ${error}`, "error");
+        }
+    }
+
+    async function joinRoom() {
+        const baseUrl = document.getElementById('apiUrl').value;
+        const inviteCode = document.getElementById('inviteCodeInput').value;
+        logMessage(`HTTP POST / 방 참가 요청 중... (초대코드: ${inviteCode})`);
+
+        try {
+            const response = await fetch(`${baseUrl}/invites/${inviteCode}/participants`, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            const data = await response.json();
+            logMessage(`✅ 방 참가 완료! 응답:\n${JSON.stringify(data, null, 2)}`);
+
+            if(data.participantToken) document.getElementById('participantTokenInput').value = data.participantToken;
+        } catch (error) {
+            logMessage(`❌ 참가 API 에러: ${error}`, "error");
+        }
+    }
+
+    async function configureAndStartRoom() {
+        const baseUrl = document.getElementById('apiUrl').value;
+        const roomId = document.getElementById('roomIdInput').value;
+        const token = document.getElementById('participantTokenInput').value;
+        const teamCount = document.getElementById('teamCount').value;
+        const teamSize = document.getElementById('teamSize').value;
+
+        logMessage(`HTTP PATCH / 방 설정 및 시작 요청 중... (Room ID: ${roomId})`);
+
+        try {
+            const headers = getAuthHeaders();
+            headers['X-Participant-Token'] = token;
+
+            const response = await fetch(`${baseUrl}/${roomId}/settings`, {
+                method: 'PATCH',
+                headers: headers,
+                body: JSON.stringify({ teamCount: parseInt(teamCount), teamSize: parseInt(teamSize) })
+            });
+
+            if(response.ok) {
+                logMessage(`✅ 방 시작 성공!`);
+            } else {
+                const errorData = await response.json();
+                logMessage(`❌ 방 시작 실패: ${JSON.stringify(errorData)}`, "error");
+            }
+        } catch (error) {
+            logMessage(`❌ 방 시작 API 에러: ${error}`, "error");
+        }
+    }
+
+    // --- WebSocket 연동 함수들 ---
+
+    function connectAndSubscribe() {
+        const url = document.getElementById('wsUrl').value;
+        const token = document.getElementById('jwtToken').value;
+        const roomId = document.getElementById('roomIdInput').value;
+
+        if(!roomId) {
+            alert("Room ID가 없습니다. 방을 먼저 생성해주세요.");
+            return;
+        }
+
+        logMessage("웹소켓 연결 시도 중... URL: " + url);
+        stompClient = Stomp.client(url);
+        stompClient.debug = null; // 디버그 로그 숨기기
+
+        const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+
+        stompClient.connect(headers, function (frame) {
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+            document.getElementById('pickBtn').disabled = false;
+            document.getElementById('chatBtn').disabled = false;
+            logMessage("🔗 웹소켓 연결 성공!");
+
+            // 1) 정상적인 게임 이벤트 구독 (공용)
+            const mainTopic = `/topic/drafts/rooms/${roomId}`;
+            subscriptions.push(stompClient.subscribe(mainTopic, (res) => {
+                logMessage(`[수신: 게임 이벤트]\n${JSON.stringify(JSON.parse(res.body), null, 2)}`);
+            }));
+
+            // 2) 💬 채팅 채널 구독 추가
+            const chatTopic = `/topic/drafts/rooms/${roomId}/chat`;
+            subscriptions.push(stompClient.subscribe(chatTopic, (res) => {
+                const chatData = JSON.parse(res.body);
+                // [💬 닉네임]: 채팅내용 형태로 출력
+                logMessage(`[💬 ${chatData.nickname || 'Unknown'}]: ${chatData.content}`, "chat");
+            }));
+
+            // 3) 🚨 에러 채널 구독
+            const errorTopic = '/user/queue/errors';
+            subscriptions.push(stompClient.subscribe(errorTopic, (res) => {
+                const errorData = JSON.parse(res.body);
+                logMessage(`[🚨 에러 수신]\n${JSON.stringify(errorData, null, 2)}`, "error");
+            }));
+
+            logMessage(`📡 구독 완료. \n - 메인: ${mainTopic}\n - 채팅: ${chatTopic}\n - 에러: ${errorTopic}`);
+
+        }, function (error) {
+            logMessage("❌ 웹소켓 연결 에러 발생: " + error, "error");
+        });
+    }
+
+    function disconnect() {
+        if (stompClient !== null) {
+            subscriptions.forEach(sub => sub.unsubscribe());
+            subscriptions = [];
+            stompClient.disconnect();
+        }
+        document.getElementById('connectBtn').disabled = false;
+        document.getElementById('disconnectBtn').disabled = true;
+        document.getElementById('pickBtn').disabled = true;
+        document.getElementById('chatBtn').disabled = true;
+        logMessage("🔌 웹소켓 연결 해제됨.");
+    }
+
+    function sendPick() {
+        const roomId = document.getElementById('roomIdInput').value;
+        const participantToken = document.getElementById('participantTokenInput').value;
+        const streamerId = document.getElementById('streamerIdInput').value;
+
+        const destination = `/app/drafts/rooms/${roomId}`; // 컨트롤러 맵핑 규칙에 맞춤
+        const payload = { participantToken: participantToken, streamerId: streamerId };
+
+        logMessage(`🚀 STOMP 픽 전송 중... [${destination}]`);
+        stompClient.send(destination, {}, JSON.stringify(payload));
+    }
+
+    // 💬 채팅 전송 함수 추가
+    function sendChat() {
+        const roomId = document.getElementById('roomIdInput').value;
+        const participantToken = document.getElementById('participantTokenInput').value;
+        const chatInput = document.getElementById('chatMessageInput');
+        const content = chatInput.value.trim();
+
+        if (!content) return; // 빈 메시지는 전송하지 않음
+
+        const destination = `/app/drafts/rooms/${roomId}/chat`;
+        const payload = { participantToken: participantToken, content: content };
+
+        stompClient.send(destination, {}, JSON.stringify(payload));
+
+        // 전송 후 입력창 비우기
+        chatInput.value = '';
+    }
+</script>
+
+</body>
+</html>

@@ -11,10 +11,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import team.pickz.api.global.annotation.MemberId;
 import team.pickz.api.global.auth.application.dto.TokenResponse;
 import team.pickz.api.global.exception.ExceptionResponse;
@@ -31,7 +28,10 @@ public interface AuthDocsController {
             @ApiResponse(responseCode = "302", description = "네이버 인증 페이지로 Redirection")
     })
     @GetMapping("/login")
-    String login();
+    String login(
+            @RequestParam(name = "redirect_uri", required = false) String redirectUri,
+            HttpServletResponse response
+    );
 
     @Operation(
             summary = "access 토큰 재발급",

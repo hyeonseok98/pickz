@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import team.pickz.api.global.annotation.MemberId;
 import team.pickz.api.global.auth.application.AuthService;
 import team.pickz.api.global.auth.application.dto.TokenResponse;
+import team.pickz.api.global.jwt.CookieUtil;
 
 @RequiredArgsConstructor
 @RequestMapping("/auths")
@@ -17,7 +18,17 @@ public class AuthController implements AuthDocsController{
     private final AuthService authService;
 
     @GetMapping("/login")
-    public String login() {
+    public String login(
+            @RequestParam(name = "redirect_uri", required = false) String redirectUri,
+            HttpServletResponse response
+    ) {
+        if(redirectUri != null && !redirectUri.isBlank()) {
+            CookieUtil.addCookie(response, "redirect_uri", redirectUri, 180);
+        }
+        else {
+            CookieUtil.deleteCookie(response, "redirect_uri");
+        }
+
         return "redirect:/oauth2/authorization/naver";
     }
 

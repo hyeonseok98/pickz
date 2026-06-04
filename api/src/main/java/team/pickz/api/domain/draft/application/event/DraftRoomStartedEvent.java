@@ -5,9 +5,9 @@ import lombok.Builder;
 @Builder
 public record DraftRoomStartedEvent(
 
-        RoomStatusEvent payload,
+        Long roomId,
 
-        Long roomId
+        RoomStatusEvent payload
 
 ) {
 }

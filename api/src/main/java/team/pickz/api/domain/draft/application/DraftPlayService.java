@@ -78,6 +78,7 @@ public class DraftPlayService {
         }
 
         PickResultResponse result = PickResultResponse.builder()
+                .code("SUCCESS")
                 .roomId(roomId)
                 .pickedNickname(requestor.getNickname())
                 .pickedStreamerId(streamerId)

@@ -87,6 +87,7 @@ public class DraftPlayService {
 
         applicationEventPublisher.publishEvent(
                 DraftPickedEvent.builder()
+                        .code("SUCCESS")
                         .roomId(roomId)
                         .result(result)
                         .build()

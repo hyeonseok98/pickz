@@ -67,15 +67,15 @@
   --raw-gray-800: #1e293b;
   --raw-gray-900: #0f172a;
 
-  --raw-violet-100: #f3e8ff;
-  --raw-violet-200: #e9d5ff;
-  --raw-violet-300: #d8b4fe;
-  --raw-violet-400: #c084fc;
+  --raw-violet-100: #f0e6fd;
+  --raw-violet-200: #dac2fb;
+  --raw-violet-300: #bd91f8;
+  --raw-violet-400: #9f5ef4;
   --raw-violet-500: #6600ee;
-  --raw-violet-600: #5b21b6;
-  --raw-violet-700: #4c1d95;
-  --raw-violet-800: #3b0764;
-  --raw-violet-900: #2e1065;
+  --raw-violet-600: #5700ca;
+  --raw-violet-700: #4800a9;
+  --raw-violet-800: #3a0088;
+  --raw-violet-900: #2e006b;
 
   --raw-background-light: var(--raw-gray-100);
   --raw-foreground-light: var(--raw-gray-900);

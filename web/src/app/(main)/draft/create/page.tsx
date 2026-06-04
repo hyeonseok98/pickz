@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  Suspense,
   useEffect,
   useMemo,
   useRef,
@@ -500,7 +501,7 @@ function SelectField({
   );
 }
 
-export default function DraftCreatePage() {
+function DraftCreatePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const participationMode = sanitizeParticipationMode(searchParams.get("mode"));
@@ -1560,5 +1561,21 @@ export default function DraftCreatePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function DraftCreatePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-[calc(100dvh-var(--header-height))] bg-background px-6 py-6 xl:px-8">
+          <section className="rounded-3xl border border-border bg-surface p-6 text-sm font-semibold text-text-secondary shadow-sm">
+            방 설정을 불러오는 중입니다.
+          </section>
+        </main>
+      }
+    >
+      <DraftCreatePageContent />
+    </Suspense>
   );
 }

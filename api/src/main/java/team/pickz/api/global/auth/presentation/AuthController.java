@@ -19,17 +19,17 @@ public class AuthController implements AuthDocsController{
 
     @GetMapping("/login")
     public String login(
-            @RequestParam(name = "redirect_uri", required = false) String redirectUri,
-            HttpServletResponse response
+//            @RequestParam(name = "redirect_uri", required = false) String redirectUri,
+//            HttpServletResponse response
     ) {
-        if(redirectUri != null && !redirectUri.isBlank()) {
-            CookieUtil.addCookie(response, "redirect_uri", redirectUri, 180);
-        }
-        else {
-            CookieUtil.deleteCookie(response, "redirect_uri");
-        }
+//        if(redirectUri != null && !redirectUri.isBlank()) {
+//            CookieUtil.addCookie(response, "redirect_uri", redirectUri, 180);
+//        }
+//        else {
+//            CookieUtil.deleteCookie(response, "redirect_uri");
+//        }
 
-        return "redirect:/oauth2/authorization/naver";
+        return "redirect:/oauth2/authorization/chzzk";
     }
 
     @PostMapping("/reissue")

@@ -14,7 +14,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import team.pickz.api.global.jwt.JwtAuthenticationFilter;
+import team.pickz.api.global.oauth2.CustomOAuth2AuthorizationRequestResolver;
 import team.pickz.api.global.oauth2.CustomOAuth2UserService;
+import team.pickz.api.global.oauth2.CustomTokenResponseClient;
 import team.pickz.api.global.oauth2.OAuth2SuccessHandler;
 
 import java.util.List;
@@ -29,6 +31,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthenticationEntryPoint authenticationEntryPoint;
     private final CorsProperties corsProperties;
+    private final CustomOAuth2AuthorizationRequestResolver customOAuth2AuthorizationRequestResolver;
+    private final CustomTokenResponseClient customTokenResponseClient;
 
     private static final String[] PERMIT_ALL_PATTERNS = {
             "/", "/oauth2/**", "/admin/**","/actuator/**",
@@ -58,8 +62,14 @@ public class SecurityConfig {
                 )
 
                 .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .authorizationRequestResolver(customOAuth2AuthorizationRequestResolver)
+                        )
+                        .tokenEndpoint(token -> token
+                                .accessTokenResponseClient(customTokenResponseClient)
+                        )
                         .successHandler(oAuth2SuccessHandler)
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                 )
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

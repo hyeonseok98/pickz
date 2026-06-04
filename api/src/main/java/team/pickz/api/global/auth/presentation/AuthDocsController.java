@@ -29,8 +29,8 @@ public interface AuthDocsController {
     })
     @GetMapping("/login")
     String login(
-            @RequestParam(name = "redirect_uri", required = false) String redirectUri,
-            HttpServletResponse response
+//            @RequestParam(name = "redirect_uri", required = false) String redirectUri,
+//            HttpServletResponse response
     );
 
     @Operation(

@@ -25,6 +25,9 @@ public class AuthController implements AuthDocsController{
         if(redirectUri != null && !redirectUri.isBlank()) {
             CookieUtil.addCookie(response, "redirect_uri", redirectUri, 180);
         }
+        else {
+            CookieUtil.deleteCookie(response, "redirect_uri");
+        }
 
         return "redirect:/oauth2/authorization/naver";
     }

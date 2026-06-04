@@ -144,6 +144,7 @@ public class DraftRoomService {
 
         applicationEventPublisher.publishEvent(
                 DraftRoomStartedEvent.builder()
+                        .code("SUCCESS")
                         .roomId(roomId)
                         .payload(event)
                         .build()

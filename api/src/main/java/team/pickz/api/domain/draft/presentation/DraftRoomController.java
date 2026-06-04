@@ -9,7 +9,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import team.pickz.api.domain.draft.application.DraftRoomService;
 import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomInitRequest;
-import team.pickz.api.domain.draft.application.dto.response.ParticipantTokenResponse;
+import team.pickz.api.domain.draft.application.dto.response.ParticipantResponse;
 import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
 import team.pickz.api.global.annotation.MemberId;
 
@@ -42,10 +42,10 @@ public class DraftRoomController implements DraftRoomDocsController {
     }
 
     @PostMapping("invites/{inviteCode}/participants")
-    public ResponseEntity<ParticipantTokenResponse> joinRoom(
+    public ResponseEntity<ParticipantResponse> joinRoom(
             @PathVariable("inviteCode") String inviteCode
     ) {
-        ParticipantTokenResponse response = draftRoomService.joinRoom(inviteCode);
+        ParticipantResponse response = draftRoomService.joinRoom(inviteCode);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

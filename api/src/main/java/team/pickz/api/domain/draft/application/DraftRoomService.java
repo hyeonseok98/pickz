@@ -4,12 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import team.pickz.api.domain.draft.application.dto.response.ParticipantResponse;
 import team.pickz.api.domain.draft.application.event.DraftRoomStartedEvent;
 import team.pickz.api.domain.draft.application.event.ParticipantJoinedEvent;
 import team.pickz.api.domain.draft.application.event.ParticipantUpdateEvent;
 import team.pickz.api.domain.draft.application.event.RoomStatusEvent;
 import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
-import team.pickz.api.domain.draft.application.dto.response.ParticipantTokenResponse;
 import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
 import team.pickz.api.domain.draft.application.util.RandomNicknameGenerator;
 import team.pickz.api.domain.draft.application.util.RoomSequenceManager;
@@ -58,11 +58,12 @@ public class DraftRoomService {
                 .roomId(room.getId())
                 .inviteCode(room.getInviteCode())
                 .participantToken(host.getParticipantToken())
+                .isHost(true)
                 .build();
     }
 
     @Transactional
-    public ParticipantTokenResponse joinRoom(String inviteCode) {
+    public ParticipantResponse joinRoom(String inviteCode) {
         DraftRoom room = draftRoomRepository.findByInviteCode(inviteCode)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
 
@@ -99,9 +100,11 @@ public class DraftRoomService {
                         .build()
         );
 
-        return ParticipantTokenResponse.builder()
+        return ParticipantResponse.builder()
+                .roomId(room.getId())
                 .participantToken(participant.getParticipantToken())
-                .build(); // 클라이언트는 이 토큰 저장해야 함
+                .isHost(participant.isHost())
+                .build();
     }
 
     @Transactional
@@ -135,6 +138,7 @@ public class DraftRoomService {
         }
 
         RoomStatusEvent event = RoomStatusEvent.builder()
+                .code("SUCCESS")
                 .roomStatus(room.getStatus())
                 .redirectUrl("/drafts/" + roomId + "/play")
                 .build();

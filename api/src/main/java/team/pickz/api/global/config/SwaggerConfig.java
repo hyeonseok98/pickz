@@ -42,7 +42,7 @@ public class SwaggerConfig {
     private List<Server> initializeServers() {
         return List.of(
                 new Server().url("http://localhost:8080/api").description("Local Server"),
-                new Server().url("https://pickz.co.kr/api").description("Prod Server")
+                new Server().url("https://api.pickz.co.kr/api").description("Prod Server")
         );
     }
 

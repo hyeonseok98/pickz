@@ -9,7 +9,7 @@ public record ParticipantResponse(
 
         String participantToken,
 
-        Boolean isHost
+        boolean isHost
 
 ) {
 }

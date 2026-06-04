@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomInitRequest;
-import team.pickz.api.domain.draft.application.dto.response.ParticipantTokenResponse;
+import team.pickz.api.domain.draft.application.dto.response.ParticipantResponse;
 import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
 import team.pickz.api.global.annotation.MemberId;
 
@@ -47,7 +47,7 @@ public interface DraftRoomDocsController {
     })
     @SecurityRequirements(value = {})
     @PostMapping("invites/{inviteCode}/participants")
-    ResponseEntity<ParticipantTokenResponse> joinRoom(
+    ResponseEntity<ParticipantResponse> joinRoom(
             @Parameter(description = "초대 코드", example = "X7a9P2K")
             @PathVariable("inviteCode") String inviteCode
     );

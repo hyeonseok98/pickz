@@ -2,9 +2,8 @@ export type {
   CreateDraftRoomRequest,
   CreateDraftRoomResponse,
   DraftParticipantSession,
-  DraftRoomRawMessage,
   JoinDraftRoomResponse,
   StartDraftRoomParams,
   StartDraftRoomRequest,
-} from "./drafts";
-export type { MenuSidebarItem, MenuSidebarProps, SidebarContextValue } from "./sidebar";
+} from "./draft-room";
+export type { DraftRoomRawMessage } from "./draft-room-event";

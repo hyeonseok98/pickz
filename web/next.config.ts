@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const apiUrl = process.env.API_URL;
+const apiUrl = process.env.API_URL?.replace(/\/+$/, "");
 
 if (!apiUrl) {
   throw new Error("API_URL 환경변수가 설정되지 않았습니다.");

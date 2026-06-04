@@ -61,37 +61,29 @@ const streamerSearchResponseSchema = z.array(streamerSearchItemSchema);
 
 type StreamerSearchItem = z.infer<typeof streamerSearchItemSchema>;
 
-function getApiBaseUrlConfigurationError(value: string) {
-  if (value.length === 0) {
-    return "NEXT_PUBLIC_API_BASE_URL 환경 변수가 없습니다.";
-  }
-
-  try {
-    new URL(value);
-
-    return null;
-  } catch {
-    return "NEXT_PUBLIC_API_BASE_URL 값이 올바른 URL 형식이 아닙니다.";
-  }
+function createApiPath(pathname: string) {
+  return `/api/${pathname.replace(/^\/+/, "")}`;
 }
 
-function createApiUrl(baseUrl: string, pathname: string) {
-  return new URL(pathname.replace(/^\/+/, ""), `${baseUrl.replace(/\/+$/, "")}/`);
+function createApiPathWithSearch(pathname: string, searchParams: URLSearchParams) {
+  const queryString = searchParams.toString();
+
+  return queryString ? `${createApiPath(pathname)}?${queryString}` : createApiPath(pathname);
 }
 
-function createStreamerSearchUrl(baseUrl: string, keyword: string) {
-  const url = createApiUrl(baseUrl, "streamers/search");
-  url.searchParams.set("keyword", keyword);
+function createStreamerSearchPath(keyword: string) {
+  const searchParams = new URLSearchParams();
+  searchParams.set("keyword", keyword);
 
-  return url;
+  return createApiPathWithSearch("streamers/search", searchParams);
 }
 
-function createLoginUrl(baseUrl: string) {
-  return createApiUrl(baseUrl, "auths/login");
+function createLoginPath() {
+  return createApiPath("auths/login");
 }
 
-function createLogoutUrl(baseUrl: string) {
-  return createApiUrl(baseUrl, "auths/logout");
+function createLogoutPath() {
+  return createApiPath("auths/logout");
 }
 
 async function readResponsePayload(response: Response) {
@@ -134,15 +126,11 @@ function getApiErrorDetail(payload: unknown) {
   return "";
 }
 
-async function fetchStreamerSearchResults(baseUrl: string, keyword: string) {
-  if (baseUrl.length === 0) {
-    throw new Error("NEXT_PUBLIC_API_BASE_URL 환경 변수가 없습니다.");
-  }
-
+async function fetchStreamerSearchResults(keyword: string) {
   let response: Response;
 
   try {
-    response = await fetch(createStreamerSearchUrl(baseUrl, keyword).toString(), {
+    response = await fetch(createStreamerSearchPath(keyword), {
       cache: "no-store",
       headers: {
         Accept: "application/json",
@@ -168,15 +156,11 @@ async function fetchStreamerSearchResults(baseUrl: string, keyword: string) {
   return streamerSearchResponseSchema.parse(payload);
 }
 
-async function logout(baseUrl: string) {
-  if (baseUrl.length === 0) {
-    throw new Error("NEXT_PUBLIC_API_BASE_URL 환경 변수가 없습니다.");
-  }
-
+async function logout() {
   let response: Response;
 
   try {
-    response = await fetch(createLogoutUrl(baseUrl).toString(), {
+    response = await fetch(createLogoutPath(), {
       method: "POST",
       credentials: "include",
       headers: {
@@ -251,34 +235,26 @@ export default function DraftApiTestPage() {
   const [keyword, setKeyword] = useState("");
   const [submittedKeyword, setSubmittedKeyword] = useState("");
   const [lastLogoutRequestedAt, setLastLogoutRequestedAt] = useState<number | null>(null);
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ?? "";
-  const configurationError = getApiBaseUrlConfigurationError(apiBaseUrl);
-  const loginUrl = configurationError ? "" : createLoginUrl(apiBaseUrl).toString();
-  const logoutUrl = configurationError ? "" : createLogoutUrl(apiBaseUrl).toString();
+  const loginPath = createLoginPath();
+  const logoutPath = createLogoutPath();
 
   const searchQuery = useQuery({
-    queryKey: ["streamer-api-test", apiBaseUrl, submittedKeyword],
-    enabled: submittedKeyword.length > 0 && !configurationError,
-    queryFn: () => fetchStreamerSearchResults(apiBaseUrl, submittedKeyword),
+    queryKey: ["streamer-api-test", submittedKeyword],
+    enabled: submittedKeyword.length > 0,
+    queryFn: () => fetchStreamerSearchResults(submittedKeyword),
   });
   const logoutMutation = useMutation({
-    mutationKey: ["auth-logout", apiBaseUrl],
-    mutationFn: () => logout(apiBaseUrl),
+    mutationKey: ["auth-logout"],
+    mutationFn: logout,
   });
 
   const requestUrl = useMemo(() => {
-    if (configurationError) {
-      return configurationError;
-    }
-
     if (submittedKeyword.length === 0) {
-      return `${apiBaseUrl.replace(/\/+$/, "")}/streamers/search?keyword=...`;
+      return `${createApiPath("streamers/search")}?keyword=...`;
     }
 
-    const url = createStreamerSearchUrl(apiBaseUrl, submittedKeyword);
-
-    return url.toString();
-  }, [apiBaseUrl, configurationError, submittedKeyword]);
+    return createStreamerSearchPath(submittedKeyword);
+  }, [submittedKeyword]);
 
   const hasResults = (searchQuery.data?.length ?? 0) > 0;
   const lastSearchUpdated =
@@ -320,16 +296,14 @@ export default function DraftApiTestPage() {
               </p>
               <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-text-primary">API 연동 확인</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                인증과 스트리머 검색을 브라우저에서 `NEXT_PUBLIC_API_BASE_URL` 기준으로 직접 테스트합니다.
+                인증과 스트리머 검색을 브라우저 같은 origin의 `/api` 프록시 경로로 직접 테스트합니다.
               </p>
             </div>
 
             <div className="grid gap-3 rounded-3xl border border-border bg-surface-muted px-4 py-4 text-sm lg:min-w-[320px]">
               <div>
                 <p className="text-xs font-semibold text-text-muted">Target Server</p>
-                <p className="mt-1 break-all font-semibold text-text-primary">
-                  {configurationError ? "미설정" : apiBaseUrl}
-                </p>
+                <p className="mt-1 break-all font-semibold text-text-primary">/api</p>
               </div>
               <div>
                 <p className="text-xs font-semibold text-text-muted">Upstream Endpoint</p>
@@ -363,20 +337,13 @@ export default function DraftApiTestPage() {
 
               <div className="mt-4 rounded-3xl border border-border bg-surface px-4 py-4">
                 <p className="text-xs font-semibold text-text-muted">Request URL</p>
-                <p className="mt-1 break-all text-sm text-text-secondary">
-                  {configurationError ? configurationError : loginUrl}
-                </p>
+                <p className="mt-1 break-all text-sm text-text-secondary">{loginPath}</p>
               </div>
 
               <button
                 type="button"
-                disabled={Boolean(configurationError)}
                 onClick={() => {
-                  if (configurationError) {
-                    return;
-                  }
-
-                  window.location.assign(loginUrl);
+                  window.location.assign(loginPath);
                 }}
                 className="mt-4 flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -389,7 +356,7 @@ export default function DraftApiTestPage() {
                 <div>
                   <p className="text-sm font-semibold text-text-primary">POST /auths/logout</p>
                   <p className="mt-1 text-sm leading-6 text-text-secondary">
-                    현재 브라우저에 저장된 `pickz.co.kr` 인증 쿠키를 포함해 로그아웃을 직접 호출합니다.
+                    현재 브라우저에 저장된 인증 쿠키를 포함해 같은 origin의 프록시 경로로 로그아웃을 직접 호출합니다.
                   </p>
                 </div>
               </div>
@@ -421,19 +388,13 @@ export default function DraftApiTestPage() {
 
               <div className="mt-4 rounded-3xl border border-border bg-surface px-4 py-4">
                 <p className="text-xs font-semibold text-text-muted">Request URL</p>
-                <p className="mt-1 break-all text-sm text-text-secondary">
-                  {configurationError ? configurationError : logoutUrl}
-                </p>
+                <p className="mt-1 break-all text-sm text-text-secondary">{logoutPath}</p>
               </div>
 
               <button
                 type="button"
-                disabled={Boolean(configurationError) || logoutMutation.isPending}
+                disabled={logoutMutation.isPending}
                 onClick={() => {
-                  if (configurationError) {
-                    return;
-                  }
-
                   setLastLogoutRequestedAt(Date.now());
                   logoutMutation.mutate();
                 }}
@@ -462,20 +423,10 @@ export default function DraftApiTestPage() {
             </div>
           </div>
 
-          {configurationError ? (
-            <div className="mb-4 rounded-3xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">
-              {configurationError} `web/.env.local`에 `NEXT_PUBLIC_API_BASE_URL`을 설정하세요.
-            </div>
-          ) : null}
-
           <form
             className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_auto]"
             onSubmit={(event) => {
               event.preventDefault();
-
-              if (configurationError) {
-                return;
-              }
 
               const normalizedKeyword = keyword.trim();
 
@@ -510,7 +461,7 @@ export default function DraftApiTestPage() {
 
             <button
               type="submit"
-              disabled={Boolean(configurationError) || keyword.trim().length === 0 || searchQuery.isFetching}
+              disabled={keyword.trim().length === 0 || searchQuery.isFetching}
               className="h-12 rounded-2xl bg-slate-950 px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               조회하기

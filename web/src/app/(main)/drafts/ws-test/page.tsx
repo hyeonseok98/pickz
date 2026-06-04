@@ -223,7 +223,9 @@ function MessageList({
 }
 
 function createInviteLink(inviteCode: string) {
-  return `https://pickz.co.kr/join/${inviteCode}`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/, "");
+
+  return appUrl ? `${appUrl}/join/${inviteCode}` : `/join/${inviteCode}`;
 }
 
 function getDisplayNickname(nickname: string | undefined, fallbackLabel: string) {

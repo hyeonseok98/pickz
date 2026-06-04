@@ -5,6 +5,8 @@ import lombok.Builder;
 @Builder
 public record PickResultResponse(
 
+        String code,
+
         Long roomId,
 
         String pickedNickname,

@@ -5,8 +5,6 @@ import lombok.Builder;
 @Builder
 public record DraftRoomStartedEvent(
 
-        String code,
-
         Long roomId,
 
         RoomStatusEvent payload

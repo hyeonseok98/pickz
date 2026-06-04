@@ -138,13 +138,13 @@ public class DraftRoomService {
         }
 
         RoomStatusEvent event = RoomStatusEvent.builder()
+                .code("SUCCESS")
                 .roomStatus(room.getStatus())
                 .redirectUrl("/drafts/" + roomId + "/play")
                 .build();
 
         applicationEventPublisher.publishEvent(
                 DraftRoomStartedEvent.builder()
-                        .code("SUCCESS")
                         .roomId(roomId)
                         .payload(event)
                         .build()

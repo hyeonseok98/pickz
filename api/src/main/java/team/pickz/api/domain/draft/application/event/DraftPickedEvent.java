@@ -6,8 +6,6 @@ import team.pickz.api.domain.draft.application.dto.response.PickResultResponse;
 @Builder
 public record DraftPickedEvent(
 
-        String code,
-
         Long roomId,
 
         PickResultResponse result

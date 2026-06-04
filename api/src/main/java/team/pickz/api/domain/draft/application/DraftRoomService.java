@@ -58,6 +58,7 @@ public class DraftRoomService {
                 .roomId(room.getId())
                 .inviteCode(room.getInviteCode())
                 .participantToken(host.getParticipantToken())
+                .isHost(true)
                 .build();
     }
 

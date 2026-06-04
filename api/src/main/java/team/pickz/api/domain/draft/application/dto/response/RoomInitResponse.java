@@ -9,7 +9,9 @@ public record RoomInitResponse(
 
         String inviteCode,
 
-        String participantToken
+        String participantToken,
+
+        Boolean isHost
 
 ) {
 }

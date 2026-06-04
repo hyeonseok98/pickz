@@ -10,21 +10,8 @@ const defaultCreateDraftRoomRequest: CreateDraftRoomRequest = {
   ruleName: "SNAKE",
 };
 
-function getApiBaseUrl() {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ?? "";
-
-  if (apiBaseUrl.length === 0) {
-    throw new Error("NEXT_PUBLIC_API_BASE_URL 환경 변수가 없습니다.");
-  }
-
-  return apiBaseUrl;
-}
-
-function createApiUrl(pathname: string) {
-  const normalizedBaseUrl = getApiBaseUrl().replace(/\/+$/, "");
-  const normalizedPathname = pathname.replace(/^\/+/, "");
-
-  return new URL(`${normalizedBaseUrl}/${normalizedPathname}`);
+function createApiPath(pathname: string) {
+  return `/api/${pathname.replace(/^\/+/, "")}`;
 }
 
 async function readResponsePayload(response: Response) {
@@ -131,7 +118,7 @@ function normalizeJoinDraftRoomResponse(payload: JoinDraftRoomResponse) {
 export async function createDraftRoom(
   request: CreateDraftRoomRequest = defaultCreateDraftRoomRequest,
 ) {
-  const response = await fetch(createApiUrl("drafts/rooms"), {
+  const response = await fetch(createApiPath("drafts/rooms"), {
     method: "POST",
     cache: "no-store",
     credentials: "include",
@@ -156,7 +143,7 @@ export async function createDraftRoom(
 
 export async function joinDraftRoomByInviteCode(inviteCode: string) {
   const response = await fetch(
-    createApiUrl(`drafts/rooms/invites/${encodeURIComponent(inviteCode)}/participants`),
+    createApiPath(`drafts/rooms/invites/${encodeURIComponent(inviteCode)}/participants`),
     {
       method: "POST",
       cache: "no-store",
@@ -184,7 +171,7 @@ export async function startDraftRoom({
   request,
   roomId,
 }: StartDraftRoomParams) {
-  const response = await fetch(createApiUrl(`drafts/rooms/${roomId}/settings`), {
+  const response = await fetch(createApiPath(`drafts/rooms/${roomId}/settings`), {
     method: "PATCH",
     cache: "no-store",
     credentials: "include",

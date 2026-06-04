@@ -86,6 +86,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                     .map(URI::create)
                     .anyMatch(allowed ->
                             Objects.equals(allowed.getScheme(), candidate.getScheme())
+                                    && Objects.equals(allowed.getHost(), candidate.getHost())
                                     && resolvePort(allowed) == candidatePort
                     );
         } catch (IllegalArgumentException ex) {

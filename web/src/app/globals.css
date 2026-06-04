@@ -7,7 +7,9 @@
   --color-black: var(--raw-black);
   --color-primary: var(--raw-primary);
   --color-secondary: var(--raw-secondary);
+  --color-tertiary: var(--raw-tertiary);
 
+  --color-gray-50: var(--raw-gray-50);
   --color-gray-100: var(--raw-gray-100);
   --color-gray-200: var(--raw-gray-200);
   --color-gray-300: var(--raw-gray-300);
@@ -18,6 +20,7 @@
   --color-gray-800: var(--raw-gray-800);
   --color-gray-900: var(--raw-gray-900);
 
+  --color-violet-50: var(--raw-violet-50);
   --color-violet-100: var(--raw-violet-100);
   --color-violet-200: var(--raw-violet-200);
   --color-violet-300: var(--raw-violet-300);
@@ -27,6 +30,71 @@
   --color-violet-700: var(--raw-violet-700);
   --color-violet-800: var(--raw-violet-800);
   --color-violet-900: var(--raw-violet-900);
+
+  --color-purple-50: var(--raw-purple-50);
+  --color-purple-100: var(--raw-purple-100);
+  --color-purple-200: var(--raw-purple-200);
+  --color-purple-300: var(--raw-purple-300);
+  --color-purple-400: var(--raw-purple-400);
+  --color-purple-500: var(--raw-purple-500);
+  --color-purple-600: var(--raw-purple-600);
+  --color-purple-700: var(--raw-purple-700);
+  --color-purple-800: var(--raw-purple-800);
+
+  --color-aqua-50: var(--raw-aqua-50);
+  --color-aqua-100: var(--raw-aqua-100);
+  --color-aqua-200: var(--raw-aqua-200);
+  --color-aqua-300: var(--raw-aqua-300);
+  --color-aqua-400: var(--raw-aqua-400);
+  --color-aqua-500: var(--raw-aqua-500);
+  --color-aqua-600: var(--raw-aqua-600);
+  --color-aqua-700: var(--raw-aqua-700);
+  --color-aqua-800: var(--raw-aqua-800);
+  --color-aqua-900: var(--raw-aqua-900);
+
+  --color-danger-50: var(--raw-danger-50);
+  --color-danger-100: var(--raw-danger-100);
+  --color-danger-200: var(--raw-danger-200);
+  --color-danger-300: var(--raw-danger-300);
+  --color-danger-400: var(--raw-danger-400);
+  --color-danger-500: var(--raw-danger-500);
+  --color-danger-600: var(--raw-danger-600);
+  --color-danger-700: var(--raw-danger-700);
+  --color-danger-800: var(--raw-danger-800);
+  --color-danger-900: var(--raw-danger-900);
+
+  --color-info-50: var(--raw-info-50);
+  --color-info-100: var(--raw-info-100);
+  --color-info-200: var(--raw-info-200);
+  --color-info-300: var(--raw-info-300);
+  --color-info-400: var(--raw-info-400);
+  --color-info-500: var(--raw-info-500);
+  --color-info-600: var(--raw-info-600);
+  --color-info-700: var(--raw-info-700);
+  --color-info-800: var(--raw-info-800);
+  --color-info-900: var(--raw-info-900);
+
+  --color-warning-50: var(--raw-warning-50);
+  --color-warning-100: var(--raw-warning-100);
+  --color-warning-200: var(--raw-warning-200);
+  --color-warning-300: var(--raw-warning-300);
+  --color-warning-400: var(--raw-warning-400);
+  --color-warning-500: var(--raw-warning-500);
+  --color-warning-600: var(--raw-warning-600);
+  --color-warning-700: var(--raw-warning-700);
+  --color-warning-800: var(--raw-warning-800);
+  --color-warning-900: var(--raw-warning-900);
+
+  --color-success-50: var(--raw-success-50);
+  --color-success-100: var(--raw-success-100);
+  --color-success-200: var(--raw-success-200);
+  --color-success-300: var(--raw-success-300);
+  --color-success-400: var(--raw-success-400);
+  --color-success-500: var(--raw-success-500);
+  --color-success-600: var(--raw-success-600);
+  --color-success-700: var(--raw-success-700);
+  --color-success-800: var(--raw-success-800);
+  --color-success-900: var(--raw-success-900);
 
   --color-background: var(--semantic-background);
   --color-foreground: var(--semantic-foreground);
@@ -38,6 +106,7 @@
   --color-accent-primary: var(--semantic-accent-primary);
   --color-accent-primary-hover: var(--semantic-accent-primary-hover);
   --color-accent-secondary: var(--semantic-accent-secondary);
+  --color-accent-tertiary: var(--semantic-accent-tertiary);
   --color-text-primary: var(--semantic-text-primary);
   --color-text-secondary: var(--semantic-text-secondary);
   --color-text-muted: var(--semantic-text-muted);
@@ -55,59 +124,129 @@
   --raw-white: #ffffff;
   --raw-black: #121212;
   --raw-primary: #6600ee;
-  --raw-secondary: #00ffa3;
+  --raw-secondary: #8f4bff;
+  --raw-tertiary: #00ffa3;
 
-  --raw-gray-100: #f8fafc;
-  --raw-gray-200: #e2e8f0;
-  --raw-gray-300: #cbd5e1;
-  --raw-gray-400: #94a3b8;
-  --raw-gray-500: #64748b;
-  --raw-gray-600: #475569;
-  --raw-gray-700: #334155;
-  --raw-gray-800: #1e293b;
-  --raw-gray-900: #0f172a;
+  --raw-gray-50: #f7f5fa;
+  --raw-gray-100: #f0edf5;
+  --raw-gray-200: #e5e1ec;
+  --raw-gray-300: #d2cbdd;
+  --raw-gray-400: #bbbbc8;
+  --raw-gray-500: #968da3;
+  --raw-gray-600: #756d82;
+  --raw-gray-700: #585262;
+  --raw-gray-800: #36323d;
+  --raw-gray-900: #1e1b24;
 
-  --raw-violet-100: #f0e6fd;
-  --raw-violet-200: #dac2fb;
-  --raw-violet-300: #bd91f8;
-  --raw-violet-400: #9f5ef4;
-  --raw-violet-500: #6600ee;
-  --raw-violet-600: #5700ca;
-  --raw-violet-700: #4800a9;
-  --raw-violet-800: #3a0088;
-  --raw-violet-900: #2e006b;
+  --raw-violet-50: #efe6fd;
+  --raw-violet-100: #ceb0fa;
+  --raw-violet-200: #b78af7;
+  --raw-violet-300: #9654f4;
+  --raw-violet-400: #8133f1;
+  --raw-violet-500: #6200ee;
+  --raw-violet-600: #5900d9;
+  --raw-violet-700: #4600a9;
+  --raw-violet-800: #360083;
+  --raw-violet-900: #290064;
 
-  --raw-background-light: var(--raw-gray-100);
+  --raw-purple-50: #f4edff;
+  --raw-purple-100: #dcc7ff;
+  --raw-purple-200: #cbb0ff;
+  --raw-purple-300: #b486ff;
+  --raw-purple-400: #a56fff;
+  --raw-purple-500: #8f4bff;
+  --raw-purple-600: #8244e8;
+  --raw-purple-700: #6635b5;
+  --raw-purple-800: #4f298c;
+
+  --raw-aqua-50: #e6fff6;
+  --raw-aqua-100: #b0ffe2;
+  --raw-aqua-200: #8affd5;
+  --raw-aqua-300: #54ffc1;
+  --raw-aqua-400: #33ffb5;
+  --raw-aqua-500: #00ffa3;
+  --raw-aqua-600: #00e894;
+  --raw-aqua-700: #00b570;
+  --raw-aqua-800: #008c5a;
+  --raw-aqua-900: #006b44;
+
+  --raw-danger-50: #fceaed;
+  --raw-danger-100: #f5bfc8;
+  --raw-danger-200: #f1a0ae;
+  --raw-danger-300: #ea7589;
+  --raw-danger-400: #e65a72;
+  --raw-danger-500: #e0314f;
+  --raw-danger-600: #cc2d48;
+  --raw-danger-700: #9f2338;
+  --raw-danger-800: #7b1b2b;
+  --raw-danger-900: #5e1521;
+
+  --raw-info-50: #ebf1fd;
+  --raw-info-100: #c2d2fa;
+  --raw-info-200: #a5bdf8;
+  --raw-info-300: #7c9ff4;
+  --raw-info-400: #628cf2;
+  --raw-info-500: #3b6fef;
+  --raw-info-600: #3665d9;
+  --raw-info-700: #2a4faa;
+  --raw-info-800: #203d83;
+  --raw-info-900: #192f64;
+
+  --raw-warning-50: #fbf1e6;
+  --raw-warning-100: #f3d5b2;
+  --raw-warning-200: #eec08c;
+  --raw-warning-300: #e6a458;
+  --raw-warning-400: #e19238;
+  --raw-warning-500: #d97706;
+  --raw-warning-600: #c56c05;
+  --raw-warning-700: #9a5404;
+  --raw-warning-800: #774103;
+  --raw-warning-900: #5b3203;
+
+  --raw-success-50: #e8f6ef;
+  --raw-success-100: #b7e2cd;
+  --raw-success-200: #94d5b5;
+  --raw-success-300: #63c994;
+  --raw-success-400: #45b57f;
+  --raw-success-500: #16a35f;
+  --raw-success-600: #149456;
+  --raw-success-700: #107443;
+  --raw-success-800: #0c5a34;
+  --raw-success-900: #094428;
+
+  --raw-background-light: var(--raw-gray-50);
   --raw-foreground-light: var(--raw-gray-900);
   --raw-surface-light: var(--raw-white);
-  --raw-surface-muted-light: #f1f5f9;
+  --raw-surface-muted-light: var(--raw-gray-100);
   --raw-surface-subtle-light: var(--raw-gray-200);
   --raw-border-light: var(--raw-gray-200);
   --raw-border-strong-light: var(--raw-gray-300);
   --raw-accent-primary-light: var(--raw-primary);
   --raw-accent-primary-hover-light: var(--raw-violet-600);
   --raw-accent-secondary-light: var(--raw-secondary);
+  --raw-accent-tertiary-light: var(--raw-tertiary);
   --raw-text-primary-light: var(--raw-gray-900);
   --raw-text-secondary-light: var(--raw-gray-700);
   --raw-text-muted-light: var(--raw-gray-500);
   --raw-text-inverse-light: var(--raw-white);
   --raw-disabled-light: var(--raw-gray-300);
 
-  --raw-background-dark: #0f1117;
-  --raw-foreground-dark: #f3f4f6;
-  --raw-surface-dark: #181c25;
-  --raw-surface-muted-dark: #232938;
-  --raw-surface-subtle-dark: #2b3244;
-  --raw-border-dark: #2f3747;
-  --raw-border-strong-dark: #40485a;
-  --raw-accent-primary-dark: #8b5cf6;
-  --raw-accent-primary-hover-dark: #a78bfa;
-  --raw-accent-secondary-dark: #34f5bf;
-  --raw-text-primary-dark: #f3f4f6;
-  --raw-text-secondary-dark: #cbd5e1;
-  --raw-text-muted-dark: #94a3b8;
-  --raw-text-inverse-dark: var(--raw-white);
-  --raw-disabled-dark: #374151;
+  --raw-background-dark: var(--raw-gray-900);
+  --raw-foreground-dark: var(--raw-gray-50);
+  --raw-surface-dark: var(--raw-gray-800);
+  --raw-surface-muted-dark: var(--raw-gray-700);
+  --raw-surface-subtle-dark: var(--raw-gray-600);
+  --raw-border-dark: var(--raw-gray-700);
+  --raw-border-strong-dark: var(--raw-gray-600);
+  --raw-accent-primary-dark: var(--raw-violet-300);
+  --raw-accent-primary-hover-dark: var(--raw-violet-200);
+  --raw-accent-secondary-dark: var(--raw-purple-300);
+  --raw-accent-tertiary-dark: var(--raw-aqua-300);
+  --raw-text-primary-dark: var(--raw-gray-50);
+  --raw-text-secondary-dark: var(--raw-gray-300);
+  --raw-text-muted-dark: var(--raw-gray-400);
+  --raw-text-inverse-dark: var(--raw-gray-900);
+  --raw-disabled-dark: var(--raw-gray-700);
 
   --semantic-background: var(--raw-background-light);
   --semantic-foreground: var(--raw-foreground-light);
@@ -119,6 +258,7 @@
   --semantic-accent-primary: var(--raw-accent-primary-light);
   --semantic-accent-primary-hover: var(--raw-accent-primary-hover-light);
   --semantic-accent-secondary: var(--raw-accent-secondary-light);
+  --semantic-accent-tertiary: var(--raw-accent-tertiary-light);
   --semantic-text-primary: var(--raw-text-primary-light);
   --semantic-text-secondary: var(--raw-text-secondary-light);
   --semantic-text-muted: var(--raw-text-muted-light);
@@ -139,6 +279,7 @@
   --semantic-accent-primary: var(--raw-accent-primary-dark);
   --semantic-accent-primary-hover: var(--raw-accent-primary-hover-dark);
   --semantic-accent-secondary: var(--raw-accent-secondary-dark);
+  --semantic-accent-tertiary: var(--raw-accent-tertiary-dark);
   --semantic-text-primary: var(--raw-text-primary-dark);
   --semantic-text-secondary: var(--raw-text-secondary-dark);
   --semantic-text-muted: var(--raw-text-muted-dark);
@@ -160,6 +301,7 @@
     --semantic-accent-primary: var(--raw-accent-primary-dark);
     --semantic-accent-primary-hover: var(--raw-accent-primary-hover-dark);
     --semantic-accent-secondary: var(--raw-accent-secondary-dark);
+    --semantic-accent-tertiary: var(--raw-accent-tertiary-dark);
     --semantic-text-primary: var(--raw-text-primary-dark);
     --semantic-text-secondary: var(--raw-text-secondary-dark);
     --semantic-text-muted: var(--raw-text-muted-dark);

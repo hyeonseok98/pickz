@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
@@ -23,16 +24,7 @@ interface PlacementSelection extends PoolSelection {
 
 function ArrowLeftIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
-      <path d="M15 10H5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path
-        d="m9 5-5 5 5 5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Image src="/icons/arrow_back.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
   );
 }
 
@@ -187,7 +179,7 @@ function cloneAssignments(assignments: BoardAssignments): BoardAssignments {
   return nextAssignments;
 }
 
-function SnakeDraftPageContent() {
+function SnakeDraftRoomPage() {
   const searchParams = useSearchParams();
   const snapshot = useMemo(() => parseDraftRoomSnapshot(searchParams.get("config")), [searchParams]);
   const [boardAssignments, setBoardAssignments] = useState<BoardAssignments>({});
@@ -228,7 +220,7 @@ function SnakeDraftPageContent() {
             방 설정에서 다시 생성해 주세요.
           </p>
           <Link
-            href="/draft/create"
+            href="/draft/create/streamers"
             className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-text-primary"
           >
             <ArrowLeftIcon />
@@ -418,7 +410,7 @@ function SnakeDraftPageContent() {
             <div>
               {isSoloMode ? (
                 <Link
-                  href={`/draft/create?type=${snapshot.draftType}&mode=${snapshot.participationMode}&tournament=${snapshot.tournamentId}`}
+                  href={`/draft/create/streamers?draftType=${snapshot.draftType}&mode=${snapshot.participationMode}&tournament=${snapshot.tournamentId}`}
                   className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-3 text-xs font-semibold text-text-primary"
                 >
                   <ArrowLeftIcon />
@@ -857,7 +849,7 @@ export default function SnakeDraftPage() {
         </main>
       }
     >
-      <SnakeDraftPageContent />
+      <SnakeDraftRoomPage />
     </Suspense>
   );
 }

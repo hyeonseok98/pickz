@@ -2,15 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import {
-  draftTypeLabelMap,
-  participationModeLabelMap,
-  teamCountOptions,
-  teamSizeOptions,
-} from "@/constants/drafts";
+import { draftTypeLabelMap, participationModeLabelMap } from "@/constants/drafts";
 import type { DraftType, ParticipationMode } from "@/types/drafts";
+import { parseDraftRoomSnapshot } from "@/utils";
 
 function sanitizeDraftType(value: string | null): DraftType {
   return value === "auction" ? "auction" : "snake";
@@ -43,26 +39,23 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function DraftRoomSettingsPage() {
-  const router = useRouter();
+function DraftInviteStepPage() {
   const searchParams = useSearchParams();
   const draftType = sanitizeDraftType(searchParams.get("draftType") ?? searchParams.get("type"));
   const participationMode = sanitizeParticipationMode(searchParams.get("mode"));
-  const nextParams = new URLSearchParams({
+  const snapshot = parseDraftRoomSnapshot(searchParams.get("config"));
+  const isPartyMode = participationMode === "party";
+  const backParams = new URLSearchParams({
     draftType,
-    mode: participationMode,
+    mode: "party",
   });
-
-  const handleNext = () => {
-    router.push(`/draft/create/streamers?${nextParams.toString()}`);
-  };
 
   return (
     <main className="min-h-full bg-background px-4 py-4 sm:px-6 sm:py-6">
       <div className="flex flex-col gap-5">
         <section className="rounded-3xl border border-border bg-surface px-5 py-5 shadow-sm sm:px-6">
           <Link
-            href="/draft"
+            href={`/draft/create/streamers?${backParams.toString()}`}
             className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary"
           >
             <Image
@@ -73,85 +66,84 @@ function DraftRoomSettingsPage() {
               aria-hidden
               className="size-4"
             />
-            <span>드래프트 선택으로 돌아가기</span>
+            <span>참가 스트리머 설정으로 돌아가기</span>
           </Link>
 
           <div className="mt-5 flex flex-wrap items-center gap-2 text-text-muted">
             <StepPill label="1. 방식 선택" />
             <span className="text-xs">›</span>
-            <StepPill active label="2. 방 설정" />
+            <StepPill label="2. 방 설정" />
             <span className="text-xs">›</span>
             <StepPill label="3. 참가 스트리머 설정" />
-            {participationMode === "party" ? (
-              <>
-                <span className="text-xs">›</span>
-                <StepPill label="4. 참가자 초대" />
-              </>
-            ) : null}
+            <span className="text-xs">›</span>
+            <StepPill active label="4. 참가자 초대" />
           </div>
 
           <div className="mt-6 max-w-4xl">
             <h1 className="text-3xl font-bold tracking-[-0.04em] text-text-primary sm:text-4xl">
-              방 설정
+              참가자 초대
             </h1>
             <p className="mt-3 text-sm leading-6 text-text-secondary">
-              선택한 드래프트 방식과 참여 방식을 기준으로 다음 단계에서 참가 스트리머를 설정합니다.
+              같이하기 전용으로 참가자 초대, 역할 선택, 게임 시작 연결을 담당하는 페이지입니다.
             </p>
           </div>
 
           <div className="mt-6 grid gap-3 lg:grid-cols-4">
             <SummaryItem label="드래프트 방식" value={draftTypeLabelMap[draftType]} />
             <SummaryItem label="참여 방식" value={participationModeLabelMap[participationMode]} />
-            <SummaryItem label="팀 개수" value={`${teamCountOptions.at(-1)}팀까지`} />
-            <SummaryItem label="팀당 인원" value={`${teamSizeOptions.at(-1)}명까지`} />
+            <SummaryItem
+              label="팀 구성"
+              value={
+                snapshot
+                  ? `${snapshot.teamCount}팀 / 팀당 ${snapshot.membersPerTeam}명`
+                  : "설정 정보 없음"
+              }
+            />
+            <SummaryItem
+              label="참가 스트리머"
+              value={snapshot ? `${snapshot.participantIds.length}명` : "설정 정보 없음"}
+            />
           </div>
         </section>
 
         <section className="rounded-3xl border border-border bg-surface px-5 py-5 shadow-sm sm:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          {isPartyMode ? (
             <div>
               <h2 className="text-xl font-bold tracking-[-0.03em] text-text-primary">
-                다음 단계
+                party 게임룸 연결 준비
               </h2>
               <p className="mt-2 text-sm leading-6 text-text-secondary">
-                방 제목, 프리셋, 팀 구성 입력 UI는 이 페이지에 고정하고, 스트리머 검색과 보드 배치는 다음 라우트에서 처리합니다.
+                다음 구현 단계에서 방 생성 API, 초대 링크, 참가자 대기실, `/drafts/[roomId]/play` 이동을 이 페이지에 연결합니다.
               </p>
             </div>
-
-            <button
-              type="button"
-              onClick={handleNext}
-              className="inline-flex h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-text-primary px-5 text-sm font-bold text-text-inverse"
-            >
-              <span>다음: 참가 스트리머 설정</span>
-              <Image
-                src="/icons/arrow_forward.svg"
-                alt=""
-                width={16}
-                height={16}
-                aria-hidden
-                className="size-4"
-              />
-            </button>
-          </div>
+          ) : (
+            <div>
+              <h2 className="text-xl font-bold tracking-[-0.03em] text-text-primary">
+                접근할 수 없는 단계입니다.
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">
+                참가자 초대는 같이하기 모드에서만 사용합니다.
+              </p>
+            </div>
+          )}
         </section>
       </div>
     </main>
   );
 }
 
-export default function DraftRoomSettingsRoutePage() {
+export default function DraftInviteRoutePage() {
   return (
     <Suspense
       fallback={
         <main className="min-h-[calc(100dvh-var(--header-height))] bg-background px-6 py-6 xl:px-8">
           <section className="rounded-3xl border border-border bg-surface p-6 text-sm font-semibold text-text-secondary shadow-sm">
-            방 설정을 불러오는 중입니다.
+            참가자 초대 정보를 불러오는 중입니다.
           </section>
         </main>
       }
     >
-      <DraftRoomSettingsPage />
+      <DraftInviteStepPage />
     </Suspense>
   );
 }

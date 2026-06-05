@@ -13,7 +13,9 @@ interface SidebarLayoutProps {
 
 export function SidebarLayout({ children, collapsed = false }: SidebarLayoutProps) {
   const pathname = usePathname();
-  const isWideDraftRoom = pathname.startsWith("/draft/snake");
+  const isWideDraftRoom =
+    pathname.startsWith("/draft/snake") ||
+    (pathname.startsWith("/drafts/") && pathname.endsWith("/play"));
 
   return (
     <div className="pt-(--header-height)">

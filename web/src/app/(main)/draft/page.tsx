@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { cn } from "@/utils";
 import type { ReactNode } from "react";
@@ -32,126 +33,49 @@ function CheckIcon() {
 
 function ArrowRightIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
-      <path d="M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path
-        d="m10.5 5 5 5-5 5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Image src="/icons/arrow_forward.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
   );
 }
 
 function SnakeIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-6" aria-hidden="true">
-      <path
-        d="M14.5 5.5c-2.6 0-4.5 1.5-4.5 3.7 0 1.8 1.3 3 3.4 3.8l1.5.6c1.7.6 2.6 1.3 2.6 2.5 0 1.5-1.4 2.5-3.4 2.5-2.1 0-3.6-1-3.9-2.8"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <circle cx="15.8" cy="6.2" r="1" fill="currentColor" />
-      <path
-        d="M9.2 8.4c-.8-.4-1.6-.6-2.4-.6-1.7 0-2.8.8-2.8 2.2 0 1.2.9 1.9 2.3 2.3l1.4.4"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
+    <Image src="/icons/snake_arrow.svg" alt="" width={24} height={24} aria-hidden className="size-6" />
   );
 }
 
 function GavelIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-6" aria-hidden="true">
-      <path d="m9 7 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="m7 9 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path
-        d="m13 4 3 3-3 3-3-3 3-3Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path d="m6 11-3 3 4 4 3-3" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M14 17h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    <Image src="/icons/gavel.svg" alt="" width={24} height={24} aria-hidden className="size-6" />
   );
 }
 
 function UserIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-6" aria-hidden="true">
-      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" strokeWidth="2" />
-      <path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    <Image src="/icons/person_fill.svg" alt="" width={24} height={24} aria-hidden className="size-6" />
   );
 }
 
 function UsersIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-6" aria-hidden="true">
-      <path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" strokeWidth="2" />
-      <path d="M17 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" strokeWidth="2" />
-      <path
-        d="M3.5 20a5.5 5.5 0 0 1 11 0"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M14 20a4.5 4.5 0 0 1 6.5-4"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
+    <Image src="/icons/group_fill.svg" alt="" width={24} height={24} aria-hidden className="size-6" />
   );
 }
 
 function PlayIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-4" aria-hidden="true">
-      <path d="m9 7 8 5-8 5V7Z" fill="currentColor" />
-    </svg>
+    <Image src="/icons/arrow_forward.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
   );
 }
 
 function LinkIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-4" aria-hidden="true">
-      <path d="M10 13.5 14 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path
-        d="M7.5 15.5 6 17a3.5 3.5 0 1 0 5 5l1.5-1.5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M16.5 8.5 18 7a3.5 3.5 0 1 0-5-5L11.5 3.5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
+    <Image src="/icons/link.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
   );
 }
 
 function HammerIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-4" aria-hidden="true">
-      <path d="m9 7 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="m7 9 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path
-        d="m13 4 3 3-3 3-3-3 3-3Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Image src="/icons/gavel.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
   );
 }
 
@@ -323,7 +247,7 @@ const participationModeOptions: Record<
   },
 };
 
-export default function Page() {
+export default function DraftPage() {
   const router = useRouter();
   const [selectedDraftType, setSelectedDraftType] = useState<DraftType>("snake");
   const [selectedParticipationMode, setSelectedParticipationMode] =
@@ -479,8 +403,8 @@ export default function Page() {
               type="button"
               onClick={() => {
                 const params = new URLSearchParams({
+                  draftType: selectedDraftType,
                   mode: selectedParticipationMode,
-                  type: selectedDraftType,
                 });
 
                 router.push(`/draft/create?${params.toString()}`);

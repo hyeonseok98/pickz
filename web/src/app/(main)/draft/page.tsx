@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useDraftCreateStore } from "@/stores/drafts";
 import { cn } from "@/utils";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
@@ -249,6 +250,7 @@ const participationModeOptions: Record<
 
 export default function DraftPage() {
   const router = useRouter();
+  const resetDraftCreate = useDraftCreateStore((state) => state.resetDraftCreate);
   const [selectedDraftType, setSelectedDraftType] = useState<DraftType>("snake");
   const [selectedParticipationMode, setSelectedParticipationMode] =
     useState<ParticipationMode>("solo");
@@ -402,6 +404,7 @@ export default function DraftPage() {
             <button
               type="button"
               onClick={() => {
+                resetDraftCreate();
                 const params = new URLSearchParams({
                   draftType: selectedDraftType,
                   mode: selectedParticipationMode,

@@ -27,8 +27,8 @@ import {
 import { DraftActionFooter, DraftStepper } from "@/components/draft/create";
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
+import { useDraftCreateStore } from "@/stores/drafts";
 import {
-  cloneDraftBoard,
   cn,
   compareDraftLineOrder,
   createEmptyDraftBoard,
@@ -41,9 +41,9 @@ import {
 import type {
   BoardState,
   DraftType,
+  DraftCreateFlowState,
   LineKey,
   ParticipationMode,
-  RoomVisibility,
   TeamCount,
   TeamSize,
 } from "@/types/drafts";
@@ -61,16 +61,6 @@ interface Tournament {
   id: string;
   name: string;
   roster: Streamer[];
-}
-
-interface DraftCreateEditableState {
-  board: BoardState;
-  membersPerTeam: TeamSize;
-  password: string;
-  participantIds: string[];
-  teamCount: TeamCount;
-  tournamentId: string;
-  visibility: RoomVisibility;
 }
 
 const leaveMessage = "이 페이지를 나가면 작성 중이던 내용이 사라집니다. 이동할까요?";
@@ -187,6 +177,56 @@ function sanitizeTournamentId(value: string | null): string {
   }
 
   return customTournamentId;
+}
+
+function isTeamCount(value: string | null): value is TeamCount {
+  return value !== null && teamCountOptions.some((option) => option === value);
+}
+
+function sanitizeTeamCount(value: string | null): TeamCount {
+  return isTeamCount(value) ? value : "5";
+}
+
+function isTeamSize(value: string | null): value is TeamSize {
+  return value !== null && teamSizeOptions.some((option) => option === value);
+}
+
+function sanitizeTeamSize(value: string | null): TeamSize {
+  return isTeamSize(value) ? value : "5";
+}
+
+function createInitialDraftCreateFlowState({
+  draftType,
+  participationMode,
+  teamCount,
+  teamSize,
+  tournamentId,
+}: {
+  draftType: DraftType;
+  participationMode: ParticipationMode;
+  teamCount: TeamCount;
+  teamSize: TeamSize;
+  tournamentId: string;
+}): DraftCreateFlowState {
+  const tournament = tournamentMap.get(tournamentId) ?? customTournament;
+  const board =
+    tournament.id === customTournamentId
+      ? createEmptyDraftBoard()
+      : createAutoBoard(tournament, teamCount, teamSize);
+  const participantIds = tournament.id === customTournamentId ? [] : getPlacedDraftStreamerIds(board);
+
+  return {
+    board,
+    draftType,
+    participantIds,
+    participationMode,
+    password: "",
+    roomTitle: "",
+    teamCount,
+    teamSize,
+    tournamentId: tournament.id,
+    visibility: "public",
+  };
 }
 
 function ArrowLeftIcon() {
@@ -393,51 +433,56 @@ function SelectField({
   );
 }
 
-function DraftStreamerSetupPage() {
+function DraftStreamerSetupContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const participationMode = sanitizeParticipationMode(searchParams.get("mode"));
-  const draftType = sanitizeDraftType(searchParams.get("draftType") ?? searchParams.get("type"));
-  const initialTournamentId = sanitizeTournamentId(searchParams.get("tournament"));
-
-  const initialState = useMemo<DraftCreateEditableState>(() => {
-    const tournament = tournamentMap.get(initialTournamentId) ?? customTournament;
-    const teamCount: TeamCount = "5";
-    const membersPerTeam: TeamSize = "5";
-    const board =
-      tournament.id === customTournamentId
-        ? createEmptyDraftBoard()
-        : createAutoBoard(tournament, teamCount, membersPerTeam);
-    const participantIds = getPlacedDraftStreamerIds(board);
-
-    return {
-      board,
-      membersPerTeam,
-      password: "",
-      participantIds,
-      teamCount,
-      tournamentId: tournament.id,
-      visibility: "public",
-    };
-  }, [initialTournamentId]);
-
-  const [state, setState] = useState<DraftCreateEditableState>(initialState);
+  const {
+    addParticipant: addParticipantToDraft,
+    applyTournamentSelection,
+    board,
+    clearBoard,
+    clearBoardSlot,
+    draftType,
+    participantIds,
+    participationMode,
+    placeParticipant,
+    removeParticipant: removeParticipantFromDraft,
+    setTeamCount,
+    setTeamSize,
+    teamCount,
+    teamSize,
+    tournamentId,
+    visibility,
+  } = useDraftCreateStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [copied, setCopied] = useState(false);
   const [draggingStreamerId, setDraggingStreamerId] = useState<string | null>(null);
   const [highlightedSearchIndex, setHighlightedSearchIndex] = useState(-1);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+  const [initialSnapshotJson] = useState(() =>
+    JSON.stringify({
+      board,
+      draftType,
+      participantIds,
+      participationMode,
+      password: "",
+      roomTitle: "",
+      teamCount,
+      teamSize,
+      tournamentId,
+      visibility,
+    }),
+  );
   const [selectedStreamerId, setSelectedStreamerId] = useState<string | null>(null);
   const [hoveredSlot, setHoveredSlot] = useState<{ index: number; line: LineKey } | null>(null);
   const searchFieldRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const isPartyMode = participationMode === "party";
-  const currentTournament = tournamentMap.get(state.tournamentId) ?? customTournament;
-  const activeLineRows = useMemo(() => getActiveDraftLines(state.membersPerTeam), [state.membersPerTeam]);
-  const visibleColumnCount = Number(state.teamCount);
-  const maxPartyParticipants = Number(state.teamCount);
+  const currentTournament = tournamentMap.get(tournamentId) ?? customTournament;
+  const activeLineRows = useMemo(() => getActiveDraftLines(teamSize), [teamSize]);
+  const visibleColumnCount = Number(teamCount);
+  const maxPartyParticipants = Number(teamCount);
   const visiblePartyParticipants = partyParticipants.slice(0, maxPartyParticipants);
   const partyParticipantSlots = Array.from(
     { length: maxPartyParticipants },
@@ -445,11 +490,11 @@ function DraftStreamerSetupPage() {
   );
   const streamerMap = STREAMER_DIRECTORY_BY_ID;
 
-  const placedIds = useMemo(() => getPlacedDraftStreamerIds(state.board), [state.board]);
+  const placedIds = useMemo(() => getPlacedDraftStreamerIds(board), [board]);
 
-  const totalSlots = Number(state.teamCount) * Number(state.membersPerTeam);
+  const totalSlots = Number(teamCount) * Number(teamSize);
   const placedCount = placedIds.length;
-  const requiredPlayerCount = Number(state.teamCount) * Number(state.membersPerTeam);
+  const requiredPlayerCount = Number(teamCount) * Number(teamSize);
   const remainingRequiredCount = Math.max(requiredPlayerCount - placedCount, 0);
 
   const searchResults = useMemo(() => {
@@ -461,7 +506,7 @@ function DraftStreamerSetupPage() {
     )
       .map((streamer) => ({
         ...streamer,
-        isParticipant: state.participantIds.includes(streamer.id),
+        isParticipant: participantIds.includes(streamer.id),
         isPlaced: placedIds.includes(streamer.id),
       }))
       .sort((left, right) => {
@@ -481,14 +526,14 @@ function DraftStreamerSetupPage() {
         return left.name.localeCompare(right.name);
       })
       .slice(0, 8);
-  }, [placedIds, searchQuery, state.participantIds]);
+  }, [participantIds, placedIds, searchQuery]);
 
   const participantStreamers = useMemo(
     () =>
-      state.participantIds
+      participantIds
         .map((participantId) => streamerMap.get(participantId))
         .filter((streamer): streamer is NonNullable<typeof streamer> => Boolean(streamer)),
-    [state.participantIds, streamerMap],
+    [participantIds, streamerMap],
   );
 
   const filteredStreamers = useMemo(() => {
@@ -510,10 +555,22 @@ function DraftStreamerSetupPage() {
       ? -1
       : Math.min(highlightedSearchIndex, Math.max(searchResults.length - 1, 0));
 
-  const inviteLink = `https://pickz.gg/draft/${currentTournament.id}-${draftType}-${state.teamCount}${state.membersPerTeam}`;
+  const inviteLink = `https://pickz.gg/draft/${currentTournament.id}-${draftType}-${teamCount}${teamSize}`;
   const isDirty = useMemo(
-    () => JSON.stringify(state) !== JSON.stringify(initialState),
-    [initialState, state],
+    () =>
+      JSON.stringify({
+        board,
+        draftType,
+        participantIds,
+        participationMode,
+        password: "",
+        roomTitle: "",
+        teamCount,
+        teamSize,
+        tournamentId,
+        visibility,
+      }) !== initialSnapshotJson,
+    [board, draftType, initialSnapshotJson, participantIds, participationMode, teamCount, teamSize, tournamentId, visibility],
   );
   const canCreateRoom = placedCount >= requiredPlayerCount;
 
@@ -559,7 +616,7 @@ function DraftStreamerSetupPage() {
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
-      if (!searchFieldRef.current?.contains(event.target as Node)) {
+      if (event.target instanceof Node && !searchFieldRef.current?.contains(event.target)) {
         closeSearchDropdown();
       }
     };
@@ -572,16 +629,7 @@ function DraftStreamerSetupPage() {
   }, []);
 
   const addParticipant = (streamerId: string) => {
-    setState((current) => {
-      if (current.participantIds.includes(streamerId)) {
-        return current;
-      }
-
-      return {
-        ...current,
-        participantIds: [...current.participantIds, streamerId],
-      };
-    });
+    addParticipantToDraft(streamerId);
     setSearchQuery("");
     setHighlightedSearchIndex(-1);
     setIsSearchDropdownOpen(false);
@@ -591,19 +639,7 @@ function DraftStreamerSetupPage() {
   };
 
   const removeParticipant = (streamerId: string) => {
-    setState((current) => {
-      const nextBoard = cloneDraftBoard(current.board);
-
-      draftLineRows.forEach(({ key }) => {
-        nextBoard[key] = nextBoard[key].map((value) => (value === streamerId ? null : value));
-      });
-
-      return {
-        ...current,
-        board: nextBoard,
-        participantIds: current.participantIds.filter((participantId) => participantId !== streamerId),
-      };
-    });
+    removeParticipantFromDraft(streamerId);
 
     if (draggingStreamerId === streamerId) {
       setDraggingStreamerId(null);
@@ -615,21 +651,13 @@ function DraftStreamerSetupPage() {
   };
 
   const updateTeamCount = (teamCount: TeamCount) => {
-    setState((current) => ({
-      ...current,
-      board: normalizeDraftBoard(current.board, teamCount, current.membersPerTeam),
-      teamCount,
-    }));
+    setTeamCount(teamCount);
     setHoveredSlot(null);
     setSelectedStreamerId(null);
   };
 
-  const updateTeamSize = (membersPerTeam: TeamSize) => {
-    setState((current) => ({
-      ...current,
-      board: normalizeDraftBoard(current.board, current.teamCount, membersPerTeam),
-      membersPerTeam,
-    }));
+  const updateTeamSize = (nextTeamSize: TeamSize) => {
+    setTeamSize(nextTeamSize);
     setHoveredSlot(null);
     setSelectedStreamerId(null);
   };
@@ -639,45 +667,33 @@ function DraftStreamerSetupPage() {
     const board =
       tournament.id === customTournamentId
         ? createEmptyDraftBoard()
-        : createAutoBoard(tournament, state.teamCount, state.membersPerTeam);
+        : createAutoBoard(tournament, teamCount, teamSize);
     const participantIds =
       tournament.id === customTournamentId ? [] : getPlacedDraftStreamerIds(board);
 
-    setState((current) => ({
-      ...current,
+    applyTournamentSelection({
       board,
       participantIds,
       tournamentId: tournament.id,
-    }));
+    });
     setDraggingStreamerId(null);
     setHoveredSlot(null);
     setSelectedStreamerId(null);
   };
 
   const clearAllSlots = () => {
-    setState((current) => ({
-      ...current,
-      board: createEmptyDraftBoard(),
-    }));
+    clearBoard();
     setDraggingStreamerId(null);
     setHoveredSlot(null);
     setSelectedStreamerId(null);
   };
 
   const clearSlot = (line: LineKey, index: number) => {
-    setState((current) => {
-      const nextBoard = cloneDraftBoard(current.board);
-      nextBoard[line][index] = null;
-
-      return {
-        ...current,
-        board: nextBoard,
-      };
-    });
+    clearBoardSlot(line, index);
   };
 
   const canPlaceStreamerOnBoard = (streamerId: string) => {
-    return state.participantIds.includes(streamerId) && streamerMap.has(streamerId);
+    return participantIds.includes(streamerId) && streamerMap.has(streamerId);
   };
 
   const placeStreamerIntoSlot = (streamerId: string, line: LineKey, index: number) => {
@@ -685,20 +701,7 @@ function DraftStreamerSetupPage() {
       return;
     }
 
-    setState((current) => {
-      const nextBoard = cloneDraftBoard(current.board);
-
-      draftLineRows.forEach(({ key }) => {
-        nextBoard[key] = nextBoard[key].map((value) => (value === streamerId ? null : value));
-      });
-
-      nextBoard[line][index] = streamerId;
-
-      return {
-        ...current,
-        board: nextBoard,
-      };
-    });
+    placeParticipant({ index, line, streamerId });
     setDraggingStreamerId(null);
     setHoveredSlot(null);
     setSelectedStreamerId(null);
@@ -854,17 +857,17 @@ function DraftStreamerSetupPage() {
     }
 
     const encodedSnapshot = serializeDraftRoomSnapshot({
-      board: normalizeDraftBoard(state.board, state.teamCount, state.membersPerTeam),
+      board: normalizeDraftBoard(board, teamCount, teamSize),
       draftType,
       inviteLink,
       joinedParticipantNames: isPartyMode ? visiblePartyParticipants.map((participant) => participant.name) : [],
-      membersPerTeam: state.membersPerTeam,
-      participantIds: state.participantIds,
+      membersPerTeam: teamSize,
+      participantIds,
       participationMode,
-      teamCount: state.teamCount,
+      teamCount,
       tournamentId: currentTournament.id,
       tournamentName: currentTournament.name,
-      visibility: state.visibility,
+      visibility,
     });
 
     const nextParams = new URLSearchParams({
@@ -906,7 +909,7 @@ function DraftStreamerSetupPage() {
               <StatusChip tone="muted">방식 {draftTypeLabelMap[draftType]}</StatusChip>
               <StatusChip tone="muted">모드 {participationModeLabelMap[participationMode]}</StatusChip>
               <StatusChip tone="muted">
-                보드 {state.membersPerTeam} x {state.teamCount}
+                보드 {teamSize} x {teamCount}
               </StatusChip>
             </div>
           </div>
@@ -923,7 +926,7 @@ function DraftStreamerSetupPage() {
               <div className="space-y-2">
                 <FieldLabel>대회 선택</FieldLabel>
                 <SelectField
-                  value={state.tournamentId}
+                  value={tournamentId}
                   onChange={(nextTournamentId) => {
                     runAutoPlacement(nextTournamentId);
                   }}
@@ -940,9 +943,9 @@ function DraftStreamerSetupPage() {
               <div className="space-y-2">
                 <FieldLabel>팀 개수</FieldLabel>
                 <SelectField
-                  value={state.teamCount}
+                  value={teamCount}
                   onChange={(value) => {
-                    updateTeamCount(value as TeamCount);
+                    updateTeamCount(sanitizeTeamCount(value));
                   }}
                   options={teamCountOptions.map((option) => ({
                     label: `${option}팀`,
@@ -954,9 +957,9 @@ function DraftStreamerSetupPage() {
               <div className="space-y-2">
                 <FieldLabel>팀당 인원</FieldLabel>
                 <SelectField
-                  value={state.membersPerTeam}
+                  value={teamSize}
                   onChange={(value) => {
-                    updateTeamSize(value as TeamSize);
+                    updateTeamSize(sanitizeTeamSize(value));
                   }}
                   options={teamSizeOptions.map((option) => ({
                     label: `${option}명`,
@@ -1256,7 +1259,7 @@ function DraftStreamerSetupPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      runAutoPlacement(state.tournamentId);
+                      runAutoPlacement(tournamentId);
                     }}
                     className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-text-primary"
                   >
@@ -1289,7 +1292,7 @@ function DraftStreamerSetupPage() {
                   ))}
 
                   {activeLineRows.flatMap((line) => {
-                    const fillCount = state.board[line.key].slice(0, visibleColumnCount).filter(Boolean).length;
+                    const fillCount = board[line.key].slice(0, visibleColumnCount).filter(Boolean).length;
 
                     return [
                       <div
@@ -1303,7 +1306,7 @@ function DraftStreamerSetupPage() {
                           </p>
                         </div>
                       </div>,
-                      ...state.board[line.key].slice(0, visibleColumnCount).map((streamerId, index) => (
+                      ...board[line.key].slice(0, visibleColumnCount).map((streamerId, index) => (
                         <BoardSlot
                           key={`${line.key}-${index}`}
                           draggable={Boolean(streamerId)}
@@ -1357,12 +1360,12 @@ function DraftStreamerSetupPage() {
                     <div className="text-center">
                       <p className="text-sm font-semibold text-text-primary">{line.label}</p>
                       <p className="mt-1 text-xs font-semibold text-text-secondary">
-                        {state.board[line.key].slice(0, visibleColumnCount).filter(Boolean).length} / {visibleColumnCount} 배치
+                        {board[line.key].slice(0, visibleColumnCount).filter(Boolean).length} / {visibleColumnCount} 배치
                       </p>
                     </div>
 
                     <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                      {state.board[line.key].slice(0, visibleColumnCount).map((streamerId, index) => (
+                      {board[line.key].slice(0, visibleColumnCount).map((streamerId, index) => (
                         <BoardSlot
                           key={`${line.key}-mobile-${index}`}
                           draggable={Boolean(streamerId)}
@@ -1432,6 +1435,55 @@ function DraftStreamerSetupPage() {
       </div>
     </main>
   );
+}
+
+function DraftStreamerSetupPage() {
+  const searchParams = useSearchParams();
+  const initializeStreamers = useDraftCreateStore((state) => state.initializeStreamers);
+  const isInitialized = useDraftCreateStore((state) => state.isInitialized);
+  const initialParticipationMode = sanitizeParticipationMode(searchParams.get("mode"));
+  const initialDraftType = sanitizeDraftType(searchParams.get("draftType") ?? searchParams.get("type"));
+  const initialTournamentId = sanitizeTournamentId(searchParams.get("tournament"));
+  const initialTeamCount = sanitizeTeamCount(searchParams.get("teamCount"));
+  const initialTeamSize = sanitizeTeamSize(
+    searchParams.get("teamSize") ?? searchParams.get("membersPerTeam"),
+  );
+
+  useEffect(() => {
+    if (isInitialized) {
+      return;
+    }
+
+    initializeStreamers(
+      createInitialDraftCreateFlowState({
+        draftType: initialDraftType,
+        participationMode: initialParticipationMode,
+        teamCount: initialTeamCount,
+        teamSize: initialTeamSize,
+        tournamentId: initialTournamentId,
+      }),
+    );
+  }, [
+    initialDraftType,
+    initialParticipationMode,
+    initialTeamCount,
+    initialTeamSize,
+    initialTournamentId,
+    initializeStreamers,
+    isInitialized,
+  ]);
+
+  if (!isInitialized) {
+    return (
+      <main className="min-h-[calc(100dvh-var(--header-height))] bg-background px-6 py-6 xl:px-8">
+        <section className="rounded-3xl border border-border bg-surface p-6 text-sm font-semibold text-text-secondary shadow-sm">
+          참가 스트리머 설정을 불러오는 중입니다.
+        </section>
+      </main>
+    );
+  }
+
+  return <DraftStreamerSetupContent />;
 }
 
 export default function DraftCreateStreamersPage() {

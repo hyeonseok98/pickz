@@ -24,6 +24,7 @@ import {
   teamCountOptions,
   teamSizeOptions,
 } from "@/constants/drafts";
+import { DraftActionFooter, DraftStepper } from "@/components/draft/create";
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import {
@@ -123,12 +124,14 @@ const tournaments = [
     adc: ["Ruler", "Elk", "GALA", "Noah", "Aiming"],
     support: ["Missing", "ON", "Keria", "Mikyx", "Life"],
   }),
-  createTournament("streamer-rivals", "Streamer Rivals", "방송인 친선전 기준 라인별 추천 후보군", {
-    top: ["침착맨", "풍월량", "옥냥이", "얍얍", "녹두로"],
-    jungle: ["캡틴잭", "울프", "따효니", "피닉스박", "랄로"],
-    mid: ["괴물쥐", "탬탬버린", "도현", "김블루", "뚜띠"],
-    adc: ["배돈", "다누리", "하꼬원딜", "러너", "앰비션봇"],
-    support: ["에스카", "실프", "김나성", "서새봄", "소니쇼"],
+  createTournament("pickz-invitational", "Pickz Invitational", "현재 mock 데이터와 연결된 자동 배치 예시 대회", {
+    top: ["플레임", "침착맨", "운타라", "랄로", "풍월량"],
+    jungle: ["피닉스박", "울프", "따효니", "앰비션", "강퀴88"],
+    mid: ["도파", "갱맘 GBM", "괴물쥐", "탬탬버린", "정령왕임"],
+    adc: ["한동숙", "러너", "뱅", "김블루", "플레임TV"],
+    support: ["실프", "서새봄냥 SEBOM", "소니쇼", "강지", "다주"],
+    headCoach: ["매드라이프 MadLife", "룩삼", "김도", "삼식", "쌍베"],
+    coach: ["소풍왔니", "양아지", "이춘향", "릴카", "강소연"],
   }),
 ] satisfies Tournament[];
 
@@ -192,12 +195,6 @@ function ArrowLeftIcon() {
   );
 }
 
-function ArrowRightIcon() {
-  return (
-    <Image src="/icons/arrow_forward.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
-  );
-}
-
 function SearchIcon() {
   return (
     <Image src="/icons/search.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
@@ -249,27 +246,6 @@ function SectionCard({
       </div>
       <div className="mt-5">{children}</div>
     </section>
-  );
-}
-
-function StepPill({
-  active = false,
-  label,
-}: {
-  active?: boolean;
-  label: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex h-8 items-center rounded-full border px-3 text-xs font-semibold transition-colors",
-        active
-          ? "border-violet-200 bg-violet-100 text-violet-700"
-          : "border-border bg-surface text-text-secondary",
-      )}
-    >
-      {label}
-    </span>
   );
 }
 
@@ -917,19 +893,7 @@ function DraftStreamerSetupPage() {
             <span>드래프트 선택으로 돌아가기</span>
           </Link>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2 text-text-muted">
-            <StepPill label="1. 방식 선택" />
-            <span className="text-xs">›</span>
-            <StepPill label="2. 방 설정" />
-            <span className="text-xs">›</span>
-            <StepPill active label="3. 참가 스트리머 설정" />
-            {isPartyMode ? (
-              <>
-                <span className="text-xs">›</span>
-                <StepPill label="4. 참가자 초대" />
-              </>
-            ) : null}
-          </div>
+          <DraftStepper currentStep="streamers" mode={participationMode} />
 
           <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
             <div className="max-w-4xl">
@@ -1451,33 +1415,17 @@ function DraftStreamerSetupPage() {
                 ))}
               </div>
 
-              <div className="flex flex-col gap-4 border-t border-border pt-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="rounded-2xl border border-border bg-surface-muted px-4 py-4">
-                  <p className="text-sm font-semibold text-text-primary">
-                    {remainingRequiredCount === 0
-                      ? "현재 설정 기준 필수 인원 배치가 완료됐습니다."
-                      : `${remainingRequiredCount}명 더 배치하면 현재 설정 기준을 충족합니다.`}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-text-secondary">
-                    실제 방 생성 조건은 현재 설정한 팀 수와 팀당 인원을 기준으로 계산됩니다.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleCreateRoom}
-                  disabled={!canCreateRoom}
-                  className={cn(
-                    "inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl px-5 text-sm font-bold transition-colors",
-                    canCreateRoom
-                      ? "cursor-pointer bg-text-primary text-text-inverse"
-                      : "cursor-not-allowed bg-surface-muted text-text-muted",
-                  )}
-                >
-                  <span>{isPartyMode ? "방 생성하기" : "혼자 시작하기"}</span>
-                  <ArrowRightIcon />
-                </button>
-              </div>
+              <DraftActionFooter
+                title={
+                  remainingRequiredCount === 0
+                    ? "현재 설정 기준 필수 인원 배치가 완료됐습니다."
+                    : `${remainingRequiredCount}명 더 배치하면 현재 설정 기준을 충족합니다.`
+                }
+                description="실제 방 생성 조건은 현재 설정한 팀 수와 팀당 인원을 기준으로 계산됩니다."
+                primaryLabel={isPartyMode ? "방 생성하기" : "혼자 시작하기"}
+                primaryDisabled={!canCreateRoom}
+                onPrimaryClick={handleCreateRoom}
+              />
             </div>
           </SectionCard>
         </div>

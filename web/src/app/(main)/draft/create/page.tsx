@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { DraftActionFooter, DraftStepper } from "@/components/draft/create";
 import {
   draftTypeLabelMap,
   participationModeLabelMap,
@@ -18,20 +19,6 @@ function sanitizeDraftType(value: string | null): DraftType {
 
 function sanitizeParticipationMode(value: string | null): ParticipationMode {
   return value === "party" ? "party" : "solo";
-}
-
-function StepPill({ active = false, label }: { active?: boolean; label: string }) {
-  return (
-    <span
-      className={
-        active
-          ? "inline-flex h-8 items-center rounded-full border border-violet-200 bg-violet-100 px-3 text-xs font-semibold text-violet-700"
-          : "inline-flex h-8 items-center rounded-full border border-border bg-surface px-3 text-xs font-semibold text-text-secondary"
-      }
-    >
-      {label}
-    </span>
-  );
 }
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
@@ -76,19 +63,7 @@ function DraftRoomSettingsPage() {
             <span>드래프트 선택으로 돌아가기</span>
           </Link>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2 text-text-muted">
-            <StepPill label="1. 방식 선택" />
-            <span className="text-xs">›</span>
-            <StepPill active label="2. 방 설정" />
-            <span className="text-xs">›</span>
-            <StepPill label="3. 참가 스트리머 설정" />
-            {participationMode === "party" ? (
-              <>
-                <span className="text-xs">›</span>
-                <StepPill label="4. 참가자 초대" />
-              </>
-            ) : null}
-          </div>
+          <DraftStepper currentStep="settings" mode={participationMode} />
 
           <div className="mt-6 max-w-4xl">
             <h1 className="text-3xl font-bold tracking-[-0.04em] text-text-primary sm:text-4xl">
@@ -108,32 +83,12 @@ function DraftRoomSettingsPage() {
         </section>
 
         <section className="rounded-3xl border border-border bg-surface px-5 py-5 shadow-sm sm:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h2 className="text-xl font-bold tracking-[-0.03em] text-text-primary">
-                다음 단계
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-text-secondary">
-                방 제목, 프리셋, 팀 구성 입력 UI는 이 페이지에 고정하고, 스트리머 검색과 보드 배치는 다음 라우트에서 처리합니다.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleNext}
-              className="inline-flex h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-text-primary px-5 text-sm font-bold text-text-inverse"
-            >
-              <span>다음: 참가 스트리머 설정</span>
-              <Image
-                src="/icons/arrow_forward.svg"
-                alt=""
-                width={16}
-                height={16}
-                aria-hidden
-                className="size-4"
-              />
-            </button>
-          </div>
+          <DraftActionFooter
+            title="다음 단계"
+            description="방 제목, 프리셋, 팀 구성 입력 UI는 이 페이지에 고정하고, 스트리머 검색과 보드 배치는 다음 라우트에서 처리합니다."
+            primaryLabel="다음: 참가 스트리머 설정"
+            onPrimaryClick={handleNext}
+          />
         </section>
       </div>
     </main>

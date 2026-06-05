@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { DraftStepper } from "@/components/draft/create";
 import { draftTypeLabelMap, participationModeLabelMap } from "@/constants/drafts";
 import type { DraftType, ParticipationMode } from "@/types/drafts";
 import { parseDraftRoomSnapshot } from "@/utils";
@@ -14,20 +15,6 @@ function sanitizeDraftType(value: string | null): DraftType {
 
 function sanitizeParticipationMode(value: string | null): ParticipationMode {
   return value === "party" ? "party" : "solo";
-}
-
-function StepPill({ active = false, label }: { active?: boolean; label: string }) {
-  return (
-    <span
-      className={
-        active
-          ? "inline-flex h-8 items-center rounded-full border border-violet-200 bg-violet-100 px-3 text-xs font-semibold text-violet-700"
-          : "inline-flex h-8 items-center rounded-full border border-border bg-surface px-3 text-xs font-semibold text-text-secondary"
-      }
-    >
-      {label}
-    </span>
-  );
 }
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
@@ -69,15 +56,7 @@ function DraftInviteStepPage() {
             <span>참가 스트리머 설정으로 돌아가기</span>
           </Link>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2 text-text-muted">
-            <StepPill label="1. 방식 선택" />
-            <span className="text-xs">›</span>
-            <StepPill label="2. 방 설정" />
-            <span className="text-xs">›</span>
-            <StepPill label="3. 참가 스트리머 설정" />
-            <span className="text-xs">›</span>
-            <StepPill active label="4. 참가자 초대" />
-          </div>
+          <DraftStepper currentStep="invite" mode="party" />
 
           <div className="mt-6 max-w-4xl">
             <h1 className="text-3xl font-bold tracking-[-0.04em] text-text-primary sm:text-4xl">

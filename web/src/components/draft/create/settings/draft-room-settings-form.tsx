@@ -142,7 +142,7 @@ function TeamCompositionFields({
 export function DraftRoomSettingsForm(props: DraftRoomSettingsFormProps) {
   return (
     <div className="space-y-8">
-      <FormSection title="방 제목">
+      <FormSection optional title="방 제목">
         <RoomTitleField onRoomTitleChange={props.onRoomTitleChange} roomTitle={props.roomTitle} />
       </FormSection>
 

@@ -78,9 +78,9 @@ const participationModeOptions: DraftRoomSettingsOption<ParticipationMode>[] = [
 
 const tournamentOptions: DraftRoomSettingsOption[] = [
   {
-    description: "mock 데이터와 연결된 자동 배치 예시 대회입니다.",
+    description: "2026 자낳대 기준 25명 자동 배치 프리셋입니다.",
     iconSrc: "/icons/trophy_fill.svg",
-    label: "Pickz Invitational",
+    label: "2026 자낳대",
     value: defaultTournamentId,
   },
   {
@@ -213,6 +213,15 @@ export function useDraftRoomSettings() {
     [tournamentId],
   );
 
+  const handleTournamentChange = (nextTournamentId: string) => {
+    setTournamentId(nextTournamentId);
+
+    if (nextTournamentId === defaultTournamentId) {
+      setTeamCount("5");
+      setTeamSize("5");
+    }
+  };
+
   const summaryItems = useMemo<DraftRoomSettingsSummaryItem[]>(
     () => [
       {
@@ -247,7 +256,7 @@ export function useDraftRoomSettings() {
     onRoomTitleChange: setRoomTitle,
     onTeamCountChange: setTeamCount,
     onTeamSizeChange: setTeamSize,
-    onTournamentChange: setTournamentId,
+    onTournamentChange: handleTournamentChange,
     participationMode,
     participationModeOptions,
     roomTitle,

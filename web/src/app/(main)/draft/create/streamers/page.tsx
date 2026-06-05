@@ -20,14 +20,10 @@ import {
   draftLineRows,
   draftTypeLabelMap,
   participationModeLabelMap,
-  teamCountOptions,
-  teamSizeOptions,
 } from "@/constants/drafts";
 import {
   DraftStepper,
-  DraftStreamerBasicSettingsSection,
   DraftStreamerBoardSection,
-  DraftStreamerPartyShareSection,
   DraftStreamerSearchSection,
 } from "@/components/draft/create";
 import { StatusChip } from "@/components/draft/create/streamers/draft-streamer-setup-primitives";
@@ -118,14 +114,12 @@ const tournaments = [
     adc: ["Ruler", "Elk", "GALA", "Noah", "Aiming"],
     support: ["Missing", "ON", "Keria", "Mikyx", "Life"],
   }),
-  createTournament("pickz-invitational", "Pickz Invitational", "현재 mock 데이터와 연결된 자동 배치 예시 대회", {
+  createTournament("pickz-invitational", "2026 자낳대", "2026 자낳대 기준 25명 자동 배치 프리셋", {
     top: ["플레임", "침착맨", "운타라", "랄로", "풍월량"],
     jungle: ["피닉스박", "울프", "따효니", "앰비션", "강퀴88"],
     mid: ["도파", "갱맘 GBM", "괴물쥐", "탬탬버린", "정령왕임"],
     adc: ["한동숙", "러너", "뱅", "김블루", "플레임TV"],
     support: ["실프", "서새봄냥 SEBOM", "소니쇼", "강지", "다주"],
-    headCoach: ["매드라이프 MadLife", "룩삼", "김도", "삼식", "쌍베"],
-    coach: ["소풍왔니", "양아지", "이춘향", "릴카", "강소연"],
   }),
 ] satisfies Tournament[];
 
@@ -144,12 +138,6 @@ const customTournament: Tournament = {
 
 const tournamentOptions = [customTournament, ...tournaments] satisfies Tournament[];
 const tournamentMap = new Map(tournamentOptions.map((tournament) => [tournament.id, tournament]));
-
-const partyParticipants = [
-  { id: "host", name: "나", status: "방장" },
-  { id: "guest-1", name: "귀여운 Pickz1", status: "초대 링크 확인" },
-  { id: "guest-2", name: "반짝이는 Pickz2", status: "입장 대기" },
-];
 
 function createAutoBoard(tournament: Tournament, teamCount: TeamCount, teamSize: TeamSize): BoardState {
   const nextBoard = createEmptyDraftBoard();
@@ -183,20 +171,12 @@ function sanitizeTournamentId(value: string | null): string {
   return customTournamentId;
 }
 
-function isTeamCount(value: string | null): value is TeamCount {
-  return value !== null && teamCountOptions.some((option) => option === value);
-}
-
 function sanitizeTeamCount(value: string | null): TeamCount {
-  return isTeamCount(value) ? value : "5";
-}
-
-function isTeamSize(value: string | null): value is TeamSize {
-  return value !== null && teamSizeOptions.some((option) => option === value);
+  return value === "2" || value === "3" || value === "4" || value === "5" ? value : "5";
 }
 
 function sanitizeTeamSize(value: string | null): TeamSize {
-  return isTeamSize(value) ? value : "5";
+  return value === "3" || value === "4" || value === "5" || value === "6" || value === "7" ? value : "5";
 }
 
 function createInitialDraftCreateFlowState({
@@ -252,15 +232,12 @@ function DraftStreamerSetupContent() {
     participationMode,
     placeParticipant,
     removeParticipant: removeParticipantFromDraft,
-    setTeamCount,
-    setTeamSize,
     teamCount,
     teamSize,
     tournamentId,
     visibility,
   } = useDraftCreateStore();
   const [searchQuery, setSearchQuery] = useState("");
-  const [copied, setCopied] = useState(false);
   const [draggingStreamerId, setDraggingStreamerId] = useState<string | null>(null);
   const [highlightedSearchIndex, setHighlightedSearchIndex] = useState(-1);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
@@ -288,12 +265,6 @@ function DraftStreamerSetupContent() {
   const currentTournament = tournamentMap.get(tournamentId) ?? customTournament;
   const activeLineRows = useMemo(() => getActiveDraftLines(teamSize), [teamSize]);
   const visibleColumnCount = Number(teamCount);
-  const maxPartyParticipants = Number(teamCount);
-  const visiblePartyParticipants = partyParticipants.slice(0, maxPartyParticipants);
-  const partyParticipantSlots = Array.from(
-    { length: maxPartyParticipants },
-    (_, index) => visiblePartyParticipants[index] ?? null,
-  );
   const streamerMap = STREAMER_DIRECTORY_BY_ID;
 
   const placedIds = useMemo(() => getPlacedDraftStreamerIds(board), [board]);
@@ -361,7 +332,6 @@ function DraftStreamerSetupContent() {
       ? -1
       : Math.min(highlightedSearchIndex, Math.max(searchResults.length - 1, 0));
 
-  const inviteLink = `https://pickz.gg/draft/${currentTournament.id}-${draftType}-${teamCount}${teamSize}`;
   const isDirty = useMemo(
     () =>
       JSON.stringify({
@@ -386,20 +356,6 @@ function DraftStreamerSetupContent() {
   };
 
   useUnsavedChangesGuard(isDirty, leaveMessage);
-
-  useEffect(() => {
-    if (!copied) {
-      return undefined;
-    }
-
-    const timeout = window.setTimeout(() => {
-      setCopied(false);
-    }, 1800);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [copied]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 1023px)");
@@ -454,18 +410,6 @@ function DraftStreamerSetupContent() {
     if (selectedStreamerId === streamerId) {
       setSelectedStreamerId(null);
     }
-  };
-
-  const updateTeamCount = (teamCount: TeamCount) => {
-    setTeamCount(teamCount);
-    setHoveredSlot(null);
-    setSelectedStreamerId(null);
-  };
-
-  const updateTeamSize = (nextTeamSize: TeamSize) => {
-    setTeamSize(nextTeamSize);
-    setHoveredSlot(null);
-    setSelectedStreamerId(null);
   };
 
   const runAutoPlacement = (tournamentId: string) => {
@@ -648,15 +592,6 @@ function DraftStreamerSetupContent() {
     placeStreamerIntoSlot(selectedStreamerId, line, index);
   };
 
-  const copyInviteLink = async () => {
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  };
-
   const handleCreateRoom = () => {
     if (!canCreateRoom) {
       return;
@@ -665,8 +600,8 @@ function DraftStreamerSetupContent() {
     const encodedSnapshot = serializeDraftRoomSnapshot({
       board: normalizeDraftBoard(board, teamCount, teamSize),
       draftType,
-      inviteLink,
-      joinedParticipantNames: isPartyMode ? visiblePartyParticipants.map((participant) => participant.name) : [],
+      inviteLink: "",
+      joinedParticipantNames: [],
       membersPerTeam: teamSize,
       participantIds,
       participationMode,
@@ -680,6 +615,8 @@ function DraftStreamerSetupContent() {
       config: encodedSnapshot,
       draftType,
       mode: participationMode,
+      teamCount,
+      teamSize,
     });
 
     if (isPartyMode) {
@@ -720,35 +657,9 @@ function DraftStreamerSetupContent() {
             </div>
           </div>
 
-          <DraftStreamerBasicSettingsSection
-            onTeamCountChange={(value) => {
-              updateTeamCount(sanitizeTeamCount(value));
-            }}
-            onTeamSizeChange={(value) => {
-              updateTeamSize(sanitizeTeamSize(value));
-            }}
-            onTournamentChange={runAutoPlacement}
-            teamCount={teamCount}
-            teamCountOptions={teamCountOptions}
-            teamSize={teamSize}
-            teamSizeOptions={teamSizeOptions}
-            tournamentId={tournamentId}
-            tournamentOptions={tournamentOptions}
-          />
         </section>
 
         <div className="grid gap-5 xl:grid-cols-11">
-          {isPartyMode ? (
-            <DraftStreamerPartyShareSection
-              copied={copied}
-              inviteLink={inviteLink}
-              maxPartyParticipants={maxPartyParticipants}
-              onCopyInviteLink={copyInviteLink}
-              partyParticipantSlots={partyParticipantSlots}
-              visiblePartyParticipantsCount={visiblePartyParticipants.length}
-            />
-          ) : null}
-
           <DraftStreamerSearchSection
             activeSearchIndex={activeSearchIndex}
             draggingStreamerId={draggingStreamerId}

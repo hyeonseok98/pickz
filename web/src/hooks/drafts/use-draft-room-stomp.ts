@@ -60,6 +60,10 @@ export function useDraftRoomStomp({
   }, [onConnectionError]);
 
   useEffect(() => {
+    if (roomId <= 0 || participantToken.trim().length === 0) {
+      return undefined;
+    }
+
     let isCleanedUp = false;
 
     const unsubscribeAll = () => {
@@ -159,7 +163,7 @@ export function useDraftRoomStomp({
         void currentClient.deactivate();
       }
     };
-  }, [roomId]);
+  }, [participantToken, roomId]);
 
   const publishPick = useCallback(
     (streamerId: string) => {

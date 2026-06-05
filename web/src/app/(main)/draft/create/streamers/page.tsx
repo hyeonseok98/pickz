@@ -734,8 +734,11 @@ function DraftStreamerSetupContent() {
 
 function DraftStreamerSetupPage() {
   const searchParams = useSearchParams();
+  const board = useDraftCreateStore((state) => state.board);
   const initializeStreamers = useDraftCreateStore((state) => state.initializeStreamers);
   const isInitialized = useDraftCreateStore((state) => state.isInitialized);
+  const participantIds = useDraftCreateStore((state) => state.participantIds);
+  const tournamentId = useDraftCreateStore((state) => state.tournamentId);
   const initialParticipationMode = sanitizeParticipationMode(searchParams.get("mode"));
   const initialDraftType = sanitizeDraftType(searchParams.get("draftType") ?? searchParams.get("type"));
   const initialTournamentId = sanitizeTournamentId(searchParams.get("tournament"));
@@ -743,22 +746,33 @@ function DraftStreamerSetupPage() {
   const initialTeamSize = sanitizeTeamSize(
     searchParams.get("teamSize") ?? searchParams.get("membersPerTeam"),
   );
+  const placedStreamerCount = useMemo(() => getPlacedDraftStreamerIds(board).length, [board]);
 
   useEffect(() => {
-    if (isInitialized) {
+    const nextInitialState = createInitialDraftCreateFlowState({
+      draftType: initialDraftType,
+      participationMode: initialParticipationMode,
+      teamCount: initialTeamCount,
+      teamSize: initialTeamSize,
+      tournamentId: initialTournamentId,
+    });
+
+    if (!isInitialized) {
+      initializeStreamers(nextInitialState);
       return;
     }
 
-    initializeStreamers(
-      createInitialDraftCreateFlowState({
-        draftType: initialDraftType,
-        participationMode: initialParticipationMode,
-        teamCount: initialTeamCount,
-        teamSize: initialTeamSize,
-        tournamentId: initialTournamentId,
-      }),
-    );
+    const shouldSeedPresetBoard =
+      tournamentId === initialTournamentId &&
+      tournamentId !== customTournamentId &&
+      participantIds.length === 0 &&
+      placedStreamerCount === 0;
+
+    if (shouldSeedPresetBoard) {
+      initializeStreamers(nextInitialState);
+    }
   }, [
+    board,
     initialDraftType,
     initialParticipationMode,
     initialTeamCount,
@@ -766,6 +780,9 @@ function DraftStreamerSetupPage() {
     initialTournamentId,
     initializeStreamers,
     isInitialized,
+    participantIds.length,
+    placedStreamerCount,
+    tournamentId,
   ]);
 
   if (!isInitialized) {

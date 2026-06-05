@@ -2,8 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
+import { Suspense, useEffect, useMemo, useState, type DragEvent } from "react";
 import { useSearchParams } from "next/navigation";
+import {
+  DraftRoomHeader,
+  DraftRoomSectionCard,
+  DraftRoomStatusChip,
+} from "@/components/draft/room";
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
 import { STREAMER_DIRECTORY_BY_ID, draftLineLabelMap } from "@/constants/drafts";
 import type { LineKey } from "@/types/drafts";
@@ -20,12 +25,6 @@ interface PoolSelection {
 
 interface PlacementSelection extends PoolSelection {
   sourcePickNumber?: number;
-}
-
-function ArrowLeftIcon() {
-  return (
-    <Image src="/icons/arrow_back.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
-  );
 }
 
 function UndoIcon() {
@@ -65,56 +64,6 @@ function RefreshIcon() {
         strokeLinejoin="round"
       />
     </svg>
-  );
-}
-
-function StatusChip({
-  children,
-  tone = "default",
-}: {
-  children: ReactNode;
-  tone?: "default" | "active" | "muted";
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex h-8 items-center rounded-full border px-3 text-xs font-semibold",
-        tone === "active"
-          ? "border-violet-300 bg-violet-100 text-violet-700"
-          : tone === "muted"
-            ? "border-border bg-surface-muted text-text-secondary"
-            : "border-border bg-surface text-text-secondary",
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
-function SectionCard({
-  children,
-  className,
-  description,
-  title,
-}: {
-  children: ReactNode;
-  className?: string;
-  description: string;
-  title: string;
-}) {
-  return (
-    <section
-      className={cn(
-        "flex min-h-0 flex-col rounded-3xl border border-border bg-surface p-4 shadow-sm sm:p-4.5",
-        className,
-      )}
-    >
-      <div className="shrink-0">
-        <h2 className="text-base font-bold tracking-[-0.03em] text-text-primary sm:text-lg">{title}</h2>
-        <p className="mt-1.5 text-xs leading-5 text-text-secondary">{description}</p>
-      </div>
-      <div className="mt-4 min-h-0 flex-1">{children}</div>
-    </section>
   );
 }
 
@@ -223,7 +172,7 @@ function SnakeDraftRoomPage() {
             href="/draft/create/streamers"
             className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-text-primary"
           >
-            <ArrowLeftIcon />
+            <Image src="/icons/arrow_back.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
             <span>방 설정으로 돌아가기</span>
           </Link>
         </section>
@@ -405,29 +354,10 @@ function SnakeDraftRoomPage() {
   return (
     <main className="overflow-y-auto bg-slate-50 px-3 py-3 sm:px-5 xl:px-6 lg:h-[calc(100dvh-var(--header-height))] lg:overflow-hidden">
       <div className="mx-auto flex max-w-screen-2xl flex-col gap-2.5 lg:h-full">
-        <section className="shrink-0 rounded-3xl border border-border bg-surface px-4 py-2.5 shadow-sm sm:px-5 sm:py-3">
-          <div className="flex flex-col gap-2.5 xl:flex-row xl:items-start xl:justify-between">
-            <div>
-              {isSoloMode ? (
-                <Link
-                  href={`/draft/create/streamers?draftType=${snapshot.draftType}&mode=${snapshot.participationMode}&tournament=${snapshot.tournamentId}`}
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-3 text-xs font-semibold text-text-primary"
-                >
-                  <ArrowLeftIcon />
-                  <span>방 설정으로 돌아가기</span>
-                </Link>
-              ) : null}
-
-              <h1 className={cn("font-bold tracking-[-0.04em] text-text-primary", isSoloMode ? "mt-2.5 text-[28px]" : "text-[28px]")}>
-                스네이크 드래프트
-              </h1>
-              <p className="mt-1 text-xs leading-4.5 text-text-secondary">
-                왼쪽 스트리머 풀에서 현재 선택 가능한 팀 칸으로 바로 배치합니다.
-              </p>
-            </div>
-
-            {isSoloMode ? (
-              <div className="flex flex-wrap gap-2 xl:justify-end">
+        <DraftRoomHeader
+          action={
+            isSoloMode ? (
+              <>
                 <button
                   type="button"
                   onClick={handleUndoPick}
@@ -456,13 +386,21 @@ function SnakeDraftRoomPage() {
                   <RefreshIcon />
                   <span>전체 다시 시작</span>
                 </button>
-              </div>
-            ) : null}
-          </div>
-        </section>
+              </>
+            ) : undefined
+          }
+          backHref={
+            isSoloMode
+              ? `/draft/create/streamers?draftType=${snapshot.draftType}&mode=${snapshot.participationMode}&tournament=${snapshot.tournamentId}`
+              : undefined
+          }
+          backLabel="방 설정으로 돌아가기"
+          description="왼쪽 스트리머 풀에서 현재 선택 가능한 팀 칸으로 바로 배치합니다."
+          title="스네이크 드래프트"
+        />
 
         <div className="grid min-h-0 flex-1 gap-2.5 xl:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] xl:items-stretch">
-          <SectionCard
+          <DraftRoomSectionCard
             className="min-h-0 xl:h-full"
             title="라인별 스트리머 풀"
             description="데스크톱에서는 바로 드래그하고, 모바일에서는 선수를 선택한 뒤 원하는 칸을 눌러 배치합니다."
@@ -562,7 +500,7 @@ function SnakeDraftRoomPage() {
                         <p className="text-sm font-semibold text-text-primary">{lineGroup.label}</p>
                         <p className="mt-1 text-xs text-text-secondary">남은 {remainingCount}명</p>
                       </div>
-                      <StatusChip tone="muted">{draftLineLabelMap[lineGroup.key]}</StatusChip>
+                      <DraftRoomStatusChip tone="muted">{draftLineLabelMap[lineGroup.key]}</DraftRoomStatusChip>
                     </div>
 
                     <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -602,9 +540,9 @@ function SnakeDraftRoomPage() {
                 );
               })}
             </div>
-          </SectionCard>
+          </DraftRoomSectionCard>
 
-          <SectionCard
+          <DraftRoomSectionCard
             className="min-h-0 xl:h-full"
             title="팀 배치"
             description="현재 선택 가능한 칸만 활성화됩니다."
@@ -831,7 +769,7 @@ function SnakeDraftRoomPage() {
                 </article>
               ))}
             </div>
-          </SectionCard>
+          </DraftRoomSectionCard>
         </div>
       </div>
     </main>

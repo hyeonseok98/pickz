@@ -11,7 +11,7 @@ import {
 } from "react";
 import { createDraftRoom, joinDraftRoomByInviteCode, startDraftRoom } from "@/apis/drafts";
 import { useDraftRoomStomp } from "@/hooks/drafts";
-import type { DraftParticipantSession, JoinDraftRoomResponse } from "@/types";
+import type { DraftParticipantSession, JoinDraftRoomResponse } from "@/types/drafts";
 import {
   cn,
   getDraftParticipantSession,

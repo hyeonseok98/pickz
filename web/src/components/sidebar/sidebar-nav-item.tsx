@@ -1,6 +1,6 @@
 "use client";
 
-import type { MenuSidebarItem } from "@/types";
+import type { MenuSidebarItem } from "@/types/sidebar";
 import { cn } from "@/utils";
 import Link from "next/link";
 

@@ -1,10 +1,1 @@
-export type {
-  CreateDraftRoomRequest,
-  CreateDraftRoomResponse,
-  DraftParticipantSession,
-  DraftRoomRawMessage,
-  JoinDraftRoomResponse,
-  StartDraftRoomParams,
-  StartDraftRoomRequest,
-} from "./drafts";
 export type { MenuSidebarItem, MenuSidebarProps, SidebarContextValue } from "./sidebar";

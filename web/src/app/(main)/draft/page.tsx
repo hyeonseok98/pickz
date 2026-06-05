@@ -4,9 +4,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/utils";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
-
-type DraftType = "snake" | "auction";
-type ParticipationMode = "solo" | "party";
+import type { DraftType, ParticipationMode } from "@/types/drafts";
 
 interface OptionCardProps {
   description: string;

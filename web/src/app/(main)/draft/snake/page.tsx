@@ -4,13 +4,12 @@ import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
-import { STREAMER_DIRECTORY_BY_ID } from "@/constants/streamers";
+import { STREAMER_DIRECTORY_BY_ID, draftLineLabelMap } from "@/constants/drafts";
+import type { LineKey } from "@/types/drafts";
 import {
   cn,
-  draftLineLabelMap,
   getActiveDraftLines,
   parseDraftRoomSnapshot,
-  type LineKey,
 } from "@/utils";
 
 interface PoolSelection {
@@ -249,11 +248,10 @@ function SnakeDraftPageContent() {
       : `${teamIndex + 1}팀`,
   );
   const snakePickBoard = buildSnakePickBoard(teamNames, snakeOrderByRound, boardAssignments);
-  const pickedIdSet = new Set(
+  const pickedStreamerIds = 
     Object.values(boardAssignments)
       .filter((assignment): assignment is PoolSelection => Boolean(assignment))
-      .map((assignment) => assignment.id),
-  );
+      .map((assignment) => assignment.id);
   const isSoloMode = snapshot.participationMode === "solo";
 
   const availablePoolByLine = activeLines.map(({ key, label }) => ({
@@ -496,7 +494,9 @@ function SnakeDraftPageContent() {
                 ))}
 
                 {availablePoolByLine.flatMap((lineGroup) => {
-                  const remainingCount = lineGroup.streamers.filter((streamer) => !pickedIdSet.has(streamer.id)).length;
+                  const remainingCount = lineGroup.streamers.filter(
+                    (streamer) => !pickedStreamerIds.includes(streamer.id),
+                  ).length;
 
                   return [
                     <div
@@ -510,7 +510,7 @@ function SnakeDraftPageContent() {
                     </div>,
                     ...lineGroup.streamers.map((streamer) => {
                       const selection = { id: streamer.id, line: lineGroup.key };
-                      const alreadyPicked = pickedIdSet.has(streamer.id);
+                      const alreadyPicked = pickedStreamerIds.includes(streamer.id);
                       const disabled = alreadyPicked;
 
                       return (
@@ -556,7 +556,9 @@ function SnakeDraftPageContent() {
 
             <div className="space-y-3 xl:hidden">
               {availablePoolByLine.map((lineGroup) => {
-                const remainingCount = lineGroup.streamers.filter((streamer) => !pickedIdSet.has(streamer.id)).length;
+                const remainingCount = lineGroup.streamers.filter(
+                  (streamer) => !pickedStreamerIds.includes(streamer.id),
+                ).length;
 
                 return (
                   <section
@@ -574,7 +576,7 @@ function SnakeDraftPageContent() {
                     <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
                       {lineGroup.streamers.map((streamer) => {
                         const selection = { id: streamer.id, line: lineGroup.key };
-                        const alreadyPicked = pickedIdSet.has(streamer.id);
+                        const alreadyPicked = pickedStreamerIds.includes(streamer.id);
                         const disabled = alreadyPicked;
 
                         return (

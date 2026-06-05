@@ -17,18 +17,35 @@ import {
   STREAMER_DIRECTORY,
   STREAMER_DIRECTORY_BY_ID,
   STREAMER_DIRECTORY_BY_NAME,
-} from "@/constants/streamers";
+  draftLineLabelMap,
+  draftLineRows,
+  draftTypeLabelMap,
+  participationModeLabelMap,
+  teamCountOptions,
+  teamSizeOptions,
+} from "@/constants/drafts";
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
-import { cn, matchesStreamerSearchQuery, serializeDraftRoomSnapshot } from "@/utils";
-
-type DraftType = "snake" | "auction";
-type ParticipationMode = "solo" | "party";
-type RoomVisibility = "public" | "private";
-type TeamCount = "2" | "3" | "4" | "5";
-type TeamSize = "3" | "4" | "5";
-type LineKey = "top" | "jungle" | "mid" | "adc" | "support";
-type BoardState = Record<LineKey, Array<string | null>>;
+import {
+  cloneDraftBoard,
+  cn,
+  compareDraftLineOrder,
+  createEmptyDraftBoard,
+  getActiveDraftLines,
+  getPlacedDraftStreamerIds,
+  matchesStreamerSearchQuery,
+  normalizeDraftBoard,
+  serializeDraftRoomSnapshot,
+} from "@/utils";
+import type {
+  BoardState,
+  DraftType,
+  LineKey,
+  ParticipationMode,
+  RoomVisibility,
+  TeamCount,
+  TeamSize,
+} from "@/types/drafts";
 
 interface Streamer {
   avatarDataUrl: string;
@@ -57,86 +74,20 @@ interface DraftCreateEditableState {
 
 const leaveMessage = "이 페이지를 나가면 작성 중이던 내용이 사라집니다. 이동할까요?";
 
-const lineRows: Array<{ key: LineKey; label: string }> = [
-  { key: "top", label: "탑" },
-  { key: "jungle", label: "정글" },
-  { key: "mid", label: "미드" },
-  { key: "adc", label: "원딜" },
-  { key: "support", label: "서폿" },
-];
-
-const lineLabelMap: Record<LineKey, string> = {
-  adc: "원딜",
-  jungle: "정글",
-  mid: "미드",
-  support: "서폿",
-  top: "탑",
-};
-
-const draftTypeLabelMap: Record<DraftType, string> = {
-  auction: "경매 드래프트",
-  snake: "스네이크 드래프트",
-};
-
-const participationModeLabelMap: Record<ParticipationMode, string> = {
-  party: "같이하기",
-  solo: "혼자하기",
-};
-
-const teamCountOptions: TeamCount[] = ["2", "3", "4", "5"];
-const teamSizeOptions: TeamSize[] = ["3", "4", "5"];
 const customTournamentId = "custom";
-
-function createEmptyBoard(): BoardState {
-  return {
-    adc: Array.from({ length: 5 }, () => null),
-    jungle: Array.from({ length: 5 }, () => null),
-    mid: Array.from({ length: 5 }, () => null),
-    support: Array.from({ length: 5 }, () => null),
-    top: Array.from({ length: 5 }, () => null),
-  };
-}
-
-function cloneBoard(board: BoardState): BoardState {
-  return {
-    adc: [...board.adc],
-    jungle: [...board.jungle],
-    mid: [...board.mid],
-    support: [...board.support],
-    top: [...board.top],
-  };
-}
-
-function getActiveLineRows(teamSize: TeamSize) {
-  return lineRows.slice(0, Number(teamSize));
-}
-
-function normalizeBoard(board: BoardState, teamCount: TeamCount, teamSize: TeamSize): BoardState {
-  const nextBoard = createEmptyBoard();
-  const activeLineKeys = new Set(getActiveLineRows(teamSize).map((line) => line.key));
-  const columnCount = Number(teamCount);
-
-  lineRows.forEach(({ key }) => {
-    nextBoard[key] = nextBoard[key].map((_, index) =>
-      activeLineKeys.has(key) && index < columnCount ? board[key][index] : null,
-    );
-  });
-
-  return nextBoard;
-}
 
 function createTournament(
   id: string,
   name: string,
   description: string,
-  rosterByLine: Record<LineKey, string[]>,
+  rosterByLine: Partial<Record<LineKey, string[]>>,
 ): Tournament {
   return {
     description,
     id,
     name,
-    roster: lineRows.flatMap(({ key }) =>
-      rosterByLine[key].reduce<Streamer[]>((accumulator, streamerName, index) => {
+    roster: draftLineRows.flatMap(({ key }) =>
+      (rosterByLine[key] ?? []).reduce<Streamer[]>((accumulator, streamerName, index) => {
         const streamerProfile = STREAMER_DIRECTORY_BY_NAME.get(streamerName);
 
         if (!streamerProfile) {
@@ -148,7 +99,7 @@ function createTournament(
           id: streamerProfile.id,
           line: key,
           name: streamerName,
-          note: `${lineLabelMap[key]} 추천 슬롯 ${index + 1}`,
+          note: `${draftLineLabelMap[key]} 추천 슬롯 ${index + 1}`,
         });
 
         return accumulator;
@@ -159,25 +110,25 @@ function createTournament(
 
 const tournaments = [
   createTournament("lck-2025-spring", "LCK 2025 Spring", "2025 스프링 기준 라인별 주전 풀", {
-    adc: ["Deft", "Viper", "Gumayusi", "Aiming", "Jiwoo"],
+    top: ["Zeus", "Kingen", "Doran", "Morgan", "DuDu"],
     jungle: ["Canyon", "Oner", "Peanut", "Lucid", "Cuzz"],
     mid: ["Faker", "Chovy", "ShowMaker", "Bdd", "Clozer"],
+    adc: ["Deft", "Viper", "Gumayusi", "Aiming", "Jiwoo"],
     support: ["Keria", "Delight", "BeryL", "Lehends", "Andil"],
-    top: ["Zeus", "Kingen", "Doran", "Morgan", "DuDu"],
   }),
   createTournament("msi-showcase", "MSI Showcase", "국제전 밸런스 기준으로 구성한 자동 배치 풀", {
-    adc: ["Ruler", "Elk", "GALA", "Noah", "Aiming"],
+    top: ["Bin", "369", "Zeus", "Kiin", "Photon"],
     jungle: ["Wei", "Xun", "Oner", "Tarzan", "Kanavi"],
     mid: ["Knight", "Scout", "Faker", "Caps", "Zeka"],
+    adc: ["Ruler", "Elk", "GALA", "Noah", "Aiming"],
     support: ["Missing", "ON", "Keria", "Mikyx", "Life"],
-    top: ["Bin", "369", "Zeus", "Kiin", "Photon"],
   }),
   createTournament("streamer-rivals", "Streamer Rivals", "방송인 친선전 기준 라인별 추천 후보군", {
-    adc: ["배돈", "다누리", "하꼬원딜", "러너", "앰비션봇"],
+    top: ["침착맨", "풍월량", "옥냥이", "얍얍", "녹두로"],
     jungle: ["캡틴잭", "울프", "따효니", "피닉스박", "랄로"],
     mid: ["괴물쥐", "탬탬버린", "도현", "김블루", "뚜띠"],
+    adc: ["배돈", "다누리", "하꼬원딜", "러너", "앰비션봇"],
     support: ["에스카", "실프", "김나성", "서새봄", "소니쇼"],
-    top: ["침착맨", "풍월량", "옥냥이", "얍얍", "녹두로"],
   }),
 ] satisfies Tournament[];
 
@@ -190,7 +141,7 @@ const customTournament: Tournament = {
     id: streamer.id,
     line: streamer.line,
     name: streamer.name,
-    note: `${lineLabelMap[streamer.line]} 직접 배치`,
+    note: `${draftLineLabelMap[streamer.line]} 직접 배치`,
   })),
 };
 
@@ -204,8 +155,8 @@ const partyParticipants = [
 ];
 
 function createAutoBoard(tournament: Tournament, teamCount: TeamCount, teamSize: TeamSize): BoardState {
-  const nextBoard = createEmptyBoard();
-  const activeLines = getActiveLineRows(teamSize);
+  const nextBoard = createEmptyDraftBoard();
+  const activeLines = getActiveDraftLines(teamSize);
   const columnCount = Number(teamCount);
 
   activeLines.forEach(({ key }) => {
@@ -514,13 +465,9 @@ function DraftCreatePageContent() {
     const membersPerTeam: TeamSize = "5";
     const board =
       tournament.id === customTournamentId
-        ? createEmptyBoard()
+        ? createEmptyDraftBoard()
         : createAutoBoard(tournament, teamCount, membersPerTeam);
-    const participantIds = Array.from(
-      new Set(
-        Object.values(board).flatMap((slots) => slots.filter((value): value is string => value !== null)),
-      ),
-    );
+    const participantIds = getPlacedDraftStreamerIds(board);
 
     return {
       board,
@@ -547,7 +494,7 @@ function DraftCreatePageContent() {
 
   const isPartyMode = participationMode === "party";
   const currentTournament = tournamentMap.get(state.tournamentId) ?? customTournament;
-  const activeLineRows = useMemo(() => getActiveLineRows(state.membersPerTeam), [state.membersPerTeam]);
+  const activeLineRows = useMemo(() => getActiveDraftLines(state.membersPerTeam), [state.membersPerTeam]);
   const visibleColumnCount = Number(state.teamCount);
   const maxPartyParticipants = Number(state.teamCount);
   const visiblePartyParticipants = partyParticipants.slice(0, maxPartyParticipants);
@@ -555,25 +502,12 @@ function DraftCreatePageContent() {
     { length: maxPartyParticipants },
     (_, index) => visiblePartyParticipants[index] ?? null,
   );
-  const participantIdSet = useMemo(() => new Set(state.participantIds), [state.participantIds]);
   const streamerMap = STREAMER_DIRECTORY_BY_ID;
 
-  const placedIds = useMemo(() => {
-    const ids = new Set<string>();
-
-    lineRows.forEach(({ key }) => {
-      state.board[key].forEach((streamerId) => {
-        if (streamerId) {
-          ids.add(streamerId);
-        }
-      });
-    });
-
-    return ids;
-  }, [state.board]);
+  const placedIds = useMemo(() => getPlacedDraftStreamerIds(state.board), [state.board]);
 
   const totalSlots = Number(state.teamCount) * Number(state.membersPerTeam);
-  const placedCount = placedIds.size;
+  const placedCount = placedIds.length;
   const requiredPlayerCount = Number(state.teamCount) * Number(state.membersPerTeam);
   const remainingRequiredCount = Math.max(requiredPlayerCount - placedCount, 0);
 
@@ -582,12 +516,12 @@ function DraftCreatePageContent() {
     return STREAMER_DIRECTORY.filter((streamer) =>
       normalizedQuery.length === 0
         ? true
-        : matchesStreamerSearchQuery(streamer.name, normalizedQuery),
+        : matchesStreamerSearchQuery([streamer.name, streamer.channelName], normalizedQuery),
     )
       .map((streamer) => ({
         ...streamer,
-        isParticipant: participantIdSet.has(streamer.id),
-        isPlaced: placedIds.has(streamer.id),
+        isParticipant: state.participantIds.includes(streamer.id),
+        isPlaced: placedIds.includes(streamer.id),
       }))
       .sort((left, right) => {
         const leftPriority = left.isParticipant ? 1 : 0;
@@ -597,10 +531,16 @@ function DraftCreatePageContent() {
           return leftPriority - rightPriority;
         }
 
+        const lineOrderDiff = compareDraftLineOrder(left.line, right.line);
+
+        if (lineOrderDiff !== 0) {
+          return lineOrderDiff;
+        }
+
         return left.name.localeCompare(right.name);
       })
       .slice(0, 8);
-  }, [participantIdSet, placedIds, searchQuery]);
+  }, [placedIds, searchQuery, state.participantIds]);
 
   const participantStreamers = useMemo(
     () =>
@@ -612,8 +552,16 @@ function DraftCreatePageContent() {
 
   const filteredStreamers = useMemo(() => {
     return participantStreamers
-      .filter((streamer) => !placedIds.has(streamer.id))
-      .sort((left, right) => left.name.localeCompare(right.name));
+      .filter((streamer) => !placedIds.includes(streamer.id))
+      .sort((left, right) => {
+        const lineOrderDiff = compareDraftLineOrder(left.line, right.line);
+
+        if (lineOrderDiff !== 0) {
+          return lineOrderDiff;
+        }
+
+        return left.name.localeCompare(right.name);
+      });
   }, [participantStreamers, placedIds]);
   const showSearchDropdown = isSearchDropdownOpen && searchQuery.trim().length > 0;
   const activeSearchIndex =
@@ -703,9 +651,9 @@ function DraftCreatePageContent() {
 
   const removeParticipant = (streamerId: string) => {
     setState((current) => {
-      const nextBoard = cloneBoard(current.board);
+      const nextBoard = cloneDraftBoard(current.board);
 
-      lineRows.forEach(({ key }) => {
+      draftLineRows.forEach(({ key }) => {
         nextBoard[key] = nextBoard[key].map((value) => (value === streamerId ? null : value));
       });
 
@@ -728,7 +676,7 @@ function DraftCreatePageContent() {
   const updateTeamCount = (teamCount: TeamCount) => {
     setState((current) => ({
       ...current,
-      board: normalizeBoard(current.board, teamCount, current.membersPerTeam),
+      board: normalizeDraftBoard(current.board, teamCount, current.membersPerTeam),
       teamCount,
     }));
     setHoveredSlot(null);
@@ -738,7 +686,7 @@ function DraftCreatePageContent() {
   const updateTeamSize = (membersPerTeam: TeamSize) => {
     setState((current) => ({
       ...current,
-      board: normalizeBoard(current.board, current.teamCount, membersPerTeam),
+      board: normalizeDraftBoard(current.board, current.teamCount, membersPerTeam),
       membersPerTeam,
     }));
     setHoveredSlot(null);
@@ -749,18 +697,10 @@ function DraftCreatePageContent() {
     const tournament = tournamentMap.get(tournamentId) ?? customTournament;
     const board =
       tournament.id === customTournamentId
-        ? createEmptyBoard()
+        ? createEmptyDraftBoard()
         : createAutoBoard(tournament, state.teamCount, state.membersPerTeam);
     const participantIds =
-      tournament.id === customTournamentId
-        ? []
-        : Array.from(
-            new Set(
-              Object.values(board).flatMap((slots) =>
-                slots.filter((value): value is string => value !== null),
-              ),
-            ),
-          );
+      tournament.id === customTournamentId ? [] : getPlacedDraftStreamerIds(board);
 
     setState((current) => ({
       ...current,
@@ -776,7 +716,7 @@ function DraftCreatePageContent() {
   const clearAllSlots = () => {
     setState((current) => ({
       ...current,
-      board: createEmptyBoard(),
+      board: createEmptyDraftBoard(),
     }));
     setDraggingStreamerId(null);
     setHoveredSlot(null);
@@ -785,7 +725,7 @@ function DraftCreatePageContent() {
 
   const clearSlot = (line: LineKey, index: number) => {
     setState((current) => {
-      const nextBoard = cloneBoard(current.board);
+      const nextBoard = cloneDraftBoard(current.board);
       nextBoard[line][index] = null;
 
       return {
@@ -796,7 +736,7 @@ function DraftCreatePageContent() {
   };
 
   const canPlaceStreamerOnBoard = (streamerId: string) => {
-    return participantIdSet.has(streamerId) && streamerMap.has(streamerId);
+    return state.participantIds.includes(streamerId) && streamerMap.has(streamerId);
   };
 
   const placeStreamerIntoSlot = (streamerId: string, line: LineKey, index: number) => {
@@ -805,9 +745,9 @@ function DraftCreatePageContent() {
     }
 
     setState((current) => {
-      const nextBoard = cloneBoard(current.board);
+      const nextBoard = cloneDraftBoard(current.board);
 
-      lineRows.forEach(({ key }) => {
+      draftLineRows.forEach(({ key }) => {
         nextBoard[key] = nextBoard[key].map((value) => (value === streamerId ? null : value));
       });
 
@@ -973,7 +913,7 @@ function DraftCreatePageContent() {
     }
 
     const encodedSnapshot = serializeDraftRoomSnapshot({
-      board: normalizeBoard(state.board, state.teamCount, state.membersPerTeam),
+      board: normalizeDraftBoard(state.board, state.teamCount, state.membersPerTeam),
       draftType,
       inviteLink,
       joinedParticipantNames: isPartyMode ? visiblePartyParticipants.map((participant) => participant.name) : [],

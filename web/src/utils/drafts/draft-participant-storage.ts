@@ -1,4 +1,4 @@
-import type { DraftParticipantSession } from "@/types";
+import type { DraftParticipantSession } from "@/types/drafts";
 
 const draftParticipantStorageKeyPrefix = "pickz:draft-participant";
 

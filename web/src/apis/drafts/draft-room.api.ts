@@ -3,7 +3,7 @@ import type {
   CreateDraftRoomResponse,
   JoinDraftRoomResponse,
   StartDraftRoomParams,
-} from "@/types";
+} from "@/types/drafts";
 
 const defaultCreateDraftRoomRequest: CreateDraftRoomRequest = {
   mode: "TOGETHER",

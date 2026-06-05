@@ -10,14 +10,20 @@ import java.util.Map;
 public class ChzzkAuthAttributes implements AuthAttributes {
 
     private final String externalId;
+    private final String email;
     private final String nickname;
 
     public static ChzzkAuthAttributes of(Map<String, Object> attributes) {
 
         Map<String, Object> content = (Map<String, Object>) attributes.get("content");
 
+        if (content == null || content.get("channelId") == null) {
+            throw new IllegalArgumentException("치지직 로그인 응답에 필수 정보가 누락되었습니다.");
+        }
+
         return new ChzzkAuthAttributes(
                 (String) content.get("channelId"),
+                null,
                 (String) content.get("channelName")
         );
     }
@@ -29,7 +35,7 @@ public class ChzzkAuthAttributes implements AuthAttributes {
 
     @Override
     public String getEmail() {
-        return "";
+        return email;
     }
 
     @Override

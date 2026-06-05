@@ -15,6 +15,10 @@ function getSessionStorage() {
   return window.sessionStorage;
 }
 
+function isOptionalString(value: unknown) {
+  return typeof value === "undefined" || typeof value === "string";
+}
+
 function isDraftParticipantSession(value: unknown): value is DraftParticipantSession {
   if (!value || typeof value !== "object") {
     return false;
@@ -23,9 +27,12 @@ function isDraftParticipantSession(value: unknown): value is DraftParticipantSes
   const recordValue = value as Record<string, unknown>;
 
   return (
+    isOptionalString(recordValue.inviteCode) &&
+    typeof recordValue.isHost === "boolean" &&
+    isOptionalString(recordValue.nickname) &&
+    typeof recordValue.participantToken === "string" &&
     typeof recordValue.roomId === "number" &&
-    typeof recordValue.inviteCode === "string" &&
-    typeof recordValue.participantToken === "string"
+    Number.isFinite(recordValue.roomId)
   );
 }
 

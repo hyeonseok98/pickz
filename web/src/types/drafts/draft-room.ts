@@ -4,24 +4,26 @@ export interface CreateDraftRoomRequest {
 }
 
 export interface CreateDraftRoomResponse {
+  isHost: boolean;
   roomId: number;
   inviteCode: string;
-  participantToken: string;
-  isHost?: boolean;
   nickname?: string;
+  participantToken: string;
 }
 
 export interface DraftParticipantSession {
-  roomId: number;
-  inviteCode: string;
+  inviteCode?: string;
+  isHost: boolean;
   nickname?: string;
   participantToken: string;
+  roomId: number;
 }
 
 export interface JoinDraftRoomResponse {
-  participantToken: string;
-  isHost?: boolean;
+  isHost: boolean;
   nickname?: string;
+  participantToken: string;
+  roomId: number;
 }
 
 export interface StartDraftRoomRequest {

@@ -66,52 +66,60 @@ function normalizeNicknameValue(value: unknown) {
   return trimmedValue;
 }
 
-function readNicknameFromPayload(payload: Record<string, unknown>) {
+function readNicknameFromPayload(payload: {
+  nickName?: unknown;
+  nickname?: unknown;
+}) {
   return (
     normalizeNicknameValue(payload.nickname) ??
     normalizeNicknameValue(payload.nickName)
   );
 }
 
+function isRecordValue(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function readIsHostValue(payload: { isHost?: unknown }, fallbackValue: boolean) {
+  return typeof payload.isHost === "boolean" ? payload.isHost : fallbackValue;
+}
+
 function isCreateDraftRoomResponse(payload: unknown): payload is CreateDraftRoomResponse {
-  if (!payload || typeof payload !== "object") {
+  if (!isRecordValue(payload)) {
     return false;
   }
 
-  const recordPayload = payload as Record<string, unknown>;
-
   return (
-    typeof recordPayload.roomId === "number" &&
-    typeof recordPayload.inviteCode === "string" &&
-    typeof recordPayload.participantToken === "string"
+    typeof payload.roomId === "number" &&
+    typeof payload.inviteCode === "string" &&
+    typeof payload.participantToken === "string"
   );
 }
 
 function isJoinDraftRoomResponse(payload: unknown): payload is JoinDraftRoomResponse {
-  if (!payload || typeof payload !== "object") {
+  if (!isRecordValue(payload)) {
     return false;
   }
 
-  const recordPayload = payload as Record<string, unknown>;
-
-  return typeof recordPayload.participantToken === "string";
+  return (
+    typeof payload.participantToken === "string" &&
+    typeof payload.roomId === "number"
+  );
 }
 
 function normalizeCreateDraftRoomResponse(payload: CreateDraftRoomResponse) {
-  const recordPayload = payload as unknown as Record<string, unknown>;
-
   return {
     ...payload,
-    nickname: readNicknameFromPayload(recordPayload),
+    isHost: readIsHostValue(payload, true),
+    nickname: readNicknameFromPayload(payload),
   };
 }
 
 function normalizeJoinDraftRoomResponse(payload: JoinDraftRoomResponse) {
-  const recordPayload = payload as unknown as Record<string, unknown>;
-
   return {
     ...payload,
-    nickname: readNicknameFromPayload(recordPayload),
+    isHost: readIsHostValue(payload, false),
+    nickname: readNicknameFromPayload(payload),
   };
 }
 

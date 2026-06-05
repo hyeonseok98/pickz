@@ -685,6 +685,7 @@ export default function DraftWebSocketTestPage() {
           const participantNumber = nextSessions.length + 1;
 
           nextSessions.push({
+            isHost: response.isHost,
             roomId: hostSession.roomId,
             inviteCode: hostSession.inviteCode,
             nickname: getDisplayNickname(response.nickname, `참가자 ${participantNumber}`),
@@ -765,6 +766,7 @@ export default function DraftWebSocketTestPage() {
     mutationFn: () => createDraftRoom(),
     onSuccess: (response) => {
       const nextSession: TestParticipantSession = {
+        isHost: response.isHost,
         roomId: response.roomId,
         inviteCode: response.inviteCode,
         nickname: getDisplayNickname(response.nickname, "방장"),
@@ -788,7 +790,7 @@ export default function DraftWebSocketTestPage() {
   const joinRoomMutation = useMutation({
     mutationKey: ["draft-room-join", hostSession?.inviteCode],
     mutationFn: async () => {
-      if (!hostSession) {
+      if (!hostSession || !hostSession.inviteCode) {
         throw new Error("먼저 방을 생성하세요.");
       }
 
@@ -801,7 +803,7 @@ export default function DraftWebSocketTestPage() {
   const joinRemainingParticipantsMutation = useMutation({
     mutationKey: ["draft-room-join-remaining", hostSession?.inviteCode, remainingGuestCount],
     mutationFn: async () => {
-      if (!hostSession) {
+      if (!hostSession || !hostSession.inviteCode) {
         throw new Error("먼저 방을 생성하세요.");
       }
 
@@ -841,7 +843,7 @@ export default function DraftWebSocketTestPage() {
     },
   });
 
-  const inviteLink = hostSession ? createInviteLink(hostSession.inviteCode) : "";
+  const inviteLink = hostSession?.inviteCode ? createInviteLink(hostSession.inviteCode) : "";
   const handleCopyInviteLink = async () => {
     if (!inviteLink) {
       return;
@@ -970,7 +972,7 @@ export default function DraftWebSocketTestPage() {
 
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                 <DetailRow label="roomId" value={String(hostSession.roomId)} />
-                <DetailRow label="inviteCode" value={hostSession.inviteCode} />
+                <DetailRow label="inviteCode" value={hostSession.inviteCode ?? ""} />
                 <DetailRow label="host participantToken" value={hostSession.participantToken} />
                 <DetailRow
                   label="sessionStorage 저장"

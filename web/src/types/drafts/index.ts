@@ -20,6 +20,19 @@ export type {
   StartDraftRoomParams,
   StartDraftRoomRequest,
 } from "./draft-room";
-export type { DraftRoomRawMessage } from "./draft-room-event";
+export type {
+  DraftRoomChatMessageEvent,
+  DraftRoomErrorEvent,
+  DraftRoomEvent,
+  DraftRoomEventSuccessCode,
+  DraftRoomParticipantJoinedEvent,
+  DraftRoomParticipantJoinedEventPayload,
+  DraftRoomPickSucceededEvent,
+  DraftRoomPickSucceededEventResult,
+  DraftRoomRawMessage,
+  DraftRoomStartedEvent,
+  DraftRoomStartedEventPayload,
+  DraftRoomStatus,
+} from "./draft-room-event";
 export type { DraftRoomSnapshot } from "./draft-room-snapshot";
 export type { StreamerDirectoryItem, StreamerInfo, StreamerLine } from "./streamer";

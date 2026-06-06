@@ -11,6 +11,7 @@ import team.pickz.api.domain.draft.application.dto.request.CoachSelectionRequest
 import team.pickz.api.domain.draft.application.dto.request.DraftRoomStreamerRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomInitRequest;
+import team.pickz.api.domain.draft.application.dto.response.DraftPlayStateResponse;
 import team.pickz.api.domain.draft.application.dto.response.DraftRoomStreamerResponse;
 import team.pickz.api.domain.draft.application.dto.response.ParticipantResponse;
 import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
@@ -77,6 +78,7 @@ public class DraftRoomController implements DraftRoomDocsController {
             @Valid @RequestBody CoachSelectionRequest request
     ) {
         draftRoomService.selectCoach(roomId, participantToken, request.coachName(), request.targetTurnOrder());
+
         return ResponseEntity.ok().build();
     }
 
@@ -86,7 +88,17 @@ public class DraftRoomController implements DraftRoomDocsController {
             @RequestHeader("X-Participant-Token") String participantToken
     ) {
         draftRoomService.startDraft(roomId, participantToken);
+
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{roomId}/state")
+    public ResponseEntity<DraftPlayStateResponse> getDraftPlayState(
+            @PathVariable("roomId") Long roomId
+    ) {
+        DraftPlayStateResponse response = draftRoomService.getDraftPlayState(roomId);
+
+        return ResponseEntity.ok(response);
     }
 
     //    @PatchMapping("/{roomId}/settings")

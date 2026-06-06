@@ -16,6 +16,7 @@ import team.pickz.api.domain.draft.application.dto.request.CoachSelectionRequest
 import team.pickz.api.domain.draft.application.dto.request.DraftRoomStreamerRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomInitRequest;
+import team.pickz.api.domain.draft.application.dto.response.DraftPlayStateResponse;
 import team.pickz.api.domain.draft.application.dto.response.DraftRoomStreamerResponse;
 import team.pickz.api.domain.draft.application.dto.response.ParticipantResponse;
 import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
@@ -124,6 +125,19 @@ public interface DraftRoomDocsController {
 
             @Parameter(description = "방장의 참여자 토큰", in = ParameterIn.HEADER, required = true)
             @RequestHeader("X-Participant-Token") String participantToken
+    );
+
+    @Operation(
+            summary = "드래프트 게임 화면 상태 조회",
+            description = "드래프트 게임(플레이) 화면 진입 시 필요한 방 상태, 참가자(감독) 배치 정보, 스트리머 풀 등 모든 초기 설정 데이터를 한 번에 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "게임 상태 조회 성공")
+    })
+    @GetMapping("/{roomId}/state")
+    ResponseEntity<DraftPlayStateResponse> getDraftPlayState(
+            @Parameter(description = "드래프트 방 ID", example = "1")
+            @PathVariable("roomId") Long roomId
     );
 
 //    @Operation(

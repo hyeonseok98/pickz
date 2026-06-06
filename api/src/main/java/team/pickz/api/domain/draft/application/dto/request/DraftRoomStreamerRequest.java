@@ -8,13 +8,13 @@ public record DraftRoomStreamerRequest(
 
         String top,
 
-        String jungle,
+        String jug,
 
         String mid,
 
         String adc,
 
-        String support,
+        String sup,
 
         String coach
 

@@ -31,6 +31,8 @@ public class DraftParticipant {
 
     private Integer turnOrder;
 
+    private String selectedCoachName;
+
     @Builder
     public DraftParticipant(Long roomId, Long memberId, String nickname, boolean isHost) {
         this.roomId = roomId;
@@ -41,6 +43,11 @@ public class DraftParticipant {
     }
 
     public void assignTurnOrder(int turnOrder) {
+        this.turnOrder = turnOrder;
+    }
+
+    public void selectCoach(String coachName, int turnOrder) {
+        this.selectedCoachName = coachName;
         this.turnOrder = turnOrder;
     }
 

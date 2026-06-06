@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.draft.application.dto.request.ChatMessageRequest;
 import team.pickz.api.domain.draft.application.dto.response.ChatMessageResponse;
 import team.pickz.api.domain.draft.application.event.DraftChatEvent;
-import team.pickz.api.domain.draft.domain.MessageType;
+import team.pickz.api.domain.draft.domain.type.MessageType;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.repository.DraftParticipantRepository;
 

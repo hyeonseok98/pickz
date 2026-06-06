@@ -5,8 +5,8 @@ import org.springframework.stereotype.Repository;
 import team.pickz.api.domain.draft.domain.entity.DraftPick;
 import team.pickz.api.domain.draft.domain.repository.DraftPickRepository;
 
-@Repository
 @RequiredArgsConstructor
+@Repository
 public class DraftPickRepositoryImpl implements DraftPickRepository {
 
     private final DraftPickJpaRepository draftPickJpaRepository;

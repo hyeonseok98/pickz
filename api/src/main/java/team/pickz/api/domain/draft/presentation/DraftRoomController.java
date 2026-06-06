@@ -7,13 +7,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import team.pickz.api.domain.draft.application.DraftRoomService;
+import team.pickz.api.domain.draft.application.dto.request.CoachSelectionRequest;
+import team.pickz.api.domain.draft.application.dto.request.DraftRoomStreamerRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomInitRequest;
+import team.pickz.api.domain.draft.application.dto.response.DraftPlayStateResponse;
+import team.pickz.api.domain.draft.application.dto.response.DraftRoomStreamerResponse;
 import team.pickz.api.domain.draft.application.dto.response.ParticipantResponse;
 import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
 import team.pickz.api.global.annotation.MemberId;
 
 import java.net.URI;
+import java.util.List;
 
 @RequiredArgsConstructor
 @RequestMapping("/drafts/rooms")
@@ -27,11 +32,7 @@ public class DraftRoomController implements DraftRoomDocsController {
             //@MemberId Long hostId,
             @Valid @RequestBody RoomInitRequest request
     ) {
-        RoomInitResponse response = draftRoomService.initRoom(
-                //hostId,
-                request.mode(),
-                request.ruleName()
-        );
+        RoomInitResponse response = draftRoomService.initRoom(request);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{roomId}")
@@ -39,6 +40,26 @@ public class DraftRoomController implements DraftRoomDocsController {
                 .toUri();
 
         return ResponseEntity.created(location).body(response);
+    }
+
+    @PostMapping("/{roomId}/streamers")
+    public ResponseEntity<Void> saveDraftRoomStreamers(
+            @PathVariable("roomId") Long roomId,
+            @RequestHeader("X-Participant-Token") String participantToken,
+            @Valid @RequestBody List<DraftRoomStreamerRequest> requests
+    ) {
+        draftRoomService.saveDraftRoomStreamers(roomId, participantToken, requests);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{roomId}/streamers")
+    public ResponseEntity<DraftRoomStreamerResponse> getDraftRoomStreamers(
+            @PathVariable("roomId") Long roomId
+    ) {
+        DraftRoomStreamerResponse response = draftRoomService.getDraftRoomStreamers(roomId);
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("invites/{inviteCode}/participants")
@@ -50,15 +71,45 @@ public class DraftRoomController implements DraftRoomDocsController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping("/{roomId}/settings")
-    public ResponseEntity<Void> configureAndStartRoom(
+    @PatchMapping("/{roomId}/participants/coach")
+    public ResponseEntity<Void> selectCoach(
             @PathVariable("roomId") Long roomId,
-            @RequestHeader("X-Participant-Token") String participantToken, // 방장 토큰
-            @Valid @RequestBody RoomConfigureRequest request
+            @RequestHeader("X-Participant-Token") String participantToken,
+            @Valid @RequestBody CoachSelectionRequest request
     ) {
-        draftRoomService.configureAndStartRoom(roomId, participantToken, request);
+        draftRoomService.selectCoach(roomId, participantToken, request.coachName(), request.targetTurnOrder());
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/{roomId}/start")
+    public ResponseEntity<Void> startDraft(
+            @PathVariable("roomId") Long roomId,
+            @RequestHeader("X-Participant-Token") String participantToken
+    ) {
+        draftRoomService.startDraft(roomId, participantToken);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{roomId}/state")
+    public ResponseEntity<DraftPlayStateResponse> getDraftPlayState(
+            @PathVariable("roomId") Long roomId
+    ) {
+        DraftPlayStateResponse response = draftRoomService.getDraftPlayState(roomId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    //    @PatchMapping("/{roomId}/settings")
+//    public ResponseEntity<Void> configureAndStartRoom(
+//            @PathVariable("roomId") Long roomId,
+//            @RequestHeader("X-Participant-Token") String participantToken, // 방장 토큰
+//            @Valid @RequestBody RoomConfigureRequest request
+//    ) {
+//        draftRoomService.configureAndStartRoom(roomId, participantToken, request);
+//
+//        return ResponseEntity.noContent().build();
+//    }
 
 }

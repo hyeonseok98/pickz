@@ -103,7 +103,7 @@ public interface DraftRoomDocsController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "스트리머 풀 조회 성공")
     })
-    @GetMapping("/{roomId}/streamer-pool")
+    @GetMapping("/{roomId}/streamers")
     ResponseEntity<DraftRoomStreamerResponse> getDraftRoomStreamers(
             @Parameter(description = "드래프트 방 ID", example = "1")
             @PathVariable("roomId") Long roomId

@@ -1,5 +1,6 @@
 package team.pickz.api.domain.draft.application.dto.request;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import team.pickz.api.domain.draft.domain.type.DraftMode;
 import team.pickz.api.domain.draft.domain.type.ParticipationType;
@@ -16,8 +17,12 @@ public record RoomInitRequest(
 
         String preset,
 
+        @NotNull(message = "팀 수는 필수입니다.")
+        @Min(value = 1, message = "팀 수는 1 이상이어야 합니다.")
         Integer teamCount,
 
+        @NotNull(message = "팀 인원 수는 필수입니다.")
+        @Min(value = 1, message = "팀 인원 수는 1 이상이어야 합니다.")
         Integer teamSize
 
 ) {

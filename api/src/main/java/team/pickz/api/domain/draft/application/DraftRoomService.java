@@ -80,7 +80,7 @@ public class DraftRoomService {
 
     @Transactional
     public void saveDraftRoomStreamers(Long roomId, String participantToken, List<DraftRoomStreamerRequest> requests) {
-        DraftParticipant requestor = draftParticipantRepository.findByParticipantToken(participantToken)
+        DraftParticipant requestor = draftParticipantRepository.findByRoomIdAndParticipantToken(roomId, participantToken)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 참여자입니다."));
 
         if (!requestor.isHost()) {

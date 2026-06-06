@@ -21,7 +21,6 @@ interface DraftInviteScreenProps {
   connectionStatus: string;
   errorMessage: string;
   infoMessage: string;
-  inviteCode?: string;
   inviteLink: string;
   isHost: boolean;
   isInitializing: boolean;
@@ -70,7 +69,6 @@ export function DraftInviteScreen({
   connectionStatus,
   errorMessage,
   infoMessage,
-  inviteCode,
   inviteLink,
   isHost,
   isInitializing,
@@ -99,8 +97,8 @@ export function DraftInviteScreen({
 
   return (
     <main className="min-h-full bg-background px-4 py-4 sm:px-6 sm:py-6">
-      <div className="flex flex-col gap-5">
-        <section className="rounded-3xl border border-border bg-surface px-5 py-5 shadow-sm sm:px-6">
+      <div className="mx-auto flex max-w-screen-2xl flex-col gap-4">
+        <section className="rounded-3xl border border-border bg-surface px-4 py-4 shadow-sm sm:px-5 sm:py-4">
           <Link
             href={backHref}
             className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary"
@@ -110,22 +108,22 @@ export function DraftInviteScreen({
 
           <DraftStepper currentStep="invite" mode="party" />
 
-          <div className="mt-6 max-w-4xl">
-            <h1 className="text-3xl font-bold tracking-[-0.04em] text-text-primary sm:text-4xl">
+          <div className="mt-4 max-w-4xl">
+            <h1 className="text-[1.7rem] font-bold tracking-[-0.04em] text-text-primary sm:text-[1.9rem]">
               참가자 초대
             </h1>
-            <p className="mt-3 text-sm leading-6 text-text-secondary">
+            <p className="mt-2 text-sm leading-5 text-text-secondary">
               방 생성, 참가자 입장, 대기실 확인, 게임 시작을 이 단계에서 처리합니다.
             </p>
           </div>
 
-          <div className="mt-6 grid gap-3 lg:grid-cols-4">
+          <div className="mt-4 grid gap-2.5 lg:grid-cols-4">
             {summaryItems.map((item) => (
               <SummaryItem key={item.label} label={item.label} value={item.value} />
             ))}
           </div>
 
-          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          <div className="mt-3 grid gap-3 lg:grid-cols-2">
             <StatusBanner
               message={
                 isInitializing
@@ -139,9 +137,8 @@ export function DraftInviteScreen({
           </div>
         </section>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">
+        <div className="grid gap-3 xl:grid-cols-[minmax(280px,0.74fr)_minmax(0,1.26fr)]">
           <DraftInviteLinkCard
-            inviteCode={inviteCode}
             inviteLink={inviteLink}
             isHost={isHost}
             onCopyInviteLink={onCopyInviteLink}
@@ -152,16 +149,16 @@ export function DraftInviteScreen({
           />
         </div>
 
-        <section className="rounded-3xl border border-border bg-surface px-5 py-5 shadow-sm sm:px-6">
-          <h2 className="text-xl font-bold tracking-[-0.03em] text-text-primary">게임 시작</h2>
-          <p className="mt-2 text-sm leading-6 text-text-secondary">
+        <section className="rounded-3xl border border-border bg-surface px-4 py-4 shadow-sm sm:px-5 sm:py-4">
+          <h2 className="text-base font-bold tracking-[-0.03em] text-text-primary">게임 시작</h2>
+          <p className="mt-1 text-sm leading-5 text-text-secondary">
             {isHost
               ? "참가 인원이 준비되면 팀 수와 팀당 인원 기준으로 게임 시작 요청을 보냅니다."
               : "방장이 게임을 시작하면 자동으로 플레이 화면으로 이동합니다."}
           </p>
 
           <DraftActionFooter
-            className="mt-5"
+            className="mt-4"
             title={isHost ? "방장만 게임을 시작할 수 있습니다." : "방장의 시작 요청을 기다리는 중입니다."}
             description={
               isHost

@@ -22,6 +22,10 @@ function sanitizeTeamSize(value: string | null): TeamSize {
   return value === "3" || value === "4" || value === "5" || value === "6" || value === "7" ? value : "5";
 }
 
+function sanitizeBooleanFlag(value: string | null) {
+  return value === "true";
+}
+
 function DraftInvitePage() {
   const searchParams = useSearchParams();
   const draftType = sanitizeDraftType(searchParams.get("draftType") ?? searchParams.get("type"));
@@ -29,8 +33,12 @@ function DraftInvitePage() {
   const inviteCode = searchParams.get("inviteCode") ?? undefined;
   const teamCount = sanitizeTeamCount(searchParams.get("teamCount"));
   const teamSize = sanitizeTeamSize(searchParams.get("teamSize") ?? searchParams.get("membersPerTeam"));
+  const headCoachEnabled = sanitizeBooleanFlag(searchParams.get("headCoachEnabled"));
+  const coachEnabled = sanitizeBooleanFlag(searchParams.get("coachEnabled"));
   const inviteRoom = useDraftInviteRoom({
+    coachEnabled,
     draftType,
+    headCoachEnabled,
     inviteCode,
     mode,
     teamCount,
@@ -43,7 +51,6 @@ function DraftInvitePage() {
       connectionStatus={inviteRoom.connectionStatus}
       errorMessage={inviteRoom.errorMessage}
       infoMessage={inviteRoom.infoMessage}
-      inviteCode={inviteRoom.inviteCode}
       inviteLink={inviteRoom.inviteLink}
       isHost={inviteRoom.isHost}
       isInitializing={inviteRoom.isInitializing}
@@ -64,7 +71,7 @@ export default function DraftInviteRoutePage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-[calc(100dvh-var(--header-height))] bg-background px-6 py-6 xl:px-8">
+        <main className="min-h-[calc(100dvh-var(--header-height))] bg-background px-4 py-4 sm:px-6 sm:py-5 xl:px-8">
           <section className="rounded-3xl border border-border bg-surface p-6 text-sm font-semibold text-text-secondary shadow-sm">
             참가자 초대 정보를 불러오는 중입니다.
           </section>

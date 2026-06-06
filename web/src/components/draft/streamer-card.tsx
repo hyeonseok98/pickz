@@ -71,8 +71,8 @@ export function DraftStreamerCard({
           size === "snake"
             ? "size-9"
             : size === "slot"
-              ? "size-10"
-              : "size-11",
+              ? "size-9"
+              : "size-10",
         )}
       />
       <span
@@ -81,8 +81,8 @@ export function DraftStreamerCard({
           size === "snake"
             ? "mt-1.5 text-xs leading-4"
             : size === "slot"
-              ? "mt-2 text-xs"
-              : "mt-3 text-xs",
+              ? "mt-1.5 text-[11px]"
+              : "mt-2 text-xs",
         )}
       >
         {name}
@@ -107,7 +107,7 @@ export function DraftStreamerCard({
       onDragOver={onDragOver}
       className={cn(
         "relative rounded-3xl border transition-all",
-        "p-2.5",
+        size === "slot" ? "p-2" : "p-2.5",
         interaction === "drag" && "cursor-grab active:cursor-grabbing",
         tone === "active"
           ? "border-violet-300 bg-violet-100 shadow-sm"
@@ -141,7 +141,7 @@ export function DraftStreamerCard({
               ? "h-full min-h-0 px-1.5"
               : size === "slot"
                 ? "min-h-20"
-                : "min-h-22",
+                : "min-h-20",
           )}
         >
           {cardContent}
@@ -154,7 +154,7 @@ export function DraftStreamerCard({
               ? "h-full min-h-0 px-1.5"
               : size === "slot"
                 ? "min-h-20"
-                : "min-h-22",
+                : "min-h-20",
             interaction === "drag" && "pointer-events-none",
           )}
         >

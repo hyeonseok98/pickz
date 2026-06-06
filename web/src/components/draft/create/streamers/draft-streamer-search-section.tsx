@@ -26,6 +26,7 @@ interface DraftStreamerSearchSectionProps {
   onSearchKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
   onSearchQueryChange: (value: string) => void;
   participantCount: number;
+  requiredParticipantCount: number;
   renderSearchResultStatus: (isParticipant: boolean, isPlaced: boolean) => ReactNode;
   searchFieldRef: RefObject<HTMLDivElement | null>;
   searchInputRef: RefObject<HTMLInputElement | null>;
@@ -51,6 +52,7 @@ export function DraftStreamerSearchSection({
   onSearchKeyDown,
   onSearchQueryChange,
   participantCount,
+  requiredParticipantCount,
   renderSearchResultStatus,
   searchFieldRef,
   searchInputRef,
@@ -63,10 +65,10 @@ export function DraftStreamerSearchSection({
     <SectionCard
       className="xl:col-span-4"
       title="검색 및 참여 스트리머"
-      description="검색 결과에서 사용자를 추가한 뒤, 참여 스트리머 목록에서 드래그해 보드에 배치합니다."
+      description="검색 결과에서 사용자를 추가한 뒤, 참여 스트리머 목록에서 드래그해 보드에 배치해 주세요."
     >
-      <div className="space-y-4">
-        <div className="space-y-3">
+      <div className="space-y-3">
+        <div className="space-y-2.5">
           <div ref={searchFieldRef} className="relative">
             <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">
               <Image src="/icons/search.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
@@ -80,7 +82,7 @@ export function DraftStreamerSearchSection({
               onFocus={onSearchFocus}
               onKeyDown={onSearchKeyDown}
               placeholder="스트리머 이름으로 검색"
-              className="h-12 w-full rounded-2xl border border-border bg-surface px-4 pl-11 pr-11 text-sm text-text-primary outline-none transition focus:border-violet-300"
+              className="h-10 w-full rounded-2xl border border-border bg-surface px-4 pl-10 pr-10 text-sm text-text-primary outline-none transition focus:border-violet-300"
               role="combobox"
               aria-expanded={showSearchDropdown}
               aria-controls="streamer-search-results"
@@ -109,7 +111,7 @@ export function DraftStreamerSearchSection({
                     현재 검색 조건에 맞는 스트리머가 없습니다.
                   </div>
                 ) : (
-                  <div className="max-h-72 overflow-y-auto p-2">
+                    <div className="max-h-64 overflow-y-auto p-2">
                     {searchResults.map((streamer, index) => (
                       <button
                         type="button"
@@ -132,14 +134,14 @@ export function DraftStreamerSearchSection({
                           activeSearchIndex === index ? "bg-surface-muted" : "hover:bg-surface-muted",
                         )}
                       >
-                        <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex min-w-0 items-center gap-2.5">
                           <Image
                             src={streamer.avatarDataUrl}
                             alt={streamer.name}
-                            width={44}
-                            height={44}
+                            width={40}
+                            height={40}
                             unoptimized
-                            className="size-11 shrink-0 rounded-full bg-surface-muted object-contain"
+                            className="size-10 shrink-0 rounded-full bg-surface-muted object-contain"
                           />
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-text-primary">{streamer.name}</p>
@@ -163,11 +165,13 @@ export function DraftStreamerSearchSection({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface-muted px-4 py-4">
+        <div className="rounded-3xl border border-border bg-surface-muted px-4 py-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="whitespace-nowrap text-sm font-semibold text-text-primary">참여 스트리머</p>
+            <p className="whitespace-nowrap text-sm font-semibold text-text-primary">선택된 스트리머</p>
             <div className="flex flex-wrap gap-2">
-              <StatusChip tone="muted">{participantCount}명 참여중</StatusChip>
+              <StatusChip tone="muted">
+                {participantCount} / {requiredParticipantCount}명
+              </StatusChip>
               <StatusChip tone="muted">{filteredStreamers.length}명 미배치</StatusChip>
             </div>
           </div>

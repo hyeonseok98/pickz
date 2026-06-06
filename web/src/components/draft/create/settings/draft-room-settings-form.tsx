@@ -14,23 +14,25 @@ function FormSection({
   return (
     <section>
       <div className="flex items-center gap-2">
-        <h2 className="text-sm font-bold text-text-primary">{title}</h2>
+        <h2 className="text-base font-bold text-text-primary">{title}</h2>
         <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-700">
           {optional ? "선택" : "필수"}
         </span>
       </div>
-      <div className="mt-3">{children}</div>
+      <div className="mt-2.5">{children}</div>
     </section>
   );
 }
 
 function SelectControl<TValue extends string>({
+  disabled,
   label,
   onChange,
   options,
   parseValue,
   value,
 }: {
+  disabled?: boolean;
   label: string;
   onChange: (value: TValue) => void;
   options: TValue[];
@@ -41,11 +43,12 @@ function SelectControl<TValue extends string>({
     <label className="block">
       <span className="text-sm font-bold text-text-primary">{label}</span>
       <select
+        disabled={disabled}
         value={value}
         onChange={(event) => {
           onChange(parseValue(event.target.value));
         }}
-        className="mt-3 h-12 w-full cursor-pointer rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-text-primary transition-colors outline-none focus:border-violet-300"
+        className="mt-3 h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-text-primary transition-colors outline-none focus:border-violet-300 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -58,20 +61,23 @@ function SelectControl<TValue extends string>({
 }
 
 function RoomTitleField({
+  disabled,
   onRoomTitleChange,
   roomTitle,
 }: {
+  disabled: boolean;
   onRoomTitleChange: (roomTitle: string) => void;
   roomTitle: string;
 }) {
   return (
     <input
+      disabled={disabled}
       value={roomTitle}
       onChange={(event) => {
         onRoomTitleChange(event.target.value);
       }}
       placeholder="예) 자낭대 시즌2 연습방"
-      className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-text-primary transition-colors outline-none placeholder:text-text-muted focus:border-violet-300"
+      className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-text-primary transition-colors outline-none placeholder:text-text-muted focus:border-violet-300 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
     />
   );
 }
@@ -104,6 +110,7 @@ function DraftOptionGroup<TValue extends string>({
 }
 
 function TeamCompositionFields({
+  isTeamCompositionDisabled,
   onTeamCountChange,
   onTeamSizeChange,
   teamCount,
@@ -112,6 +119,7 @@ function TeamCompositionFields({
   teamSizeOptions,
 }: Pick<
   DraftRoomSettingsFormProps,
+  | "isTeamCompositionDisabled"
   | "onTeamCountChange"
   | "onTeamSizeChange"
   | "teamCount"
@@ -122,6 +130,7 @@ function TeamCompositionFields({
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <SelectControl
+        disabled={isTeamCompositionDisabled}
         label="팀 개수"
         onChange={onTeamCountChange}
         options={teamCountOptions}
@@ -129,6 +138,7 @@ function TeamCompositionFields({
         value={teamCount}
       />
       <SelectControl
+        disabled={isTeamCompositionDisabled}
         label="팀당 인원"
         onChange={onTeamSizeChange}
         options={teamSizeOptions}
@@ -141,9 +151,13 @@ function TeamCompositionFields({
 
 export function DraftRoomSettingsForm(props: DraftRoomSettingsFormProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <FormSection optional title="방 제목">
-        <RoomTitleField onRoomTitleChange={props.onRoomTitleChange} roomTitle={props.roomTitle} />
+        <RoomTitleField
+          disabled={props.isRoomTitleDisabled}
+          onRoomTitleChange={props.onRoomTitleChange}
+          roomTitle={props.roomTitle}
+        />
       </FormSection>
 
       <FormSection title="드래프트 방식 선택">
@@ -170,14 +184,17 @@ export function DraftRoomSettingsForm(props: DraftRoomSettingsFormProps) {
         />
       </FormSection>
 
-      <TeamCompositionFields
-        onTeamCountChange={props.onTeamCountChange}
-        onTeamSizeChange={props.onTeamSizeChange}
-        teamCount={props.teamCount}
-        teamCountOptions={props.teamCountOptions}
-        teamSize={props.teamSize}
-        teamSizeOptions={props.teamSizeOptions}
-      />
+      <FormSection optional title="팀 구성">
+        <TeamCompositionFields
+          isTeamCompositionDisabled={props.isTeamCompositionDisabled}
+          onTeamCountChange={props.onTeamCountChange}
+          onTeamSizeChange={props.onTeamSizeChange}
+          teamCount={props.teamCount}
+          teamCountOptions={props.teamCountOptions}
+          teamSize={props.teamSize}
+          teamSizeOptions={props.teamSizeOptions}
+        />
+      </FormSection>
     </div>
   );
 }

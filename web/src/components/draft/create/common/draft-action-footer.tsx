@@ -27,14 +27,14 @@ export function DraftActionFooter({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 border-t border-border pt-4 lg:flex-row lg:items-center lg:justify-between",
+        "flex flex-col gap-2.5 lg:flex-row lg:items-end lg:justify-between",
         className,
       )}
     >
-      <div className="rounded-2xl border border-border bg-surface-muted px-4 py-4">
+      <div className="rounded-2xl border border-border bg-surface-muted px-4 py-2.5 lg:max-w-xl">
         {title ? <p className="text-sm font-semibold text-text-primary">{title}</p> : null}
         {description ? (
-          <p className={cn("text-sm leading-6 text-text-secondary", title ? "mt-2" : "")}>
+          <p className={cn("text-sm leading-5 text-text-secondary", title ? "mt-1.5" : "")}>
             {description}
           </p>
         ) : null}
@@ -44,7 +44,7 @@ export function DraftActionFooter({
         {secondaryHref && secondaryLabel ? (
           <Link
             href={secondaryHref}
-            className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-5 text-sm font-bold text-text-primary"
+            className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-5 text-sm font-bold text-text-primary"
           >
             <Image
               src="/icons/arrow_back.svg"
@@ -63,10 +63,10 @@ export function DraftActionFooter({
           onClick={onPrimaryClick}
           disabled={primaryDisabled}
           className={cn(
-            "inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl px-5 text-sm font-bold transition-colors",
+            "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-2xl px-5 text-sm font-bold transition-colors lg:min-w-[220px]",
             primaryDisabled
               ? "cursor-not-allowed bg-surface-muted text-text-muted"
-              : "cursor-pointer bg-text-primary text-text-inverse",
+              : "cursor-pointer bg-violet-600 text-text-inverse hover:bg-violet-700",
           )}
         >
           <span>{primaryLabel}</span>

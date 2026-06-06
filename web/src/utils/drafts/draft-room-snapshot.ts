@@ -49,7 +49,9 @@ function isDraftRoomSnapshot(value: unknown): value is DraftRoomSnapshot {
 
   return (
     isBoardState(recordValue.board) &&
+    typeof recordValue.coachEnabled === "boolean" &&
     isIncludedString(validDraftTypes, recordValue.draftType) &&
+    typeof recordValue.headCoachEnabled === "boolean" &&
     isIncludedString(validParticipationModes, recordValue.participationMode) &&
     isIncludedString(validRoomVisibility, recordValue.visibility) &&
     isIncludedString(validTeamCounts, recordValue.teamCount) &&
@@ -63,7 +65,7 @@ function isDraftRoomSnapshot(value: unknown): value is DraftRoomSnapshot {
 }
 
 export function serializeDraftRoomSnapshot(snapshot: DraftRoomSnapshot) {
-  return encodeURIComponent(JSON.stringify(snapshot));
+  return JSON.stringify(snapshot);
 }
 
 export function parseDraftRoomSnapshot(encodedSnapshot: string | null): DraftRoomSnapshot | null {
@@ -72,10 +74,16 @@ export function parseDraftRoomSnapshot(encodedSnapshot: string | null): DraftRoo
   }
 
   try {
-    const parsedValue = JSON.parse(decodeURIComponent(encodedSnapshot)) as unknown;
+    const parsedValue = JSON.parse(encodedSnapshot) as unknown;
 
     return isDraftRoomSnapshot(parsedValue) ? parsedValue : null;
   } catch {
-    return null;
+    try {
+      const parsedValue = JSON.parse(decodeURIComponent(encodedSnapshot)) as unknown;
+
+      return isDraftRoomSnapshot(parsedValue) ? parsedValue : null;
+    } catch {
+      return null;
+    }
   }
 }

@@ -19,12 +19,12 @@ export function SectionCard({
   title: string;
 }) {
   return (
-    <section className={cn("rounded-3xl border border-border bg-surface p-5 shadow-sm sm:p-6", className)}>
+    <section className={cn("rounded-3xl border border-border bg-surface p-4 shadow-sm sm:p-4.5", className)}>
       <div>
-        <h2 className="text-xl font-bold tracking-[-0.03em] text-text-primary">{title}</h2>
-        <p className="mt-2 text-sm leading-6 text-text-secondary">{description}</p>
+        <h2 className="text-base font-bold tracking-[-0.03em] text-text-primary">{title}</h2>
+        <p className="mt-1 text-sm leading-5 text-text-secondary">{description}</p>
       </div>
-      <div className="mt-5">{children}</div>
+      <div className="mt-3">{children}</div>
     </section>
   );
 }
@@ -72,7 +72,7 @@ export function SelectField({
       onChange={(event) => {
         onChange(event.target.value);
       }}
-      className="h-12 w-full cursor-pointer rounded-2xl border border-border bg-surface px-4 text-sm text-text-primary outline-none transition focus:border-violet-300"
+      className="h-11 w-full cursor-pointer rounded-2xl border border-border bg-surface px-4 text-sm text-text-primary outline-none transition focus:border-violet-300"
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
@@ -152,7 +152,7 @@ export function BoardSlot({
       onDragLeave={onDragLeave}
       onDragOver={onDragOver}
       className={cn(
-        "relative rounded-3xl border p-2.5 transition-all",
+        "relative rounded-3xl border p-2 transition-all",
         dropReady || touchReady
           ? "border-violet-300 bg-violet-50 shadow-sm"
           : "border-border bg-surface hover:border-violet-200",
@@ -162,12 +162,12 @@ export function BoardSlot({
         type="button"
         onClick={onPlaceSelected}
         className={cn(
-          "flex min-h-20 w-full flex-col items-center justify-center rounded-2xl px-2 text-center",
+          "flex min-h-16 w-full flex-col items-center justify-center rounded-2xl px-2 text-center",
           onPlaceSelected ? "cursor-pointer" : "cursor-default",
         )}
       >
-        <span className="text-xl font-light text-text-muted">+</span>
-        <p className="mt-1 text-xs font-semibold text-text-secondary">
+        <span className="text-lg font-light text-text-muted">+</span>
+        <p className="mt-1 text-[11px] font-semibold text-text-secondary">
           {dropReady ? "여기에 드롭" : touchReady ? "탭해서 배치" : "스트리머 배치"}
         </p>
       </button>

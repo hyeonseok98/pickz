@@ -3,7 +3,9 @@ import type { DraftType, ParticipationMode, RoomVisibility, TeamCount, TeamSize 
 
 export interface DraftCreateFlowState {
   board: BoardState;
+  coachEnabled: boolean;
   draftType: DraftType;
+  headCoachEnabled: boolean;
   participantIds: string[];
   participationMode: ParticipationMode;
   password: string;
@@ -16,12 +18,16 @@ export interface DraftCreateFlowState {
 
 export interface ApplyTournamentSelectionParams {
   board: BoardState;
+  coachEnabled: boolean;
+  headCoachEnabled: boolean;
   participantIds: string[];
   tournamentId: string;
 }
 
 export interface InitializeDraftCreateSettingsParams {
+  coachEnabled?: boolean;
   draftType: DraftType;
+  headCoachEnabled?: boolean;
   participationMode: ParticipationMode;
   roomTitle?: string;
   teamCount: TeamCount;

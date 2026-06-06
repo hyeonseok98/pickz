@@ -2080,6 +2080,43 @@ export const streamerInfoMocks: StreamerInfo[] = [
 
 const mockStreamerLineCycle: StreamerLine[] = ["top", "jungle", "mid", "adc", "support"];
 
+const streamerLineOverrides: Partial<Record<string, StreamerLine>> = {
+  갱맘: "jungle",
+  "갱맘 GBM": "jungle",
+  강소연: "top",
+  고수달: "adc",
+  네클릿: "mid",
+  던: "support",
+  룩삼: "top",
+  러너: "top",
+  로컨: "coach",
+  마린: "headCoach",
+  베릴: "headCoach",
+  BeryL: "headCoach",
+  뱅: "jungle",
+  샘웨: "top",
+  소우릎: "jungle",
+  순당무: "adc",
+  앰비션: "mid",
+  엄티: "coach",
+  운타라: "jungle",
+  윤가놈: "support",
+  인간젤리: "headCoach",
+  침착맨: "support",
+  캬하하: "adc",
+  "캬하하 이석현": "adc",
+  코치: "coach",
+  크캣: "adc",
+  큐베: "headCoach",
+  "큐베 CuVee": "headCoach",
+  푸린: "support",
+  플라이: "coach",
+  Fly: "coach",
+  플레임: "mid",
+  헤징: "mid",
+  노페: "coach",
+};
+
 function createAvatarDataUrl(backgroundColor: string) {
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
@@ -2096,6 +2133,10 @@ function getMockStreamerLine(index: number) {
   return mockStreamerLineCycle[index % mockStreamerLineCycle.length];
 }
 
+function resolveStreamerLine(streamerName: string, index: number) {
+  return streamerLineOverrides[streamerName] ?? getMockStreamerLine(index);
+}
+
 const fallbackAvatarDataUrl = createAvatarDataUrl("#f0edf5");
 
 export const STREAMER_DIRECTORY = streamerInfoMocks
@@ -2104,7 +2145,7 @@ export const STREAMER_DIRECTORY = streamerInfoMocks
     channelId: streamerInfo.channelId,
     channelName: streamerInfo.channelName,
     id: streamerInfo.id,
-    line: getMockStreamerLine(index),
+    line: resolveStreamerLine(streamerInfo.streamerName, index),
     name: streamerInfo.streamerName,
     profileImageUrl: streamerInfo.profileImageUrl,
     streamerInfo,

@@ -17,7 +17,9 @@ interface DraftInviteParticipantItem {
 }
 
 interface UseDraftInviteRoomParams {
+  coachEnabled?: boolean;
   draftType: "snake" | "auction";
+  headCoachEnabled?: boolean;
   inviteCode?: string;
   mode: "solo" | "party";
   teamCount: string;
@@ -58,13 +60,17 @@ interface DraftParticipantEventPayload {
 
 function createInviteLink({
   baseUrl,
+  coachEnabled,
   draftType,
+  headCoachEnabled,
   inviteCode,
   teamCount,
   teamSize,
 }: {
   baseUrl: string;
+  coachEnabled?: boolean;
   draftType: "snake" | "auction";
+  headCoachEnabled?: boolean;
   inviteCode: string;
   teamCount: string;
   teamSize: string;
@@ -75,6 +81,14 @@ function createInviteLink({
     teamCount,
     teamSize,
   });
+
+  if (headCoachEnabled) {
+    searchParams.set("headCoachEnabled", "true");
+  }
+
+  if (coachEnabled) {
+    searchParams.set("coachEnabled", "true");
+  }
 
   return `${baseUrl}/join/${inviteCode}?${searchParams.toString()}`;
 }
@@ -206,7 +220,9 @@ function mergeParticipantList({
 }
 
 export function useDraftInviteRoom({
+  coachEnabled,
   draftType,
+  headCoachEnabled,
   inviteCode: initialInviteCode,
   mode,
   teamCount: teamCountFromQuery,
@@ -364,7 +380,9 @@ export function useDraftInviteRoom({
 
       return createInviteLink({
         baseUrl: window.location.origin,
+        coachEnabled,
         draftType,
+        headCoachEnabled,
         inviteCode,
         teamCount: teamCountFromQuery,
         teamSize: teamSizeFromQuery,
@@ -389,7 +407,22 @@ export function useDraftInviteRoom({
   const primaryActionDisabled =
     !isHost || isStarting || participants.length < Number(teamCountFromQuery) || roomId === null;
   const primaryActionLabel = isHost ? "게임 시작하기" : "방장 시작 대기 중";
-  const backHref = `/draft/create/streamers?draftType=${draftType}&mode=party&teamCount=${teamCountFromQuery}&teamSize=${teamSizeFromQuery}`;
+  const backSearchParams = new URLSearchParams({
+    draftType,
+    mode: "party",
+    teamCount: teamCountFromQuery,
+    teamSize: teamSizeFromQuery,
+  });
+
+  if (headCoachEnabled) {
+    backSearchParams.set("headCoachEnabled", "true");
+  }
+
+  if (coachEnabled) {
+    backSearchParams.set("coachEnabled", "true");
+  }
+
+  const backHref = `/draft/create/streamers?${backSearchParams.toString()}`;
 
   return {
     backHref,

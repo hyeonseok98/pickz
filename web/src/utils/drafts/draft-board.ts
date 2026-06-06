@@ -1,6 +1,11 @@
 import { draftLineRows, maxTeamCount } from "@/constants/drafts";
 import type { BoardState, TeamCount, TeamSize } from "@/types/drafts";
 
+interface DraftLineOptions {
+  coachEnabled?: boolean;
+  headCoachEnabled?: boolean;
+}
+
 export function createEmptyDraftBoard(): BoardState {
   return {
     top: Array.from({ length: maxTeamCount }, () => null),
@@ -25,17 +30,40 @@ export function cloneDraftBoard(board: BoardState): BoardState {
   };
 }
 
-export function getActiveDraftLines(teamSize: TeamSize) {
-  return draftLineRows.slice(0, Number(teamSize));
+export function getActiveDraftLines(teamSize: TeamSize, options?: DraftLineOptions) {
+  const baseLineCount = Math.min(Number(teamSize), 5);
+  const activeLines = [...draftLineRows.slice(0, baseLineCount)];
+  const inferredHeadCoachEnabled = teamSize === "7";
+  const inferredCoachEnabled = teamSize === "6" || teamSize === "7";
+  const headCoachEnabled = options?.headCoachEnabled ?? inferredHeadCoachEnabled;
+  const coachEnabled = options?.coachEnabled ?? inferredCoachEnabled;
+
+  if (headCoachEnabled) {
+    activeLines.push(draftLineRows.find((line) => line.key === "headCoach")!);
+  }
+
+  if (coachEnabled) {
+    activeLines.push(draftLineRows.find((line) => line.key === "coach")!);
+  }
+
+  return activeLines;
+}
+
+export function deriveDraftCreateBooleans(teamSize: TeamSize) {
+  return {
+    coachEnabled: teamSize === "6" || teamSize === "7",
+    headCoachEnabled: teamSize === "7",
+  };
 }
 
 export function normalizeDraftBoard(
   board: BoardState,
   teamCount: TeamCount,
   teamSize: TeamSize,
+  options?: DraftLineOptions,
 ): BoardState {
   const nextBoard = createEmptyDraftBoard();
-  const activeLineKeys = getActiveDraftLines(teamSize).map((line) => line.key);
+  const activeLineKeys = getActiveDraftLines(teamSize, options).map((line) => line.key);
   const columnCount = Number(teamCount);
 
   draftLineRows.forEach(({ key }) => {

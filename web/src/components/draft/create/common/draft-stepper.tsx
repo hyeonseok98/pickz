@@ -28,22 +28,54 @@ export function DraftStepper({ currentStep, mode }: DraftStepperProps) {
   const steps = mode === "party" ? partyDraftSteps : soloDraftSteps;
 
   return (
-    <div className="mt-5 flex flex-wrap items-center gap-2 text-text-muted">
-      {steps.map((step, index) => (
-        <div key={step.id} className="flex items-center gap-2">
-          {index > 0 ? <span className="text-xs">›</span> : null}
-          <span
-            className={cn(
-              "inline-flex h-8 items-center rounded-full border px-3 text-xs font-semibold",
-              step.id === currentStep
-                ? "border-violet-200 bg-violet-100 text-violet-700"
-                : "border-border bg-surface text-text-secondary",
-            )}
-          >
-            {step.label}
-          </span>
-        </div>
-      ))}
+    <div className="mt-3 overflow-x-auto">
+      <div
+        className={cn(
+          "grid min-w-[560px] items-start gap-2",
+          steps.length === 4 ? "grid-cols-4" : "grid-cols-3",
+        )}
+      >
+        {steps.map((step, index) => {
+          const isActive = step.id === currentStep;
+          const isCompleted = steps.findIndex((item) => item.id === currentStep) > index;
+
+          return (
+            <div key={step.id} className="relative">
+              {index < steps.length - 1 ? (
+                <div className="absolute left-[calc(50%+0.75rem)] right-[-50%] top-3 h-px bg-border">
+                  <div
+                    className={cn(
+                      "h-full bg-violet-500 transition-all",
+                      isCompleted ? "w-full" : "w-0",
+                    )}
+                  />
+                </div>
+              ) : null}
+
+              <div className="relative z-10 flex flex-col items-center text-center">
+                <span
+                  className={cn(
+                    "flex size-6 items-center justify-center rounded-full border text-[10px] font-bold",
+                    isActive || isCompleted
+                      ? "border-violet-500 bg-violet-500 text-white"
+                      : "border-border bg-surface text-text-secondary",
+                  )}
+                >
+                  {index + 1}
+                </span>
+                <span
+                  className={cn(
+                    "mt-1 text-[10px] font-semibold",
+                    isActive ? "text-violet-700" : "text-text-secondary",
+                  )}
+                >
+                  {step.label.replace(/^\d+\.\s*/, "")}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -10,12 +10,12 @@ import {
   DraftRoomStatusChip,
 } from "@/components/draft/room";
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
-import { STREAMER_DIRECTORY_BY_ID, draftLineLabelMap } from "@/constants/drafts";
+import { STREAMER_DIRECTORY_BY_ID, draftLineLabelMap, draftLineRows } from "@/constants/drafts";
 import type { LineKey } from "@/types/drafts";
 import {
   cn,
-  getActiveDraftLines,
   parseDraftRoomSnapshot,
+  serializeDraftRoomSnapshot,
 } from "@/utils";
 
 interface PoolSelection {
@@ -26,6 +26,25 @@ interface PoolSelection {
 interface PlacementSelection extends PoolSelection {
   sourcePickNumber?: number;
 }
+
+interface SnakeDraftTeamHeader {
+  avatarDataUrl?: string;
+  subtitle?: string;
+  title: string;
+}
+
+const presetTeamHeaderFallbackMap: Record<
+  string,
+  {
+    coach: string[];
+    headCoach: string[];
+  }
+> = {
+  "pickz-invitational": {
+    coach: ["엄티", "로컨", "노페", "플라이"],
+    headCoach: ["마린", "베릴", "인간젤리", "큐베"],
+  },
+};
 
 function UndoIcon() {
   return (
@@ -82,13 +101,13 @@ function buildSnakeOrder(teamCount: number, roundCount: number) {
 type BoardAssignments = Partial<Record<number, PoolSelection>>;
 
 function buildSnakePickBoard(
-  teamNames: string[],
+  teamHeaders: SnakeDraftTeamHeader[],
   snakeOrderByRound: number[][],
   boardAssignments: BoardAssignments,
 ) {
-  return teamNames.map((teamName, teamIndex) => ({
+  return teamHeaders.map((teamHeader, teamIndex) => ({
     id: `team-${teamIndex + 1}`,
-    name: teamName ?? `${teamIndex + 1}팀`,
+    teamHeader,
     picks: snakeOrderByRound.map((roundOrder, roundIndex) => {
       const pickOrderInRound = roundOrder.indexOf(teamIndex);
       const absolutePickIndex = roundIndex * roundOrder.length + pickOrderInRound;
@@ -126,6 +145,38 @@ function cloneAssignments(assignments: BoardAssignments): BoardAssignments {
   });
 
   return nextAssignments;
+}
+
+function TeamHeaderBlock({
+  avatarDataUrl,
+  subtitle,
+  title,
+}: SnakeDraftTeamHeader) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-1 text-center">
+      {avatarDataUrl ? (
+        <Image
+          src={avatarDataUrl}
+          alt=""
+          width={32}
+          height={32}
+          className="size-8 rounded-full border border-border bg-surface object-cover"
+        />
+      ) : null}
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-text-primary">{title}</p>
+        {subtitle ? <p className="truncate text-[11px] text-text-secondary">{subtitle}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+function resolvePresetTeamHeaderFallback(
+  tournamentId: string,
+  line: "coach" | "headCoach",
+  teamIndex: number,
+) {
+  return presetTeamHeaderFallbackMap[tournamentId]?.[line]?.[teamIndex] ?? null;
 }
 
 function SnakeDraftRoomPage() {
@@ -180,22 +231,74 @@ function SnakeDraftRoomPage() {
     );
   }
 
-  const activeLines = getActiveDraftLines(snapshot.membersPerTeam);
-  const teamCount = Number(snapshot.teamCount);
-  const snakeOrderByRound = buildSnakeOrder(teamCount, activeLines.length);
-  const teamNames = Array.from({ length: teamCount }, (_, teamIndex) =>
-    snapshot.participationMode === "party"
-      ? snapshot.joinedParticipantNames[teamIndex] ?? `${teamIndex + 1}팀`
-      : `${teamIndex + 1}팀`,
+  const playerLines = draftLineRows.filter(
+    ({ key }) =>
+      key === "top" || key === "jungle" || key === "mid" || key === "adc" || key === "support",
   );
-  const snakePickBoard = buildSnakePickBoard(teamNames, snakeOrderByRound, boardAssignments);
+  const teamCount = Number(snapshot.teamCount);
+  const snakeOrderByRound = buildSnakeOrder(teamCount, playerLines.length);
+  const teamHeaders = Array.from({ length: teamCount }, (_, teamIndex) => {
+    const headCoachId = snapshot.board.headCoach?.[teamIndex] ?? null;
+    const coachId = snapshot.board.coach?.[teamIndex] ?? null;
+    const headCoach = headCoachId ? STREAMER_DIRECTORY_BY_ID.get(headCoachId) ?? null : null;
+    const coach = coachId ? STREAMER_DIRECTORY_BY_ID.get(coachId) ?? null : null;
+    const headCoachFallbackName = resolvePresetTeamHeaderFallback(snapshot.tournamentId, "headCoach", teamIndex);
+    const coachFallbackName = resolvePresetTeamHeaderFallback(snapshot.tournamentId, "coach", teamIndex);
+    const headCoachName = headCoach?.name ?? headCoachFallbackName;
+    const coachName = coach?.name ?? coachFallbackName;
+
+    if (headCoachName && coachName) {
+      return {
+        avatarDataUrl: headCoach?.avatarDataUrl ?? coach?.avatarDataUrl,
+        subtitle: `(코치: ${coachName})`,
+        title: headCoachName,
+      };
+    }
+
+    if (headCoachName) {
+      return {
+        avatarDataUrl: headCoach?.avatarDataUrl,
+        title: headCoachName,
+      };
+    }
+
+    if (coachName) {
+      return {
+        avatarDataUrl: coach?.avatarDataUrl,
+        title: coachName,
+      };
+    }
+
+    return {
+      title: `${teamIndex + 1}팀`,
+    };
+  });
+  const snakePickBoard = buildSnakePickBoard(teamHeaders, snakeOrderByRound, boardAssignments);
   const pickedStreamerIds = 
     Object.values(boardAssignments)
       .filter((assignment): assignment is PoolSelection => Boolean(assignment))
       .map((assignment) => assignment.id);
   const isSoloMode = snapshot.participationMode === "solo";
+  const backToStreamersParams = new URLSearchParams({
+    config: serializeDraftRoomSnapshot(snapshot),
+    draftType: snapshot.draftType,
+    mode: snapshot.participationMode,
+    teamCount: snapshot.teamCount,
+    teamSize: snapshot.membersPerTeam,
+    tournament: snapshot.tournamentId,
+  });
 
-  const availablePoolByLine = activeLines.map(({ key, label }) => ({
+  if (snapshot.headCoachEnabled) {
+    backToStreamersParams.set("headCoachEnabled", "true");
+  }
+
+  if (snapshot.coachEnabled) {
+    backToStreamersParams.set("coachEnabled", "true");
+  }
+
+  const backToStreamersHref = `/draft/create/streamers?${backToStreamersParams.toString()}`;
+
+  const availablePoolByLine = playerLines.map(({ key, label }) => ({
     key,
     label,
     streamers: snapshot.board[key]
@@ -391,7 +494,7 @@ function SnakeDraftRoomPage() {
           }
           backHref={
             isSoloMode
-              ? `/draft/create/streamers?draftType=${snapshot.draftType}&mode=${snapshot.participationMode}&tournament=${snapshot.tournamentId}`
+              ? backToStreamersHref
               : undefined
           }
           backLabel="방 설정으로 돌아가기"
@@ -551,26 +654,28 @@ function SnakeDraftRoomPage() {
               <div
                 className="grid h-full gap-1.5"
                 style={{
-                  gridTemplateColumns: `48px repeat(${activeLines.length}, minmax(0, 1fr))`,
+                  gridTemplateColumns: `96px repeat(${playerLines.length}, minmax(0, 1fr))`,
                   gridTemplateRows: `repeat(${teamCount}, minmax(0, 1fr))`,
                 }}
               >
-                {snakePickBoard.flatMap((teamRow, teamIndex) => [
+                {snakePickBoard.flatMap((teamRow) => [
                   <div
                     key={`${teamRow.id}-label`}
-                    className="flex h-full items-center justify-center rounded-lg bg-surface-muted px-1 text-center"
+                    className="flex h-full items-center rounded-lg bg-surface-muted px-2 py-2"
                   >
-                    <span
+                    <div
                       className={cn(
-                        "text-base font-bold tracking-[-0.05em]",
+                        "w-full",
                         selectedPlacement &&
-                        teamRow.picks.some((pick) => pick.absolutePickNumber === selectedPlacement.sourcePickNumber)
+                          teamRow.picks.some(
+                            (pick) => pick.absolutePickNumber === selectedPlacement.sourcePickNumber,
+                          )
                           ? "text-violet-700"
-                          : "text-text-primary",
+                          : "",
                       )}
                     >
-                      {teamIndex + 1}팀
-                    </span>
+                      <TeamHeaderBlock {...teamRow.teamHeader} />
+                    </div>
                   </div>,
                   ...teamRow.picks.map((pick) => {
                     const isHovered = hoveredPickNumber === pick.absolutePickNumber;
@@ -671,25 +776,27 @@ function SnakeDraftRoomPage() {
             </div>
 
             <div className="space-y-3 xl:hidden">
-              {snakePickBoard.map((teamRow, teamIndex) => (
+              {snakePickBoard.map((teamRow) => (
                 <article
                   key={`${teamRow.id}-mobile`}
                   className="rounded-3xl border border-border bg-surface-muted p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <h3
+                    <div
                       className={cn(
-                        "text-lg font-bold tracking-[-0.04em]",
+                        "min-w-0",
                         selectedPlacement &&
-                        teamRow.picks.some((pick) => pick.absolutePickNumber === selectedPlacement.sourcePickNumber)
+                        teamRow.picks.some(
+                          (pick) => pick.absolutePickNumber === selectedPlacement.sourcePickNumber,
+                        )
                           ? "text-violet-700"
                           : "text-text-primary",
                       )}
                     >
-                      {teamIndex + 1}팀
-                    </h3>
+                      <TeamHeaderBlock {...teamRow.teamHeader} />
+                    </div>
                     <p className="text-xs text-text-secondary">
-                      {teamRow.picks.filter((pick) => Boolean(pick.streamer)).length} / {activeLines.length}
+                      {teamRow.picks.filter((pick) => Boolean(pick.streamer)).length} / {playerLines.length}
                     </p>
                   </div>
 

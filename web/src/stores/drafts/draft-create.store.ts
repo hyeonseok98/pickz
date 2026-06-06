@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { draftLineRows } from "@/constants/drafts";
-import { cloneDraftBoard, createEmptyDraftBoard, normalizeDraftBoard } from "@/utils";
+import { cloneDraftBoard, createEmptyDraftBoard, deriveDraftCreateBooleans, normalizeDraftBoard } from "@/utils";
 import type {
   ApplyTournamentSelectionParams,
   DraftCreateFlowState,
@@ -22,7 +22,9 @@ interface DraftCreateStoreState extends DraftCreateFlowState {
   placeParticipant: (params: MoveDraftParticipantParams) => void;
   removeParticipant: (streamerId: string) => void;
   resetDraftCreate: () => void;
+  setCoachEnabled: (coachEnabled: boolean) => void;
   setDraftType: (draftType: DraftCreateFlowState["draftType"]) => void;
+  setHeadCoachEnabled: (headCoachEnabled: boolean) => void;
   setParticipationMode: (participationMode: DraftCreateFlowState["participationMode"]) => void;
   setPassword: (password: string) => void;
   setRoomTitle: (roomTitle: string) => void;
@@ -34,16 +36,38 @@ interface DraftCreateStoreState extends DraftCreateFlowState {
 
 const initialDraftCreateState: DraftCreateFlowState = {
   board: createEmptyDraftBoard(),
+  coachEnabled: true,
   draftType: "snake",
+  headCoachEnabled: true,
   participantIds: [],
   participationMode: "solo",
   password: "",
   roomTitle: "",
-  teamCount: "5",
-  teamSize: "5",
+  teamCount: "4",
+  teamSize: "7",
   tournamentId: "pickz-invitational",
   visibility: "public",
 };
+
+function deriveTeamSizeFromCoachFlags({
+  coachEnabled,
+  headCoachEnabled,
+}: {
+  coachEnabled: boolean;
+  headCoachEnabled: boolean;
+}): TeamSize {
+  const enabledExtraLineCount = Number(coachEnabled) + Number(headCoachEnabled);
+
+  if (enabledExtraLineCount === 2) {
+    return "7";
+  }
+
+  if (enabledExtraLineCount === 1) {
+    return "6";
+  }
+
+  return "5";
+}
 
 function removeParticipantFromBoard(board: DraftCreateFlowState["board"], streamerId: string) {
   const nextBoard = cloneDraftBoard(board);
@@ -68,9 +92,11 @@ export const useDraftCreateStore = create<DraftCreateStoreState>((set) => ({
       };
     });
   },
-  applyTournamentSelection: ({ board, participantIds, tournamentId }) => {
+  applyTournamentSelection: ({ board, coachEnabled, headCoachEnabled, participantIds, tournamentId }) => {
     set(() => ({
       board,
+      coachEnabled,
+      headCoachEnabled,
       participantIds,
       tournamentId,
     }));
@@ -90,10 +116,14 @@ export const useDraftCreateStore = create<DraftCreateStoreState>((set) => ({
       };
     });
   },
-  initializeSettings: ({ draftType, participationMode, roomTitle = "", teamCount, teamSize, tournamentId }) => {
+  initializeSettings: ({ coachEnabled, draftType, headCoachEnabled, participationMode, roomTitle = "", teamCount, teamSize, tournamentId }) => {
+    const inferredBooleans = deriveDraftCreateBooleans(teamSize);
+
     set((current) => ({
       ...current,
+      coachEnabled: coachEnabled ?? inferredBooleans.coachEnabled,
       draftType,
+      headCoachEnabled: headCoachEnabled ?? inferredBooleans.headCoachEnabled,
       isInitialized: true,
       participationMode,
       roomTitle,
@@ -135,10 +165,44 @@ export const useDraftCreateStore = create<DraftCreateStoreState>((set) => ({
       isInitialized: false,
     }));
   },
+  setCoachEnabled: (coachEnabled) => {
+    set((current) => {
+      const nextTeamSize = deriveTeamSizeFromCoachFlags({
+        coachEnabled,
+        headCoachEnabled: current.headCoachEnabled,
+      });
+
+      return {
+        board: normalizeDraftBoard(current.board, current.teamCount, nextTeamSize, {
+          coachEnabled,
+          headCoachEnabled: current.headCoachEnabled,
+        }),
+        coachEnabled,
+        teamSize: nextTeamSize,
+      };
+    });
+  },
   setDraftType: (draftType) => {
     set(() => ({
       draftType,
     }));
+  },
+  setHeadCoachEnabled: (headCoachEnabled) => {
+    set((current) => {
+      const nextTeamSize = deriveTeamSizeFromCoachFlags({
+        coachEnabled: current.coachEnabled,
+        headCoachEnabled,
+      });
+
+      return {
+        board: normalizeDraftBoard(current.board, current.teamCount, nextTeamSize, {
+          coachEnabled: current.coachEnabled,
+          headCoachEnabled,
+        }),
+        headCoachEnabled,
+        teamSize: nextTeamSize,
+      };
+    });
   },
   setParticipationMode: (participationMode) => {
     set(() => ({
@@ -157,15 +221,27 @@ export const useDraftCreateStore = create<DraftCreateStoreState>((set) => ({
   },
   setTeamCount: (teamCount) => {
     set((current) => ({
-      board: normalizeDraftBoard(current.board, teamCount, current.teamSize),
+      board: normalizeDraftBoard(current.board, teamCount, current.teamSize, {
+        coachEnabled: current.coachEnabled,
+        headCoachEnabled: current.headCoachEnabled,
+      }),
       teamCount,
     }));
   },
   setTeamSize: (teamSize) => {
-    set((current) => ({
-      board: normalizeDraftBoard(current.board, current.teamCount, teamSize),
-      teamSize,
-    }));
+    set((current) => {
+      const { coachEnabled, headCoachEnabled } = deriveDraftCreateBooleans(teamSize);
+
+      return {
+        board: normalizeDraftBoard(current.board, current.teamCount, teamSize, {
+          coachEnabled,
+          headCoachEnabled,
+        }),
+        coachEnabled,
+        headCoachEnabled,
+        teamSize,
+      };
+    });
   },
   setTournamentId: (tournamentId) => {
     set(() => ({

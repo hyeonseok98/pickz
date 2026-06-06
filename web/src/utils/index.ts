@@ -3,6 +3,7 @@ export {
   cloneDraftBoard,
   compareDraftLineOrder,
   createEmptyDraftBoard,
+  deriveDraftCreateBooleans,
   getActiveDraftLines,
   getDraftParticipantSession,
   getPlacedDraftStreamerIds,

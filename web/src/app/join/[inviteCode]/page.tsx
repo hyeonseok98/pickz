@@ -30,5 +30,16 @@ export default async function JoinDraftPage({
     teamSize: readSearchParamValue(resolvedSearchParams, "teamSize") ?? "5",
   });
 
+  const headCoachEnabled = readSearchParamValue(resolvedSearchParams, "headCoachEnabled");
+  const coachEnabled = readSearchParamValue(resolvedSearchParams, "coachEnabled");
+
+  if (headCoachEnabled === "true") {
+    nextSearchParams.set("headCoachEnabled", "true");
+  }
+
+  if (coachEnabled === "true") {
+    nextSearchParams.set("coachEnabled", "true");
+  }
+
   redirect(`/draft/create/invite?${nextSearchParams.toString()}`);
 }

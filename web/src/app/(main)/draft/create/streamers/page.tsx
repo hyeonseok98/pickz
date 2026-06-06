@@ -18,8 +18,6 @@ import {
   STREAMER_DIRECTORY_BY_NAME,
   draftLineLabelMap,
   draftLineRows,
-  draftTypeLabelMap,
-  participationModeLabelMap,
 } from "@/constants/drafts";
 import {
   DraftStepper,
@@ -32,10 +30,12 @@ import { useDraftCreateStore } from "@/stores/drafts";
 import {
   compareDraftLineOrder,
   createEmptyDraftBoard,
+  deriveDraftCreateBooleans,
   getActiveDraftLines,
   getPlacedDraftStreamerIds,
   matchesStreamerSearchQuery,
   normalizeDraftBoard,
+  parseDraftRoomSnapshot,
   serializeDraftRoomSnapshot,
 } from "@/utils";
 import type {
@@ -44,16 +44,19 @@ import type {
   DraftCreateFlowState,
   LineKey,
   ParticipationMode,
+  StreamerDirectoryItem,
   TeamCount,
   TeamSize,
 } from "@/types/drafts";
 
 interface Streamer {
   avatarDataUrl: string;
+  channelName: string;
   id: string;
   line: LineKey;
   name: string;
   note?: string;
+  profileImageUrl?: string | null;
 }
 
 interface Tournament {
@@ -66,6 +69,24 @@ interface Tournament {
 const leaveMessage = "이 페이지를 나가면 작성 중이던 내용이 사라집니다. 이동할까요?";
 
 const customTournamentId = "custom";
+const presetStreamerAliasMap: Partial<Record<LineKey, Record<string, string>>> = {
+  adc: {
+    캬하하: "캬하하 이석현",
+  },
+  coach: {
+    플라이: "Fly",
+  },
+  headCoach: {
+    베릴: "BeryL",
+    큐베: "큐베 CuVee",
+  },
+  jungle: {
+    갱맘: "갱맘 GBM",
+  },
+};
+
+const presetFallbackAvatarDataUrl =
+  "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2296%22%20height%3D%2296%22%20viewBox%3D%220%200%2096%2096%22%3E%3Crect%20width%3D%2296%22%20height%3D%2296%22%20rx%3D%2248%22%20fill%3D%22%23f1ecff%22/%3E%3Ccircle%20cx%3D%2248%22%20cy%3D%2234%22%20r%3D%2218%22%20fill%3D%22%237c3aed%22%20fill-opacity%3D%220.16%22/%3E%3Cpath%20d%3D%22M22%2078c5-14%2015-22%2026-22s21%208%2026%2022%22%20fill%3D%22%237c3aed%22%20fill-opacity%3D%220.22%22/%3E%3C/svg%3E";
 
 function createTournament(
   id: string,
@@ -79,18 +100,33 @@ function createTournament(
     name,
     roster: draftLineRows.flatMap(({ key }) =>
       (rosterByLine[key] ?? []).reduce<Streamer[]>((accumulator, streamerName, index) => {
-        const streamerProfile = STREAMER_DIRECTORY_BY_NAME.get(streamerName);
+        const resolvedStreamerName = presetStreamerAliasMap[key]?.[streamerName] ?? streamerName;
+        const streamerProfile = STREAMER_DIRECTORY_BY_NAME.get(resolvedStreamerName);
 
         if (!streamerProfile) {
+          const fallbackStreamerId = `${id}-${key}-${index + 1}`;
+
+          accumulator.push({
+            avatarDataUrl: presetFallbackAvatarDataUrl,
+            channelName: streamerName,
+            id: fallbackStreamerId,
+            line: key,
+            name: streamerName,
+            note: `${draftLineLabelMap[key]} 추천 슬롯 ${index + 1}`,
+            profileImageUrl: null,
+          });
+
           return accumulator;
         }
 
         accumulator.push({
           avatarDataUrl: streamerProfile.avatarDataUrl,
+          channelName: streamerProfile.channelName,
           id: streamerProfile.id,
           line: key,
           name: streamerName,
           note: `${draftLineLabelMap[key]} 추천 슬롯 ${index + 1}`,
+          profileImageUrl: streamerProfile.profileImageUrl,
         });
 
         return accumulator;
@@ -114,12 +150,14 @@ const tournaments = [
     adc: ["Ruler", "Elk", "GALA", "Noah", "Aiming"],
     support: ["Missing", "ON", "Keria", "Mikyx", "Life"],
   }),
-  createTournament("pickz-invitational", "2026 자낳대", "2026 자낳대 기준 25명 자동 배치 프리셋", {
-    top: ["플레임", "침착맨", "운타라", "랄로", "풍월량"],
-    jungle: ["피닉스박", "울프", "따효니", "앰비션", "강퀴88"],
-    mid: ["도파", "갱맘 GBM", "괴물쥐", "탬탬버린", "정령왕임"],
-    adc: ["한동숙", "러너", "뱅", "김블루", "플레임TV"],
-    support: ["실프", "서새봄냥 SEBOM", "소니쇼", "강지", "다주"],
+  createTournament("pickz-invitational", "2026 자낳대", "2026 자낳대 기준 기본 20인과 감독-코치 세트 자동 배치 프리셋", {
+    top: ["러너", "룩삼", "강소연", "샘웨"],
+    jungle: ["갱맘", "소우릎", "뱅", "운타라"],
+    mid: ["플레임", "앰비션", "헤징", "네클릿"],
+    adc: ["고수달", "크캣", "캬하하", "순당무"],
+    support: ["던", "푸린", "윤가놈", "침착맨"],
+    headCoach: ["마린", "베릴", "인간젤리", "큐베"],
+    coach: ["엄티", "로컨", "노페", "플라이"],
   }),
 ] satisfies Tournament[];
 
@@ -129,19 +167,32 @@ const customTournament: Tournament = {
   name: "사용자 설정",
   roster: STREAMER_DIRECTORY.map((streamer) => ({
     avatarDataUrl: streamer.avatarDataUrl,
+    channelName: streamer.channelName,
     id: streamer.id,
     line: streamer.line,
     name: streamer.name,
     note: `${draftLineLabelMap[streamer.line]} 직접 배치`,
+    profileImageUrl: streamer.profileImageUrl,
   })),
 };
 
 const tournamentOptions = [customTournament, ...tournaments] satisfies Tournament[];
 const tournamentMap = new Map(tournamentOptions.map((tournament) => [tournament.id, tournament]));
 
-function createAutoBoard(tournament: Tournament, teamCount: TeamCount, teamSize: TeamSize): BoardState {
+function createAutoBoard(
+  tournament: Tournament,
+  teamCount: TeamCount,
+  teamSize: TeamSize,
+  {
+    coachEnabled,
+    headCoachEnabled,
+  }: {
+    coachEnabled: boolean;
+    headCoachEnabled: boolean;
+  },
+): BoardState {
   const nextBoard = createEmptyDraftBoard();
-  const activeLines = getActiveDraftLines(teamSize);
+  const activeLines = getActiveDraftLines(teamSize, { coachEnabled, headCoachEnabled });
   const columnCount = Number(teamCount);
 
   activeLines.forEach(({ key }) => {
@@ -151,6 +202,63 @@ function createAutoBoard(tournament: Tournament, teamCount: TeamCount, teamSize:
       nextBoard[key][index] = streamer.id;
     });
   });
+
+  return nextBoard;
+}
+
+function createCustomAutoBoard({
+  coachEnabled,
+  headCoachEnabled,
+  participantIds,
+  streamerMap,
+  teamCount,
+  teamSize,
+}: {
+  coachEnabled: boolean;
+  headCoachEnabled: boolean;
+  participantIds: string[];
+  streamerMap: Map<string, StreamerDirectoryItem>;
+  teamCount: TeamCount;
+  teamSize: TeamSize;
+}) {
+  const nextBoard = createEmptyDraftBoard();
+  const activeLines = getActiveDraftLines(teamSize, { coachEnabled, headCoachEnabled });
+  const columnCount = Number(teamCount);
+  const placedParticipantIdSet = new Set<string>();
+
+  for (const { key } of activeLines) {
+    const lineStreamerIds = participantIds.filter(
+      (participantId) =>
+        !placedParticipantIdSet.has(participantId) && streamerMap.get(participantId)?.line === key,
+    );
+
+    lineStreamerIds.slice(0, columnCount).forEach((streamerId, index) => {
+      nextBoard[key][index] = streamerId;
+      placedParticipantIdSet.add(streamerId);
+    });
+  }
+
+  const remainingParticipantIds = participantIds.filter(
+    (participantId) => !placedParticipantIdSet.has(participantId),
+  );
+  let remainingParticipantIndex = 0;
+
+  for (const { key } of activeLines) {
+    for (let columnIndex = 0; columnIndex < columnCount; columnIndex += 1) {
+      if (nextBoard[key][columnIndex] !== null) {
+        continue;
+      }
+
+      const nextStreamerId = remainingParticipantIds[remainingParticipantIndex];
+
+      if (!nextStreamerId) {
+        break;
+      }
+
+      nextBoard[key][columnIndex] = nextStreamerId;
+      remainingParticipantIndex += 1;
+    }
+  }
 
   return nextBoard;
 }
@@ -172,21 +280,29 @@ function sanitizeTournamentId(value: string | null): string {
 }
 
 function sanitizeTeamCount(value: string | null): TeamCount {
-  return value === "2" || value === "3" || value === "4" || value === "5" ? value : "5";
+  return value === "2" || value === "3" || value === "4" || value === "5" ? value : "4";
 }
 
 function sanitizeTeamSize(value: string | null): TeamSize {
-  return value === "3" || value === "4" || value === "5" || value === "6" || value === "7" ? value : "5";
+  return value === "3" || value === "4" || value === "5" || value === "6" || value === "7" ? value : "7";
+}
+
+function sanitizeBooleanFlag(value: string | null) {
+  return value === "true";
 }
 
 function createInitialDraftCreateFlowState({
+  coachEnabled,
   draftType,
+  headCoachEnabled,
   participationMode,
   teamCount,
   teamSize,
   tournamentId,
 }: {
+  coachEnabled: boolean;
   draftType: DraftType;
+  headCoachEnabled: boolean;
   participationMode: ParticipationMode;
   teamCount: TeamCount;
   teamSize: TeamSize;
@@ -196,12 +312,14 @@ function createInitialDraftCreateFlowState({
   const board =
     tournament.id === customTournamentId
       ? createEmptyDraftBoard()
-      : createAutoBoard(tournament, teamCount, teamSize);
+      : createAutoBoard(tournament, teamCount, teamSize, { coachEnabled, headCoachEnabled });
   const participantIds = tournament.id === customTournamentId ? [] : getPlacedDraftStreamerIds(board);
 
   return {
     board,
+    coachEnabled,
     draftType,
+    headCoachEnabled,
     participantIds,
     participationMode,
     password: "",
@@ -210,6 +328,34 @@ function createInitialDraftCreateFlowState({
     teamSize,
     tournamentId: tournament.id,
     visibility: "public",
+  };
+}
+
+function createDraftCreateFlowStateFromSnapshot(snapshot: {
+  board: BoardState;
+  coachEnabled: boolean;
+  draftType: DraftType;
+  headCoachEnabled: boolean;
+  membersPerTeam: TeamSize;
+  participantIds: string[];
+  participationMode: ParticipationMode;
+  teamCount: TeamCount;
+  tournamentId: string;
+  visibility: DraftCreateFlowState["visibility"];
+}): DraftCreateFlowState {
+  return {
+    board: snapshot.board,
+    coachEnabled: snapshot.coachEnabled,
+    draftType: snapshot.draftType,
+    headCoachEnabled: snapshot.headCoachEnabled,
+    participantIds: snapshot.participantIds,
+    participationMode: snapshot.participationMode,
+    password: "",
+    roomTitle: "",
+    teamCount: snapshot.teamCount,
+    teamSize: snapshot.membersPerTeam,
+    tournamentId: snapshot.tournamentId,
+    visibility: snapshot.visibility,
   };
 }
 
@@ -225,13 +371,18 @@ function DraftStreamerSetupContent() {
     addParticipant: addParticipantToDraft,
     applyTournamentSelection,
     board,
+    coachEnabled,
     clearBoard,
     clearBoardSlot,
     draftType,
+    headCoachEnabled,
     participantIds,
     participationMode,
     placeParticipant,
     removeParticipant: removeParticipantFromDraft,
+    setCoachEnabled,
+    setHeadCoachEnabled,
+    setTeamSize,
     teamCount,
     teamSize,
     tournamentId,
@@ -245,7 +396,9 @@ function DraftStreamerSetupContent() {
   const [initialSnapshotJson] = useState(() =>
     JSON.stringify({
       board,
+      coachEnabled,
       draftType,
+      headCoachEnabled,
       participantIds,
       participationMode,
       password: "",
@@ -263,16 +416,45 @@ function DraftStreamerSetupContent() {
 
   const isPartyMode = participationMode === "party";
   const currentTournament = tournamentMap.get(tournamentId) ?? customTournament;
-  const activeLineRows = useMemo(() => getActiveDraftLines(teamSize), [teamSize]);
+  const activeLineRows = useMemo(
+    () => getActiveDraftLines(teamSize, { coachEnabled, headCoachEnabled }),
+    [coachEnabled, headCoachEnabled, teamSize],
+  );
   const visibleColumnCount = Number(teamCount);
-  const streamerMap = STREAMER_DIRECTORY_BY_ID;
+  const streamerMap = useMemo(() => {
+    const nextStreamerMap = new Map(STREAMER_DIRECTORY_BY_ID);
+
+    currentTournament.roster.forEach((streamer) => {
+      if (nextStreamerMap.has(streamer.id)) {
+        return;
+      }
+
+      nextStreamerMap.set(streamer.id, {
+        avatarDataUrl: streamer.avatarDataUrl,
+        channelId: streamer.id,
+        channelName: streamer.channelName,
+        id: streamer.id,
+        line: streamer.line,
+        name: streamer.name,
+        profileImageUrl: streamer.profileImageUrl ?? null,
+        streamerInfo: {
+          channelId: streamer.id,
+          channelName: streamer.channelName,
+          followerCount: 0,
+          id: streamer.id,
+          profileImageUrl: streamer.profileImageUrl ?? null,
+          streamerName: streamer.name,
+        },
+      });
+    });
+
+    return nextStreamerMap;
+  }, [currentTournament]);
 
   const placedIds = useMemo(() => getPlacedDraftStreamerIds(board), [board]);
 
-  const totalSlots = Number(teamCount) * Number(teamSize);
   const placedCount = placedIds.length;
   const requiredPlayerCount = Number(teamCount) * Number(teamSize);
-  const remainingRequiredCount = Math.max(requiredPlayerCount - placedCount, 0);
 
   const searchResults = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -336,7 +518,9 @@ function DraftStreamerSetupContent() {
     () =>
       JSON.stringify({
         board,
+        coachEnabled,
         draftType,
+        headCoachEnabled,
         participantIds,
         participationMode,
         password: "",
@@ -346,7 +530,19 @@ function DraftStreamerSetupContent() {
         tournamentId,
         visibility,
       }) !== initialSnapshotJson,
-    [board, draftType, initialSnapshotJson, participantIds, participationMode, teamCount, teamSize, tournamentId, visibility],
+    [
+      board,
+      coachEnabled,
+      draftType,
+      headCoachEnabled,
+      initialSnapshotJson,
+      participantIds,
+      participationMode,
+      teamCount,
+      teamSize,
+      tournamentId,
+      visibility,
+    ],
   );
   const canCreateRoom = placedCount >= requiredPlayerCount;
 
@@ -412,23 +608,45 @@ function DraftStreamerSetupContent() {
     }
   };
 
-  const runAutoPlacement = (tournamentId: string) => {
-    const tournament = tournamentMap.get(tournamentId) ?? customTournament;
+  const runAutoPlacement = ({
+    nextCoachEnabled = coachEnabled,
+    nextHeadCoachEnabled = headCoachEnabled,
+    nextTeamSize = teamSize,
+    nextTournamentId = tournamentId,
+  }: {
+    nextCoachEnabled?: boolean;
+    nextHeadCoachEnabled?: boolean;
+    nextTeamSize?: TeamSize;
+    nextTournamentId?: string;
+  }) => {
+    const tournament = tournamentMap.get(nextTournamentId) ?? customTournament;
     const board =
       tournament.id === customTournamentId
-        ? createEmptyDraftBoard()
-        : createAutoBoard(tournament, teamCount, teamSize);
-    const participantIds =
-      tournament.id === customTournamentId ? [] : getPlacedDraftStreamerIds(board);
+        ? createCustomAutoBoard({
+            coachEnabled: nextCoachEnabled,
+            headCoachEnabled: nextHeadCoachEnabled,
+            participantIds,
+            streamerMap,
+            teamCount,
+            teamSize: nextTeamSize,
+          })
+        : createAutoBoard(tournament, teamCount, nextTeamSize, {
+            coachEnabled: nextCoachEnabled,
+            headCoachEnabled: nextHeadCoachEnabled,
+          });
+    const nextParticipantIds =
+      tournament.id === customTournamentId ? participantIds : getPlacedDraftStreamerIds(board);
 
     applyTournamentSelection({
       board,
-      participantIds,
+      coachEnabled: nextCoachEnabled,
+      headCoachEnabled: nextHeadCoachEnabled,
+      participantIds: nextParticipantIds,
       tournamentId: tournament.id,
     });
     setDraggingStreamerId(null);
     setHoveredSlot(null);
-    setSelectedStreamerId(null);
+      setSelectedStreamerId(null);
   };
 
   const clearAllSlots = () => {
@@ -592,14 +810,65 @@ function DraftStreamerSetupContent() {
     placeStreamerIntoSlot(selectedStreamerId, line, index);
   };
 
+  const handleHeadCoachSlotToggle = () => {
+    const nextHeadCoachEnabled = !headCoachEnabled;
+    const nextCoachEnabled = coachEnabled;
+    const nextTeamSize =
+      nextHeadCoachEnabled && nextCoachEnabled ? "7" : nextHeadCoachEnabled || nextCoachEnabled ? "6" : "5";
+
+    setHeadCoachEnabled(nextHeadCoachEnabled);
+    if (nextTeamSize !== teamSize) {
+      setTeamSize(nextTeamSize);
+    }
+    setDraggingStreamerId(null);
+    setHoveredSlot(null);
+    setSelectedStreamerId(null);
+
+    if (tournamentId !== customTournamentId) {
+      runAutoPlacement({
+        nextCoachEnabled,
+        nextHeadCoachEnabled,
+        nextTeamSize,
+      });
+    }
+  };
+
+  const handleCoachSlotToggle = () => {
+    const nextCoachEnabled = !coachEnabled;
+    const nextHeadCoachEnabled = headCoachEnabled;
+    const nextTeamSize =
+      nextHeadCoachEnabled && nextCoachEnabled ? "7" : nextHeadCoachEnabled || nextCoachEnabled ? "6" : "5";
+
+    setCoachEnabled(nextCoachEnabled);
+    if (nextTeamSize !== teamSize) {
+      setTeamSize(nextTeamSize);
+    }
+    setDraggingStreamerId(null);
+    setHoveredSlot(null);
+    setSelectedStreamerId(null);
+
+    if (tournamentId !== customTournamentId) {
+      runAutoPlacement({
+        nextCoachEnabled,
+        nextHeadCoachEnabled,
+        nextTeamSize,
+      });
+    }
+  };
+
   const handleCreateRoom = () => {
     if (!canCreateRoom) {
       return;
     }
 
     const encodedSnapshot = serializeDraftRoomSnapshot({
-      board: normalizeDraftBoard(board, teamCount, teamSize),
+      board: normalizeDraftBoard(board, teamCount, teamSize, {
+        coachEnabled,
+        headCoachEnabled,
+      }),
+      coachEnabled,
       draftType,
+      headCoachEnabled,
       inviteLink: "",
       joinedParticipantNames: [],
       membersPerTeam: teamSize,
@@ -619,6 +888,14 @@ function DraftStreamerSetupContent() {
       teamSize,
     });
 
+    if (headCoachEnabled) {
+      nextParams.set("headCoachEnabled", "true");
+    }
+
+    if (coachEnabled) {
+      nextParams.set("coachEnabled", "true");
+    }
+
     if (isPartyMode) {
       router.push(`/draft/create/invite?${nextParams.toString()}`);
       return;
@@ -628,38 +905,33 @@ function DraftStreamerSetupContent() {
   };
 
   return (
-    <main className="min-h-full bg-background px-4 py-4 sm:px-6 sm:py-6">
-      <div className="flex flex-col gap-5">
-        <section className="rounded-3xl border border-border bg-surface px-5 py-5 shadow-sm sm:px-6">
+    <main className="min-h-full bg-background px-4 py-3 sm:px-6 sm:py-5">
+      <div className="mx-auto flex max-w-screen-2xl flex-col gap-3">
+        <section className="rounded-3xl border border-border bg-surface px-4 py-4 shadow-sm sm:px-5 sm:py-4">
           <Link
-            href="/draft"
+            href={`/draft/create?draftType=${draftType}&mode=${participationMode}&teamCount=${teamCount}&teamSize=${teamSize}&tournament=${tournamentId}`}
             className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary"
           >
             <ArrowLeftIcon />
-            <span>드래프트 선택으로 돌아가기</span>
+            <span>방 설정</span>
           </Link>
 
           <DraftStepper currentStep="streamers" mode={participationMode} />
 
-          <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+          <div className="mt-3">
             <div className="max-w-4xl">
-              <h1 className="text-3xl font-bold tracking-[-0.04em] text-text-primary sm:text-4xl">
+              <h1 className="text-[1.7rem] font-bold tracking-[-0.04em] text-text-primary sm:text-[1.9rem]">
                 참가 스트리머 설정
               </h1>
-            </div>
-
-            <div className="flex flex-wrap gap-2 xl:justify-end">
-              <StatusChip tone="muted">방식 {draftTypeLabelMap[draftType]}</StatusChip>
-              <StatusChip tone="muted">모드 {participationModeLabelMap[participationMode]}</StatusChip>
-              <StatusChip tone="muted">
-                보드 {teamSize} x {teamCount}
-              </StatusChip>
+              <p className="mt-2 text-sm leading-5 text-text-secondary">
+                함께 드래프트에 참여할 스트리머를 추가하고, 팀과 포지션에 맞춰 배치해 주세요.
+              </p>
             </div>
           </div>
 
         </section>
 
-        <div className="grid gap-5 xl:grid-cols-11">
+        <div className="grid gap-3 xl:grid-cols-11">
           <DraftStreamerSearchSection
             activeSearchIndex={activeSearchIndex}
             draggingStreamerId={draggingStreamerId}
@@ -689,6 +961,7 @@ function DraftStreamerSetupContent() {
               setIsSearchDropdownOpen(true);
             }}
             participantCount={participantStreamers.length}
+            requiredParticipantCount={requiredPlayerCount}
             renderSearchResultStatus={renderSearchResultStatus}
             searchFieldRef={searchFieldRef}
             searchInputRef={searchInputRef}
@@ -702,15 +975,19 @@ function DraftStreamerSetupContent() {
             activeLineRows={activeLineRows}
             board={board}
             canCreateRoom={canCreateRoom}
+            coachEnabled={coachEnabled}
+            headCoachEnabled={headCoachEnabled}
             hoveredSlot={hoveredSlot}
             isPartyMode={isPartyMode}
             onClearAllSlots={clearAllSlots}
+            onCoachSlotToggle={handleCoachSlotToggle}
             onClearSlot={clearSlot}
             onCreateRoom={handleCreateRoom}
+            onHeadCoachSlotToggle={handleHeadCoachSlotToggle}
             onParticipantDragEnd={handleChipDragEnd}
             onParticipantDragStart={handleChipDragStart}
             onRunAutoPlacement={() => {
-              runAutoPlacement(tournamentId);
+              runAutoPlacement({});
             }}
             onSlotDragEnter={handleSlotDragEnter}
             onSlotDragLeave={handleSlotDragLeave}
@@ -718,12 +995,8 @@ function DraftStreamerSetupContent() {
             onSlotDrop={handleSlotDrop}
             onSlotTap={handleSlotTap}
             onStreamerSelect={handleChipSelect}
-            placedCount={placedCount}
-            remainingRequiredCount={remainingRequiredCount}
-            requiredPlayerCount={requiredPlayerCount}
             selectedStreamerId={selectedStreamerId}
             streamerMap={streamerMap}
-            totalSlots={totalSlots}
             visibleColumnCount={visibleColumnCount}
           />
         </div>
@@ -739,6 +1012,8 @@ function DraftStreamerSetupPage() {
   const isInitialized = useDraftCreateStore((state) => state.isInitialized);
   const participantIds = useDraftCreateStore((state) => state.participantIds);
   const tournamentId = useDraftCreateStore((state) => state.tournamentId);
+  const hasHandledInitialSeedRef = useRef(false);
+  const snapshot = useMemo(() => parseDraftRoomSnapshot(searchParams.get("config")), [searchParams]);
   const initialParticipationMode = sanitizeParticipationMode(searchParams.get("mode"));
   const initialDraftType = sanitizeDraftType(searchParams.get("draftType") ?? searchParams.get("type"));
   const initialTournamentId = sanitizeTournamentId(searchParams.get("tournament"));
@@ -746,34 +1021,66 @@ function DraftStreamerSetupPage() {
   const initialTeamSize = sanitizeTeamSize(
     searchParams.get("teamSize") ?? searchParams.get("membersPerTeam"),
   );
+  const { coachEnabled: inferredCoachEnabled, headCoachEnabled: inferredHeadCoachEnabled } =
+    deriveDraftCreateBooleans(initialTeamSize);
+  const initialCoachEnabled = sanitizeBooleanFlag(searchParams.get("coachEnabled")) || inferredCoachEnabled;
+  const initialHeadCoachEnabled =
+    sanitizeBooleanFlag(searchParams.get("headCoachEnabled")) || inferredHeadCoachEnabled;
   const placedStreamerCount = useMemo(() => getPlacedDraftStreamerIds(board).length, [board]);
 
   useEffect(() => {
-    const nextInitialState = createInitialDraftCreateFlowState({
-      draftType: initialDraftType,
-      participationMode: initialParticipationMode,
-      teamCount: initialTeamCount,
-      teamSize: initialTeamSize,
-      tournamentId: initialTournamentId,
-    });
+    const nextInitialState = snapshot
+      ? createDraftCreateFlowStateFromSnapshot(snapshot)
+      : createInitialDraftCreateFlowState({
+          draftType: initialDraftType,
+          coachEnabled: initialCoachEnabled,
+          headCoachEnabled: initialHeadCoachEnabled,
+          participationMode: initialParticipationMode,
+          teamCount: initialTeamCount,
+          teamSize: initialTeamSize,
+          tournamentId: initialTournamentId,
+        });
 
     if (!isInitialized) {
       initializeStreamers(nextInitialState);
+      hasHandledInitialSeedRef.current = true;
+      return;
+    }
+
+    if (hasHandledInitialSeedRef.current) {
       return;
     }
 
     const shouldSeedPresetBoard =
+      !snapshot &&
       tournamentId === initialTournamentId &&
       tournamentId !== customTournamentId &&
       participantIds.length === 0 &&
       placedStreamerCount === 0;
+    const shouldResetCustomBoard =
+      !snapshot &&
+      tournamentId === customTournamentId &&
+      initialTournamentId === customTournamentId &&
+      (participantIds.length > 0 || placedStreamerCount > 0);
 
     if (shouldSeedPresetBoard) {
       initializeStreamers(nextInitialState);
+      hasHandledInitialSeedRef.current = true;
+      return;
     }
+
+    if (shouldResetCustomBoard) {
+      initializeStreamers(nextInitialState);
+      hasHandledInitialSeedRef.current = true;
+      return;
+    }
+
+    hasHandledInitialSeedRef.current = true;
   }, [
     board,
+    initialCoachEnabled,
     initialDraftType,
+    initialHeadCoachEnabled,
     initialParticipationMode,
     initialTeamCount,
     initialTeamSize,
@@ -782,6 +1089,7 @@ function DraftStreamerSetupPage() {
     isInitialized,
     participantIds.length,
     placedStreamerCount,
+    snapshot,
     tournamentId,
   ]);
 

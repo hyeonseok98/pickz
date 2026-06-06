@@ -15,11 +15,11 @@ export function DraftInviteParticipantList({
   participants,
 }: DraftInviteParticipantListProps) {
   return (
-    <section className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
+    <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold tracking-[-0.03em] text-text-primary">참가자 대기실</h2>
-          <p className="mt-2 text-sm leading-6 text-text-secondary">
+          <h2 className="text-lg font-bold tracking-[-0.03em] text-text-primary">참가자 대기실</h2>
+          <p className="mt-1.5 text-sm leading-5 text-text-secondary">
             참가자가 입장하면 실시간으로 목록을 갱신합니다.
           </p>
         </div>
@@ -28,14 +28,14 @@ export function DraftInviteParticipantList({
         </span>
       </div>
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-4 space-y-2.5">
         {participants.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border px-4 py-8 text-center text-sm text-text-secondary">
             아직 입장한 참가자가 없습니다.
           </div>
         ) : (
           participants.map((participant, index) => (
-            <article key={participant.id} className="rounded-2xl border border-border bg-surface-muted px-4 py-4">
+            <article key={participant.id} className="rounded-2xl border border-border bg-surface-muted px-4 py-3.5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-text-primary">{participant.nickname}</p>

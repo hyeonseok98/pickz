@@ -1,6 +1,7 @@
 export {
   cloneDraftBoard,
   createEmptyDraftBoard,
+  deriveDraftCreateBooleans,
   getActiveDraftLines,
   getPlacedDraftStreamerIds,
   normalizeDraftBoard,

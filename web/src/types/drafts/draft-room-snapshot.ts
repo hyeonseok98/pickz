@@ -9,7 +9,9 @@ import type {
 
 export interface DraftRoomSnapshot {
   board: BoardState;
+  coachEnabled: boolean;
   draftType: DraftType;
+  headCoachEnabled: boolean;
   inviteLink: string;
   joinedParticipantNames: string[];
   membersPerTeam: TeamSize;

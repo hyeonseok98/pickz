@@ -25,9 +25,9 @@ function DraftRoomSettingsPage() {
   }
 
   return (
-    <main className="min-h-full bg-background px-4 py-4 sm:px-6 sm:py-6 xl:px-8">
-      <div className="mx-auto flex max-w-screen-2xl flex-col gap-5">
-        <section className="rounded-2xl border border-border bg-surface px-5 py-5 shadow-sm sm:px-6">
+    <main className="min-h-full bg-background px-4 py-3 sm:px-6 sm:py-5 xl:px-8">
+      <div className="mx-auto flex max-w-screen-2xl flex-col gap-3">
+        <section className="rounded-3xl border border-border bg-surface px-4 py-4 shadow-sm sm:px-5 sm:py-4">
           <Link
             href="/draft"
             className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary"
@@ -45,25 +45,25 @@ function DraftRoomSettingsPage() {
 
           <DraftStepper currentStep="settings" mode={settings.participationMode} />
 
-          <div className="mt-6 max-w-4xl">
-            <h1 className="text-3xl font-bold tracking-[-0.04em] text-text-primary sm:text-4xl">
+          <div className="mt-4 max-w-4xl">
+            <h1 className="text-[1.7rem] font-bold tracking-[-0.04em] text-text-primary sm:text-[1.9rem]">
               방 생성하기
             </h1>
-            <p className="mt-3 text-sm leading-6 text-text-secondary">
+            <p className="mt-2 text-sm leading-5 text-text-secondary">
               드래프트 방의 기본 정보를 설정해 주세요.
             </p>
           </div>
         </section>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <section className="rounded-2xl border border-border bg-surface px-5 py-5 shadow-sm sm:px-6">
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <section className="rounded-3xl border border-border bg-surface px-4 py-4 shadow-sm sm:px-5 sm:py-4">
             <DraftRoomSettingsForm {...settings.formState} />
           </section>
 
           <DraftSettingsSummary items={settings.summaryItems} />
         </div>
 
-        <section className="rounded-2xl border border-border bg-surface px-5 py-5 shadow-sm sm:px-6">
+        <section className="rounded-3xl border border-border bg-surface px-4 py-4 shadow-sm sm:px-5 sm:py-4">
           <DraftActionFooter
             title="설정한 값을 기준으로 참가 스트리머 배치 단계가 열립니다."
             description="프리셋을 선택하면 다음 단계에서 라인별 보드에 자동 배치할 수 있습니다."

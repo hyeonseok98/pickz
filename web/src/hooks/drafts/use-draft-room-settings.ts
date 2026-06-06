@@ -27,6 +27,8 @@ export interface DraftRoomSettingsSummaryItem {
 export interface DraftRoomSettingsFormProps {
   draftType: DraftType;
   draftTypeOptions: DraftRoomSettingsOption<DraftType>[];
+  isRoomTitleDisabled: boolean;
+  isTeamCompositionDisabled: boolean;
   onDraftTypeChange: (draftType: DraftType) => void;
   onParticipationModeChange: (participationMode: ParticipationMode) => void;
   onRoomTitleChange: (roomTitle: string) => void;
@@ -78,7 +80,7 @@ const participationModeOptions: DraftRoomSettingsOption<ParticipationMode>[] = [
 
 const tournamentOptions: DraftRoomSettingsOption[] = [
   {
-    description: "2026 자낳대 기준 25명 자동 배치 프리셋입니다.",
+    description: "2026 자낳대 기준 28명 자동 배치 프리셋입니다.",
     iconSrc: "/icons/trophy_fill.svg",
     label: "2026 자낳대",
     value: defaultTournamentId,
@@ -104,7 +106,7 @@ function isTeamCount(value: string | null): value is TeamCount {
 }
 
 function sanitizeTeamCount(value: string | null): TeamCount {
-  return isTeamCount(value) ? value : "5";
+  return isTeamCount(value) ? value : "4";
 }
 
 function isTeamSize(value: string | null): value is TeamSize {
@@ -112,7 +114,7 @@ function isTeamSize(value: string | null): value is TeamSize {
 }
 
 function sanitizeTeamSize(value: string | null): TeamSize {
-  return isTeamSize(value) ? value : "5";
+  return isTeamSize(value) ? value : "7";
 }
 
 function sanitizeTournamentId(value: string | null): string {
@@ -130,6 +132,8 @@ function createNextStepParams({
   teamCount,
   teamSize,
   tournamentId,
+  coachEnabled,
+  headCoachEnabled,
 }: {
   draftType: DraftType;
   participationMode: ParticipationMode;
@@ -137,6 +141,8 @@ function createNextStepParams({
   teamCount: TeamCount;
   teamSize: TeamSize;
   tournamentId: string;
+  coachEnabled: boolean;
+  headCoachEnabled: boolean;
 }) {
   const nextParams = new URLSearchParams({
     draftType,
@@ -147,8 +153,16 @@ function createNextStepParams({
   });
   const trimmedRoomTitle = roomTitle.trim();
 
-  if (trimmedRoomTitle.length > 0) {
+  if (participationMode === "party" && trimmedRoomTitle.length > 0) {
     nextParams.set("roomTitle", trimmedRoomTitle);
+  }
+
+  if (headCoachEnabled) {
+    nextParams.set("headCoachEnabled", "true");
+  }
+
+  if (coachEnabled) {
+    nextParams.set("coachEnabled", "true");
   }
 
   return nextParams;
@@ -175,6 +189,8 @@ export function useDraftRoomSettings() {
     roomTitle,
     setDraftType,
     setParticipationMode,
+    setCoachEnabled,
+    setHeadCoachEnabled,
     setRoomTitle,
     setTeamCount,
     setTeamSize,
@@ -182,6 +198,8 @@ export function useDraftRoomSettings() {
     teamCount,
     teamSize,
     tournamentId,
+    coachEnabled,
+    headCoachEnabled,
   } = useDraftCreateStore();
 
   useEffect(() => {
@@ -217,9 +235,17 @@ export function useDraftRoomSettings() {
     setTournamentId(nextTournamentId);
 
     if (nextTournamentId === defaultTournamentId) {
-      setTeamCount("5");
-      setTeamSize("5");
+      setTeamCount("4");
+      setTeamSize("7");
+      setHeadCoachEnabled(true);
+      setCoachEnabled(true);
+      return;
     }
+
+    setTeamCount("5");
+    setTeamSize("5");
+    setHeadCoachEnabled(false);
+    setCoachEnabled(false);
   };
 
   const summaryItems = useMemo<DraftRoomSettingsSummaryItem[]>(
@@ -251,6 +277,8 @@ export function useDraftRoomSettings() {
   const formState: DraftRoomSettingsFormProps = {
     draftType,
     draftTypeOptions,
+    isRoomTitleDisabled: participationMode === "solo",
+    isTeamCompositionDisabled: tournamentId === defaultTournamentId,
     onDraftTypeChange: setDraftType,
     onParticipationModeChange: setParticipationMode,
     onRoomTitleChange: setRoomTitle,
@@ -276,6 +304,8 @@ export function useDraftRoomSettings() {
       teamCount,
       teamSize,
       tournamentId,
+      coachEnabled,
+      headCoachEnabled,
     });
 
     router.push(`/draft/create/streamers?${nextParams.toString()}`);

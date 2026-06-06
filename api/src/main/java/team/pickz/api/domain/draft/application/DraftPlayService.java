@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.draft.application.dto.response.PickResultResponse;
 import team.pickz.api.domain.draft.application.event.DraftPickedEvent;
 import team.pickz.api.domain.draft.application.util.RoomSequenceManager;
-import team.pickz.api.domain.draft.domain.RoomStatus;
+import team.pickz.api.domain.draft.domain.type.RoomStatus;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftPick;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;

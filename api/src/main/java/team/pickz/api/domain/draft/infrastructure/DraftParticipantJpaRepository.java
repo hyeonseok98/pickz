@@ -10,9 +10,11 @@ public interface DraftParticipantJpaRepository extends JpaRepository<DraftPartic
 
     List<DraftParticipant> findAllByRoomId(Long roomId);
 
-    Optional<DraftParticipant> findByParticipantToken(String participantToken);
-
     List<DraftParticipant> findAllByRoomIdOrderByTurnOrderAsc(Long roomId);
+
+    boolean existsByRoomIdAndSelectedCoachName(Long roomId, String coachName);
+
+    Optional<DraftParticipant> findByParticipantToken(String participantToken);
 
     Optional<DraftParticipant> findByRoomIdAndParticipantToken(Long roomId, String participantToken);
 

@@ -3,7 +3,7 @@ package team.pickz.api.domain.draft.application.dto.response;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
-import team.pickz.api.domain.draft.domain.MessageType;
+import team.pickz.api.domain.draft.domain.type.MessageType;
 
 @Builder
 public record ChatMessageResponse(

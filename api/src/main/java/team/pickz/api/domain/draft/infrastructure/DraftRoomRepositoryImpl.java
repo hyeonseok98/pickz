@@ -7,8 +7,8 @@ import team.pickz.api.domain.draft.domain.repository.DraftRoomRepository;
 
 import java.util.Optional;
 
-@Repository
 @RequiredArgsConstructor
+@Repository
 public class DraftRoomRepositoryImpl implements DraftRoomRepository {
 
     private final DraftRoomJpaRepository draftRoomJpaRepository;

@@ -1,14 +1,24 @@
 package team.pickz.api.domain.draft.application.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import team.pickz.api.domain.draft.domain.type.DraftMode;
+import team.pickz.api.domain.draft.domain.type.ParticipationType;
 
 public record RoomInitRequest(
 
-        @NotBlank(message = "참여 모드는 필수 입니다.")
-        String mode,
+        String title,
 
-        @NotBlank(message = "드래프트 룰 이름은 필수입니다.")
-        String ruleName
+        @NotNull(message = "드래프트 방식은 필수입니다.")
+        DraftMode draftMode,
+
+        @NotNull(message = "참여 방식은 필수입니다.")
+        ParticipationType participationType,
+
+        String preset,
+
+        Integer teamCount,
+
+        Integer teamSize
 
 ) {
 }

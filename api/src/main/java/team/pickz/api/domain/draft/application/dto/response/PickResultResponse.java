@@ -13,6 +13,10 @@ public record PickResultResponse(
 
         String pickedStreamerId,
 
+        String pickedStreamerName,
+
+        String pickedStreamerImageUrl,
+
         String nextTurnNickname,
 
         boolean isDraftDone

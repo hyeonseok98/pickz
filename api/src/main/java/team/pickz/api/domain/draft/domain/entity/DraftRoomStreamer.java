@@ -18,15 +18,18 @@ public class DraftRoomStreamer {
 
     private String streamerName;
 
+    private String imageUrl;
+
     @Enumerated(EnumType.STRING)
     private Position position;
 
     private int teamSlot;
 
     @Builder
-    public DraftRoomStreamer(Long roomId, String streamerName, Position position, int teamSlot) {
+    public DraftRoomStreamer(Long roomId, String streamerName, String imageUrl, Position position, int teamSlot) {
         this.roomId = roomId;
         this.streamerName = streamerName;
+        this.imageUrl = imageUrl;
         this.position = position;
         this.teamSlot = teamSlot;
     }

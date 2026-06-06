@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.draft.application.dto.response.PickResultResponse;
 import team.pickz.api.domain.draft.application.event.DraftPickedEvent;
 import team.pickz.api.domain.draft.application.util.RoomSequenceManager;
+import team.pickz.api.domain.draft.domain.entity.DraftRoomStreamer;
+import team.pickz.api.domain.draft.domain.repository.DraftRoomStreamerRepository;
 import team.pickz.api.domain.draft.domain.type.RoomStatus;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftPick;
@@ -25,6 +27,7 @@ public class DraftPlayService {
     private final DraftRoomRepository draftRoomRepository;
     private final DraftParticipantRepository draftParticipantRepository;
     private final DraftPickRepository draftPickRepository;
+    private final DraftRoomStreamerRepository draftRoomStreamerRepository;
     private final DraftRule snakeDraftRule;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final RoomSequenceManager roomSequenceManager;
@@ -56,6 +59,9 @@ public class DraftPlayService {
             throw new IllegalArgumentException("이미 선택된 스트리머입니다.");
         }
 
+        DraftRoomStreamer pickedStreamer = draftRoomStreamerRepository.findByRoomIdAndStreamerName(roomId, streamerId)
+                .orElseThrow(() -> new IllegalArgumentException("드래프트 풀에 존재하지 않는 스트리머입니다."));
+
         int currentRound = room.getCurrentPickCount() / room.getTeamCount();
         DraftPick pick = DraftPick.builder()
                 .roomId(roomId)
@@ -82,7 +88,9 @@ public class DraftPlayService {
                 .roomId(roomId)
                 .pickedNickname(requestor.getNickname())
                 .pickedStreamerId(streamerId)
-                .nextTurnNickname(nextTurnNickname) // 다음 차례 유저의 닉네임을 UI에 표시
+                .pickedStreamerName(pickedStreamer.getStreamerName())
+                .pickedStreamerImageUrl(pickedStreamer.getImageUrl())
+                .nextTurnNickname(nextTurnNickname)
                 .isDraftDone(room.getStatus() == RoomStatus.DONE)
                 .build();
 

@@ -1,20 +1,22 @@
 package team.pickz.api.domain.draft.application.dto.response;
 
+import team.pickz.api.domain.draft.application.dto.StreamerInfo;
+
 import java.util.List;
 
 public record DraftRoomStreamerResponse(
 
-        List<String> top,
+        List<StreamerInfo> top,
 
-        List<String> jug,
+        List<StreamerInfo> jug,
 
-        List<String> mid,
+        List<StreamerInfo> mid,
 
-        List<String> adc,
+        List<StreamerInfo> adc,
 
-        List<String> sup,
+        List<StreamerInfo> sup,
 
-        List<String> coach
+        List<StreamerInfo> coach
 
 ) {
 }

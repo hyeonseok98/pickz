@@ -1,22 +1,22 @@
 package team.pickz.api.domain.draft.application.dto.request;
 
-import java.util.List;
+import team.pickz.api.domain.draft.application.dto.StreamerInfo;
 
 public record DraftRoomStreamerRequest(
 
         int teamSlot,
 
-        String top,
+        StreamerInfo top,
 
-        String jug,
+        StreamerInfo jug,
 
-        String mid,
+        StreamerInfo mid,
 
-        String adc,
+        StreamerInfo adc,
 
-        String sup,
+        StreamerInfo sup,
 
-        String coach
+        StreamerInfo coach
 
 ) {
 }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import team.pickz.api.domain.draft.application.dto.StreamerInfo;
 import team.pickz.api.domain.draft.application.dto.request.DraftRoomStreamerRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomInitRequest;
 import team.pickz.api.domain.draft.application.dto.response.*;
@@ -99,13 +100,15 @@ public class DraftRoomService {
         }
     }
 
-    private void savePositionStreamers(Long roomId, int teamSlot, Position position, String name) {
-        if(name == null || name.isBlank()) return;
+    private void savePositionStreamers(Long roomId, int teamSlot, Position position, StreamerInfo info) {
+        if (info == null || info.name() == null || info.name().isBlank()) return;
+
         DraftRoomStreamer streamer = DraftRoomStreamer.builder()
                 .roomId(roomId)
                 .teamSlot(teamSlot)
                 .position(position)
-                .streamerName(name)
+                .streamerName(info.name())
+                .imageUrl(info.imageUrl())
                 .build();
         draftRoomStreamerRepository.save(streamer);
     }
@@ -114,21 +117,21 @@ public class DraftRoomService {
     public DraftRoomStreamerResponse getDraftRoomStreamers(Long roomId) {
         List<DraftRoomStreamer> streamers = draftRoomStreamerRepository.findAllByRoomId(roomId);
 
-        List<String> top = extractByPosition(streamers, Position.TOP);
-        List<String> jungle = extractByPosition(streamers, Position.JUG);
-        List<String> mid = extractByPosition(streamers, Position.MID);
-        List<String> adc = extractByPosition(streamers, Position.ADC);
-        List<String> support = extractByPosition(streamers, Position.SUP);
-        List<String> coach = extractByPosition(streamers, Position.COACH);
+        List<StreamerInfo> top = extractByPosition(streamers, Position.TOP);
+        List<StreamerInfo> jungle = extractByPosition(streamers, Position.JUG);
+        List<StreamerInfo> mid = extractByPosition(streamers, Position.MID);
+        List<StreamerInfo> adc = extractByPosition(streamers, Position.ADC);
+        List<StreamerInfo> support = extractByPosition(streamers, Position.SUP);
+        List<StreamerInfo> coach = extractByPosition(streamers, Position.COACH);
 
         return new DraftRoomStreamerResponse(top, jungle, mid, adc, support, coach);
     }
 
-    private List<String> extractByPosition(List<DraftRoomStreamer> streamers, Position position) {
+    private List<StreamerInfo> extractByPosition(List<DraftRoomStreamer> streamers, Position position) {
         return streamers.stream()
                 .filter(s -> s.getPosition() == position)
                 .sorted(Comparator.comparingInt(DraftRoomStreamer::getTeamSlot))
-                .map(DraftRoomStreamer::getStreamerName)
+                .map(s -> new StreamerInfo(s.getStreamerName(), s.getImageUrl()))
                 .toList();
     }
 

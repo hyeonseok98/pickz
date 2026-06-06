@@ -6,6 +6,7 @@ import team.pickz.api.domain.draft.domain.entity.DraftRoomStreamer;
 import team.pickz.api.domain.draft.domain.repository.DraftRoomStreamerRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Repository
@@ -26,6 +27,11 @@ public class DraftRoomStreamerRepositoryImpl implements DraftRoomStreamerReposit
     @Override
     public List<DraftRoomStreamer> findAllByRoomId(Long roomId) {
         return draftRoomStreamerJpaRepository.findAllByRoomId(roomId);
+    }
+
+    @Override
+    public Optional<DraftRoomStreamer> findByRoomIdAndStreamerName(Long roomId, String streamerId) {
+        return draftRoomStreamerJpaRepository.findByRoomIdAndStreamerName(roomId, streamerId);
     }
 
 }

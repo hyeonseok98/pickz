@@ -29,9 +29,11 @@ public class DraftRoom {
     private RoomStatus status;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private DraftMode draftMode;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ParticipationType participationType;
 
     private String preset;

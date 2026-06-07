@@ -7,7 +7,11 @@ import java.util.Optional;
 
 public interface DraftParticipantRepository {
 
+    void flush();
+
     int countByRoomId(Long roomId);
+
+    void delete(DraftParticipant participant);
 
     List<DraftParticipant> findAllByRoomId(Long roomId);
 

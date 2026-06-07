@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public interface DraftParticipantRepository {
 
+    int countByRoomId(Long roomId);
+
     List<DraftParticipant> findAllByRoomId(Long roomId);
 
     DraftParticipant save(DraftParticipant draftParticipant);

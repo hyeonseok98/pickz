@@ -33,6 +33,11 @@ public class DraftParticipantService {
 
         room.verifyPickable();
 
+        int currentCount = draftParticipantRepository.countByRoomId(room.getId());
+        if(currentCount >= room.getTeamCount()) {
+            throw new IllegalStateException("방의 정원이 가득 찼습니다.");
+        }
+
         int sequence = roomSequenceManager.getNextSequence(room.getId());
         String nickname = RandomNicknameGenerator.generate(sequence);
 
@@ -41,7 +46,6 @@ public class DraftParticipantService {
                 .nickname(nickname)
                 .isHost(false)
                 .build();
-
         draftParticipantRepository.save(participant);
 
         List<DraftParticipant> participants = draftParticipantRepository.findAllByRoomId(room.getId());

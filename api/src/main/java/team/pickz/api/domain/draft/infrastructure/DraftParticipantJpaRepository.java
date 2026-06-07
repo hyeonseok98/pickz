@@ -13,6 +13,8 @@ import java.util.Optional;
 
 public interface DraftParticipantJpaRepository extends JpaRepository<DraftParticipant, Long> {
 
+    int countByRoomId(Long roomId);
+
     List<DraftParticipant> findAllByRoomId(Long roomId);
 
     List<DraftParticipant> findAllByRoomIdOrderByTurnOrderAsc(Long roomId);

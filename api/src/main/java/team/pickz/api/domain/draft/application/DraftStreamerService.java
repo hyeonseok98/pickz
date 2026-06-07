@@ -17,6 +17,8 @@ import team.pickz.api.domain.draft.domain.repository.DraftRoomRepository;
 import team.pickz.api.domain.draft.domain.repository.DraftStreamerRepository;
 import team.pickz.api.domain.draft.domain.type.Position;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -71,24 +73,35 @@ public class DraftStreamerService {
 
     @Transactional(readOnly = true)
     public DraftRoomStreamerResponse getDraftRoomStreamers(Long roomId) {
+        DraftRoom room = draftRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+        int teamCount = room.getTeamCount();
+
         List<DraftStreamer> streamers = draftStreamerRepository.findAllByRoomId(roomId);
 
-        List<StreamerInfo> top = extractByPosition(streamers, Position.TOP);
-        List<StreamerInfo> jungle = extractByPosition(streamers, Position.JUG);
-        List<StreamerInfo> mid = extractByPosition(streamers, Position.MID);
-        List<StreamerInfo> adc = extractByPosition(streamers, Position.ADC);
-        List<StreamerInfo> support = extractByPosition(streamers, Position.SUP);
-        List<StreamerInfo> coach = extractByPosition(streamers, Position.COACH);
+        List<StreamerInfo> top = extractByPosition(streamers, Position.TOP, teamCount);
+        List<StreamerInfo> jungle = extractByPosition(streamers, Position.JUG, teamCount);
+        List<StreamerInfo> mid = extractByPosition(streamers, Position.MID, teamCount);
+        List<StreamerInfo> adc = extractByPosition(streamers, Position.ADC, teamCount);
+        List<StreamerInfo> support = extractByPosition(streamers, Position.SUP, teamCount);
+        List<StreamerInfo> coach = extractByPosition(streamers, Position.COACH, teamCount);
 
         return new DraftRoomStreamerResponse(top, jungle, mid, adc, support, coach);
     }
 
-    private List<StreamerInfo> extractByPosition(List<DraftStreamer> streamers, Position position) {
-        return streamers.stream()
+    private List<StreamerInfo> extractByPosition(List<DraftStreamer> streamers, Position position, int teamCount) {
+        List<StreamerInfo> result = new ArrayList<>(Collections.nCopies(teamCount, null));
+
+        streamers.stream()
                 .filter(s -> s.getPosition() == position)
-                .sorted(Comparator.comparingInt(DraftStreamer::getTeamSlot))
-                .map(s -> new StreamerInfo(s.getStreamerName(), s.getImageUrl()))
-                .toList();
+                .forEach(s -> {
+                    int slot = s.getTeamSlot();
+                    if (slot > 0 && slot <= teamCount) {
+                        result.set(slot, new StreamerInfo(s.getStreamerName(), s.getImageUrl()));
+                    }
+                });
+
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -120,14 +133,15 @@ public class DraftStreamerService {
 
         // 2. 스트리머 풀 조회 로직 재활용
         List<DraftStreamer> streamers = draftStreamerRepository.findAllByRoomId(roomId);
+        int teamCount = room.getTeamCount();
 
         DraftConfigResponse.StreamersByLine streamersByLine = new DraftConfigResponse.StreamersByLine(
-                extractByPosition(streamers, Position.TOP),
-                extractByPosition(streamers, Position.JUG),
-                extractByPosition(streamers, Position.MID),
-                extractByPosition(streamers, Position.ADC),
-                extractByPosition(streamers, Position.SUP),
-                extractByPosition(streamers, Position.COACH)
+                extractByPosition(streamers, Position.TOP, teamCount),
+                extractByPosition(streamers, Position.JUG, teamCount),
+                extractByPosition(streamers, Position.MID, teamCount),
+                extractByPosition(streamers, Position.ADC, teamCount),
+                extractByPosition(streamers, Position.SUP, teamCount),
+                extractByPosition(streamers, Position.COACH, teamCount)
         );
 
         // 3. 최종 데이터 조립

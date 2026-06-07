@@ -28,12 +28,10 @@ public class DraftParticipantService {
 
     @Transactional
     public ParticipantResponse joinRoom(String inviteCode) {
-        DraftRoom room = draftRoomRepository.findByInviteCode(inviteCode)
+        DraftRoom room = draftRoomRepository.findByInviteCodeWithLock(inviteCode)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
 
-        if(room.getStatus() != RoomStatus.WAITING) {
-            throw new IllegalStateException("이미 게임이 시작된 방입니다.");
-        }
+        room.verifyPickable();
 
         int sequence = roomSequenceManager.getNextSequence(room.getId());
         String nickname = RandomNicknameGenerator.generate(sequence);

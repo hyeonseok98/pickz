@@ -2,14 +2,14 @@ export type DraftRoomEventSuccessCode = "SUCCESS";
 
 export type DraftRoomStatus = "WAITING" | "PLAYING";
 
-export interface DraftRoomParticipantJoinedEventPayload {
+export interface DraftRoomParticipantsChangedEventPayload {
   newParticipant: string;
   nicknames: string[];
   totalCount: number;
 }
 
-export interface DraftRoomParticipantJoinedEvent {
-  payload: DraftRoomParticipantJoinedEventPayload;
+export interface DraftRoomParticipantsChangedEvent {
+  payload: DraftRoomParticipantsChangedEventPayload;
   roomId: number;
 }
 
@@ -21,6 +21,16 @@ export interface DraftRoomStartedEventPayload {
 export interface DraftRoomStartedEvent {
   code: DraftRoomEventSuccessCode;
   payload: DraftRoomStartedEventPayload;
+}
+
+export interface DraftRoomDeletedEventPayload {
+  message?: string;
+  reason?: string;
+}
+
+export interface DraftRoomDeletedEvent {
+  payload?: DraftRoomDeletedEventPayload;
+  roomId: number;
 }
 
 export interface DraftRoomPickSucceededEventResult {
@@ -49,8 +59,9 @@ export interface DraftRoomErrorEvent {
 }
 
 export type DraftRoomEvent =
-  | DraftRoomParticipantJoinedEvent
+  | DraftRoomDeletedEvent
   | DraftRoomPickSucceededEvent
+  | DraftRoomParticipantsChangedEvent
   | DraftRoomStartedEvent;
 
 export type DraftRoomRawMessage = string;

@@ -1,13 +1,22 @@
 import type {
   CreateDraftRoomRequest,
   CreateDraftRoomResponse,
+  DraftRoomParticipantTokenParams,
+  DraftRoomStateResponse,
+  DraftRoomStreamerPoolResponse,
   JoinDraftRoomResponse,
+  SaveDraftRoomStreamerPoolParams,
+  SelectDraftRoomCoachParams,
   StartDraftRoomParams,
 } from "@/types/drafts";
 
 const defaultCreateDraftRoomRequest: CreateDraftRoomRequest = {
-  mode: "TOGETHER",
-  ruleName: "SNAKE",
+  draftMode: "SNAKE",
+  participationType: "TOGETHER",
+  preset: "custom",
+  teamCount: 5,
+  teamSize: 5,
+  title: "Pickz 드래프트 방",
 };
 
 function createApiPath(pathname: string) {
@@ -107,6 +116,29 @@ function isJoinDraftRoomResponse(payload: unknown): payload is JoinDraftRoomResp
   );
 }
 
+function isDraftRoomStreamerPoolResponse(payload: unknown): payload is DraftRoomStreamerPoolResponse {
+  if (!isRecordValue(payload)) {
+    return false;
+  }
+
+  return (
+    Array.isArray(payload.top) &&
+    Array.isArray(payload.jug) &&
+    Array.isArray(payload.mid) &&
+    Array.isArray(payload.adc) &&
+    Array.isArray(payload.sup) &&
+    Array.isArray(payload.coach)
+  );
+}
+
+function isDraftRoomStateResponse(payload: unknown): payload is DraftRoomStateResponse {
+  if (!isRecordValue(payload) || !isRecordValue(payload.draftConfig)) {
+    return false;
+  }
+
+  return typeof payload.roomId === "number" && typeof payload.roomStatus === "string";
+}
+
 function normalizeCreateDraftRoomResponse(payload: CreateDraftRoomResponse) {
   return {
     ...payload,
@@ -176,15 +208,80 @@ export async function joinDraftRoomByInviteCode(inviteCode: string) {
 
 export async function startDraftRoom({
   participantToken,
-  request,
   roomId,
 }: StartDraftRoomParams) {
-  const response = await fetch(createApiPath(`drafts/rooms/${roomId}/settings`), {
-    method: "PATCH",
+  const response = await fetch(createApiPath(`drafts/rooms/${roomId}/start`), {
+    method: "POST",
+    cache: "no-store",
+    credentials: "include",
+    headers: {
+      Accept: "text/plain",
+      "X-Participant-Token": participantToken,
+    },
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok) {
+    throw createApiError(response, payload, "드래프트 시작 API 호출에 실패했습니다.");
+  }
+}
+
+export async function getDraftRoomStreamerPool(roomId: number) {
+  const response = await fetch(createApiPath(`drafts/rooms/${roomId}/streamers`), {
+    method: "GET",
     cache: "no-store",
     credentials: "include",
     headers: {
       Accept: "application/json",
+    },
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok) {
+    throw createApiError(response, payload, "드래프트 스트리머 풀 조회 API 호출에 실패했습니다.");
+  }
+
+  if (!isDraftRoomStreamerPoolResponse(payload)) {
+    throw new Error("드래프트 스트리머 풀 응답 형식이 올바르지 않습니다.");
+  }
+
+  return payload;
+}
+
+export async function saveDraftRoomStreamerPool({
+  participantToken,
+  roomId,
+  teamStreamerSlots,
+}: SaveDraftRoomStreamerPoolParams) {
+  const response = await fetch(createApiPath(`drafts/rooms/${roomId}/streamers`), {
+    method: "POST",
+    cache: "no-store",
+    credentials: "include",
+    headers: {
+      Accept: "text/plain",
+      "Content-Type": "application/json",
+      "X-Participant-Token": participantToken,
+    },
+    body: JSON.stringify(teamStreamerSlots),
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok) {
+    throw createApiError(response, payload, "드래프트 스트리머 풀 저장 API 호출에 실패했습니다.");
+  }
+}
+
+export async function selectDraftRoomCoach({
+  participantToken,
+  request,
+  roomId,
+}: SelectDraftRoomCoachParams) {
+  const response = await fetch(createApiPath(`drafts/rooms/${roomId}/participants/coach`), {
+    method: "PATCH",
+    cache: "no-store",
+    credentials: "include",
+    headers: {
+      Accept: "text/plain",
       "Content-Type": "application/json",
       "X-Participant-Token": participantToken,
     },
@@ -193,6 +290,68 @@ export async function startDraftRoom({
   const payload = await readResponsePayload(response);
 
   if (!response.ok) {
-    throw createApiError(response, payload, "드래프트 방 설정 및 시작 API 호출에 실패했습니다.");
+    throw createApiError(response, payload, "드래프트 감독 선택 API 호출에 실패했습니다.");
+  }
+}
+
+export async function getDraftRoomState(roomId: number) {
+  const response = await fetch(createApiPath(`drafts/rooms/${roomId}/state`), {
+    method: "GET",
+    cache: "no-store",
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok) {
+    throw createApiError(response, payload, "드래프트 게임 상태 조회 API 호출에 실패했습니다.");
+  }
+
+  if (!isDraftRoomStateResponse(payload)) {
+    throw new Error("드래프트 게임 상태 응답 형식이 올바르지 않습니다.");
+  }
+
+  return payload;
+}
+
+export async function deleteDraftRoom({
+  participantToken,
+  roomId,
+}: DraftRoomParticipantTokenParams) {
+  const response = await fetch(createApiPath(`drafts/rooms/${roomId}`), {
+    method: "DELETE",
+    cache: "no-store",
+    credentials: "include",
+    headers: {
+      Accept: "text/plain",
+      "X-Participant-Token": participantToken,
+    },
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok) {
+    throw createApiError(response, payload, "드래프트 방 삭제 API 호출에 실패했습니다.");
+  }
+}
+
+export async function leaveDraftRoom({
+  participantToken,
+  roomId,
+}: DraftRoomParticipantTokenParams) {
+  const response = await fetch(createApiPath(`drafts/rooms/${roomId}/participants`), {
+    method: "DELETE",
+    cache: "no-store",
+    credentials: "include",
+    headers: {
+      Accept: "text/plain",
+      "X-Participant-Token": participantToken,
+    },
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok) {
+    throw createApiError(response, payload, "드래프트 방 퇴장 API 호출에 실패했습니다.");
   }
 }

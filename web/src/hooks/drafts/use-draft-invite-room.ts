@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createDraftRoom, joinDraftRoomByInviteCode, startDraftRoom } from "@/apis/drafts";
 import { useDraftCreateStore } from "@/stores/drafts";
+import type { CreateDraftRoomRequest } from "@/types/drafts";
 import { getDraftParticipantSession, saveDraftParticipantSession } from "@/utils";
 import { useDraftRoomStomp } from "./use-draft-room-stomp";
 
@@ -96,6 +97,31 @@ function createInviteLink({
   }
 
   return `${baseUrl}/join/${inviteCode}?${searchParams.toString()}`;
+}
+
+function createDraftRoomRequest({
+  draftType,
+  mode,
+  roomTitle,
+  teamCount,
+  teamSize,
+  tournamentId,
+}: {
+  draftType: "snake" | "auction";
+  mode: "solo" | "party";
+  roomTitle: string;
+  teamCount: string;
+  teamSize: string;
+  tournamentId: string;
+}): CreateDraftRoomRequest {
+  return {
+    draftMode: draftType === "auction" ? "AUCTION" : "SNAKE",
+    participationType: mode === "party" ? "TOGETHER" : "SOLO",
+    preset: tournamentId,
+    teamCount: Number(teamCount),
+    teamSize: Number(teamSize),
+    title: roomTitle.trim() || "Pickz 드래프트 방",
+  };
 }
 
 function createParticipantItem({
@@ -234,7 +260,7 @@ export function useDraftInviteRoom({
   teamSize: teamSizeFromQuery,
 }: UseDraftInviteRoomParams): UseDraftInviteRoomResult {
   const router = useRouter();
-  const { participantIds, tournamentId } = useDraftCreateStore();
+  const { participantIds, roomTitle, tournamentId } = useDraftCreateStore();
   const teamCountValue = Number(teamCountFromQuery);
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
@@ -255,7 +281,17 @@ export function useDraftInviteRoom({
   const bootstrapCompletedRef = useRef(false);
 
   const createRoomMutation = useMutation({
-    mutationFn: () => createDraftRoom(),
+    mutationFn: () =>
+      createDraftRoom(
+        createDraftRoomRequest({
+          draftType,
+          mode,
+          roomTitle,
+          teamCount: teamCountFromQuery,
+          teamSize: teamSizeFromQuery,
+          tournamentId,
+        }),
+      ),
     onMutate: () => {
       setBootstrapStatus("creating_room");
       setBootstrapErrorSource(null);
@@ -341,10 +377,6 @@ export function useDraftInviteRoom({
 
       await startDraftRoom({
         participantToken,
-        request: {
-          teamCount: Number(teamCountFromQuery),
-          teamSize: Number(teamSizeFromQuery),
-        },
         roomId,
       });
     },
@@ -374,6 +406,26 @@ export function useDraftInviteRoom({
     createRoom();
   }, [createRoom, initialInviteCode, joinRoom, mode]);
 
+  const handleParticipantRoomMessage = (messageBody: string) => {
+    const participantEvent = parseParticipantEvent(messageBody);
+
+    if (!participantEvent) {
+      return;
+    }
+
+    setParticipants((currentParticipants) => {
+      const session = roomId ? getDraftParticipantSession(roomId) : null;
+      const fallbackHostName = session?.isHost ? getDisplayNickname(session.nickname, "방장") : "방장";
+
+      return mergeParticipantList({
+        currentParticipants,
+        eventPayload: participantEvent,
+        fallbackHostName,
+      });
+    });
+    setInfoMessage(`현재 ${participantEvent.totalCount}명이 대기실에 입장했습니다.`);
+  };
+
   const { connectionStatus } = useDraftRoomStomp({
     roomId: roomId ?? 0,
     participantToken,
@@ -394,23 +446,15 @@ export function useDraftInviteRoom({
         return;
       }
 
-      const participantEvent = parseParticipantEvent(messageBody);
-
-      if (!participantEvent) {
-        return;
-      }
-
-      setParticipants((currentParticipants) => {
-        const session = roomId ? getDraftParticipantSession(roomId) : null;
-        const fallbackHostName = session?.isHost ? getDisplayNickname(session.nickname, "방장") : "방장";
-
-        return mergeParticipantList({
-          currentParticipants,
-          eventPayload: participantEvent,
-          fallbackHostName,
-        });
-      });
-      setInfoMessage(`현재 ${participantEvent.totalCount}명이 대기실에 입장했습니다.`);
+      // 구버전 서버가 room topic으로 참가자 이벤트를 보내는 경우까지 흡수합니다.
+      handleParticipantRoomMessage(messageBody);
+    },
+    onParticipantsMessage: handleParticipantRoomMessage,
+    onRoomDeletedMessage: () => {
+      setBootstrapStatus("bootstrap_error");
+      setBootstrapErrorSource("session");
+      setErrorMessage("방이 종료되었습니다. 드래프트 화면으로 다시 이동해 주세요.");
+      setInfoMessage("");
     },
   });
   const inviteLink = useSyncExternalStore(

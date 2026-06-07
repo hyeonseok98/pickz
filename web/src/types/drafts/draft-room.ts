@@ -1,6 +1,19 @@
+export type DraftRoomApiDraftMode = "SNAKE" | "AUCTION";
+export type DraftRoomApiParticipationType = "SOLO" | "TOGETHER";
+export type DraftRoomApiStatus = "WAITING" | "PLAYING";
+
+export interface DraftRoomApiStreamer {
+  imageUrl: string;
+  name: string;
+}
+
 export interface CreateDraftRoomRequest {
-  mode: "TOGETHER";
-  ruleName: "SNAKE";
+  draftMode: DraftRoomApiDraftMode;
+  participationType: DraftRoomApiParticipationType;
+  preset: string;
+  teamCount: number;
+  teamSize: number;
+  title: string;
 }
 
 export interface CreateDraftRoomResponse {
@@ -26,13 +39,74 @@ export interface JoinDraftRoomResponse {
   roomId: number;
 }
 
-export interface StartDraftRoomRequest {
-  teamCount: number;
-  teamSize: number;
-}
-
 export interface StartDraftRoomParams {
   participantToken: string;
-  request: StartDraftRoomRequest;
+  roomId: number;
+}
+
+export interface DraftRoomStreamerPoolResponse {
+  adc: DraftRoomApiStreamer[];
+  coach: DraftRoomApiStreamer[];
+  jug: DraftRoomApiStreamer[];
+  mid: DraftRoomApiStreamer[];
+  sup: DraftRoomApiStreamer[];
+  top: DraftRoomApiStreamer[];
+}
+
+export interface DraftRoomStreamerTeamSlotRequest {
+  adc: DraftRoomApiStreamer;
+  coach: DraftRoomApiStreamer;
+  jug: DraftRoomApiStreamer;
+  mid: DraftRoomApiStreamer;
+  sup: DraftRoomApiStreamer;
+  teamSlot: number;
+  top: DraftRoomApiStreamer;
+}
+
+export interface SaveDraftRoomStreamerPoolParams {
+  participantToken: string;
+  roomId: number;
+  teamStreamerSlots: DraftRoomStreamerTeamSlotRequest[];
+}
+
+export interface SelectDraftRoomCoachRequest {
+  coachName: string;
+  targetTurnOrder: number;
+}
+
+export interface SelectDraftRoomCoachParams {
+  participantToken: string;
+  request: SelectDraftRoomCoachRequest;
+  roomId: number;
+}
+
+export interface DraftRoomStateCoach {
+  nickname: string;
+  participantNickname: string;
+}
+
+export interface DraftRoomStateStreamerPool {
+  adc: DraftRoomApiStreamer[];
+  coach: DraftRoomApiStreamer[];
+  jungle: DraftRoomApiStreamer[];
+  mid: DraftRoomApiStreamer[];
+  support: DraftRoomApiStreamer[];
+  top: DraftRoomApiStreamer[];
+}
+
+export interface DraftRoomStateConfig {
+  coaches: DraftRoomStateCoach[];
+  pickOrder: string[];
+  streamersByLine: DraftRoomStateStreamerPool;
+}
+
+export interface DraftRoomStateResponse {
+  draftConfig: DraftRoomStateConfig;
+  roomId: number;
+  roomStatus: DraftRoomApiStatus;
+}
+
+export interface DraftRoomParticipantTokenParams {
+  participantToken: string;
   roomId: number;
 }

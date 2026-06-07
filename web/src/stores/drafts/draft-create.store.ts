@@ -54,7 +54,7 @@ const initialDraftCreateState: DraftCreateFlowState = {
   visibility: "public",
 };
 
-function deriveTeamSizeFromCoachFlags({
+function getTeamSizeByStaffOptions({
   coachEnabled,
   headCoachEnabled,
 }: {
@@ -189,7 +189,7 @@ export const useDraftCreateStore = create<DraftCreateStoreState>((set) => ({
   },
   setCoachEnabled: (coachEnabled) => {
     set((current) => {
-      const nextTeamSize = deriveTeamSizeFromCoachFlags({
+      const nextTeamSize = getTeamSizeByStaffOptions({
         coachEnabled,
         headCoachEnabled: current.headCoachEnabled,
       });
@@ -211,7 +211,7 @@ export const useDraftCreateStore = create<DraftCreateStoreState>((set) => ({
   },
   setHeadCoachEnabled: (headCoachEnabled) => {
     set((current) => {
-      const nextTeamSize = deriveTeamSizeFromCoachFlags({
+      const nextTeamSize = getTeamSizeByStaffOptions({
         coachEnabled: current.coachEnabled,
         headCoachEnabled,
       });

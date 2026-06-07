@@ -17,6 +17,8 @@ interface UseDraftRoomStompParams {
   onChatMessage?: (messageBody: string) => void;
   onConnectionError?: (messageBody: string) => void;
   onRoomMessage?: (messageBody: string) => void;
+  onParticipantsMessage?: (messageBody: string) => void;
+  onRoomDeletedMessage?: (messageBody: string) => void;
   onErrorMessage?: (messageBody: string) => void;
 }
 
@@ -32,6 +34,8 @@ export function useDraftRoomStomp({
   onChatMessage,
   onConnectionError,
   onErrorMessage,
+  onParticipantsMessage,
+  onRoomDeletedMessage,
   onRoomMessage,
 }: UseDraftRoomStompParams): UseDraftRoomStompReturn {
   const [connectionStatus, setConnectionStatus] =
@@ -39,6 +43,8 @@ export function useDraftRoomStomp({
   const clientRef = useRef<Client | null>(null);
   const subscriptionsRef = useRef<StompSubscription[]>([]);
   const onRoomMessageRef = useRef(onRoomMessage);
+  const onParticipantsMessageRef = useRef(onParticipantsMessage);
+  const onRoomDeletedMessageRef = useRef(onRoomDeletedMessage);
   const onErrorMessageRef = useRef(onErrorMessage);
   const onChatMessageRef = useRef(onChatMessage);
   const onConnectionErrorRef = useRef(onConnectionError);
@@ -46,6 +52,14 @@ export function useDraftRoomStomp({
   useEffect(() => {
     onRoomMessageRef.current = onRoomMessage;
   }, [onRoomMessage]);
+
+  useEffect(() => {
+    onParticipantsMessageRef.current = onParticipantsMessage;
+  }, [onParticipantsMessage]);
+
+  useEffect(() => {
+    onRoomDeletedMessageRef.current = onRoomDeletedMessage;
+  }, [onRoomDeletedMessage]);
 
   useEffect(() => {
     onErrorMessageRef.current = onErrorMessage;
@@ -90,6 +104,20 @@ export function useDraftRoomStomp({
               onRoomMessageRef.current?.(message.body);
             },
           );
+          const participantsSubscription = client.subscribe(
+            `/topic/drafts/rooms/${roomId}/participants`,
+            (message: IMessage) => {
+              console.log("[draft room participants]", message.body);
+              onParticipantsMessageRef.current?.(message.body);
+            },
+          );
+          const deletedSubscription = client.subscribe(
+            `/topic/drafts/rooms/${roomId}/deleted`,
+            (message: IMessage) => {
+              console.log("[draft room deleted]", message.body);
+              onRoomDeletedMessageRef.current?.(message.body);
+            },
+          );
           const errorSubscription = client.subscribe(
             "/user/queue/errors",
             (message: IMessage) => {
@@ -105,7 +133,13 @@ export function useDraftRoomStomp({
             },
           );
 
-          subscriptionsRef.current = [roomSubscription, errorSubscription, chatSubscription];
+          subscriptionsRef.current = [
+            roomSubscription,
+            participantsSubscription,
+            deletedSubscription,
+            errorSubscription,
+            chatSubscription,
+          ];
           setConnectionStatus("connected");
         },
         onDisconnect: () => {

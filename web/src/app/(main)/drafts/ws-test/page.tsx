@@ -835,10 +835,6 @@ export default function DraftWebSocketTestPage() {
       return startDraftRoom({
         roomId: hostSession.roomId,
         participantToken: hostSession.participantToken,
-        request: {
-          teamCount: fixedTeamCount,
-          teamSize: fixedTeamSize,
-        },
       });
     },
   });
@@ -1053,7 +1049,7 @@ export default function DraftWebSocketTestPage() {
 
         <SectionCard
           title="게임 시작"
-          description="5팀 5인 고정값으로 PATCH /settings를 호출하고 WebSocket 게임 시작 이벤트를 확인합니다."
+          description="방장 토큰으로 POST /start를 호출하고 WebSocket 게임 시작 이벤트를 확인합니다."
         >
           <div className="grid gap-4 xl:grid-cols-[auto_auto_auto_minmax(0,1fr)]">
             <CompactMetric label="teamCount" value={String(fixedTeamCount)} />
@@ -1073,12 +1069,12 @@ export default function DraftWebSocketTestPage() {
               <pre className="mt-1 text-xs leading-5 text-text-primary">
                 {JSON.stringify(
                   {
-                    method: "PATCH",
-                    path: hostSession ? `/api/drafts/rooms/${hostSession.roomId}/settings` : "",
+                    method: "POST",
+                    path: hostSession ? `/api/drafts/rooms/${hostSession.roomId}/start` : "",
                     headers: {
                       "X-Participant-Token": hostSession?.participantToken ?? "",
                     },
-                    body: { teamCount: fixedTeamCount, teamSize: fixedTeamSize },
+                    body: null,
                     required: `방장 포함 ${fixedTeamCount}명 필요`,
                     currentParticipants: totalParticipantCount,
                   },

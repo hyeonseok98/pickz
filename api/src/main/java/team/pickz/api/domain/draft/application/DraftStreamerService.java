@@ -30,11 +30,18 @@ public class DraftStreamerService {
 
     @Transactional
     public void saveDraftRoomStreamers(Long roomId, String participantToken, List<DraftRoomStreamerRequest> requests) {
+        DraftRoom room = draftRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+
         DraftParticipant requestor = draftParticipantRepository.findByRoomIdAndParticipantToken(roomId, participantToken)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 참여자입니다."));
 
         if (!requestor.isHost()) {
             throw new IllegalArgumentException("방장만 스트리머 풀을 설정할 수 있습니다.");
+        }
+
+        for (DraftRoomStreamerRequest req : requests) {
+            room.validateTeamSlot(req.teamSlot());
         }
 
         draftStreamerRepository.deleteAllByRoomId(roomId);

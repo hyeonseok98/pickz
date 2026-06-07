@@ -80,9 +80,18 @@ public class DraftRoom {
         return this.status == RoomStatus.DONE;
     }
 
+    public void validateTeamSlot(int teamSlot) {
+        if(teamSlot < 1 || teamSlot > this.teamCount) {
+            throw new IllegalArgumentException(
+                    String.format("유효하지 않은 팀 슬롯입니다. (입력: %d, 허용 범위: 1 ~ %d)",
+                            teamSlot, this.teamCount)
+            );
+        }
+    }
+
     public void incrementPickCount() {
         this.currentPickCount++;
-        if (this.currentPickCount >= (this.teamCount * this.teamSize)) {
+        if(this.currentPickCount >= (this.teamCount * this.teamSize)) {
             this.status = RoomStatus.DONE;
         }
     }

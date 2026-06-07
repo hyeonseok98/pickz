@@ -143,6 +143,10 @@ public class DraftRoomService {
             return;
         }
 
+        if (!roomId.equals(participant.getRoomId())) {
+            throw new IllegalArgumentException("해당 방의 참여자가 아닙니다.");
+        }
+
         if (participant.isHost()) {
             deleteRoom(roomId, participantToken);
             return;

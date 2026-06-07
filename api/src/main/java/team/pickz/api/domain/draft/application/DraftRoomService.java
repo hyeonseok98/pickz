@@ -151,14 +151,24 @@ public class DraftRoomService {
         draftParticipantRepository.delete(participant);
 
         List<DraftParticipant> remainingParticipants = draftParticipantRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);
-        List<String> nicknames = remainingParticipants.stream()
-                .map(DraftParticipant::getNickname)
+
+        List<ParticipantResponse> participantResponses = remainingParticipants.stream()
+                .map(p -> new ParticipantResponse(
+                        p.getId(),
+                        p.getRoomId(),
+                        p.getParticipantToken(), // 혹은 프론트가 필요한 필드들
+                        p.getNickname(),
+                        p.isHost(),
+                        p.getSelectedCoachName(),
+                        p.getTurnOrder(),
+                        p.isReady()
+                ))
                 .toList();
 
         applicationEventPublisher.publishEvent(
                 ParticipantUpdateEvent.builder()
                         .roomId(roomId)
-                        .nicknames(nicknames)
+                        .participants(participantResponses)
                         .build()
         );
     }

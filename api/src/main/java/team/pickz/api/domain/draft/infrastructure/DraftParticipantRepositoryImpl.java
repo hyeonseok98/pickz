@@ -35,6 +35,11 @@ public class DraftParticipantRepositoryImpl implements DraftParticipantRepositor
     }
 
     @Override
+    public void flush() {
+        draftParticipantJpaRepository.flush();
+    }
+
+    @Override
     public int countByRoomId(Long roomId) {
         return draftParticipantJpaRepository.countByRoomId(roomId);
     }

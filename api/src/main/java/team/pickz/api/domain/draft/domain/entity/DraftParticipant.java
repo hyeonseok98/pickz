@@ -36,6 +36,8 @@ public class DraftParticipant {
 
     private String selectedCoachName;
 
+    private boolean isReady;
+
     @Builder
     public DraftParticipant(Long roomId, Long memberId, String nickname, boolean isHost) {
         this.roomId = roomId;
@@ -52,6 +54,9 @@ public class DraftParticipant {
     public void selectCoach(String coachName, int turnOrder) {
         this.selectedCoachName = coachName;
         this.turnOrder = turnOrder;
+        if(coachName != null) {
+            this.isReady = true;
+        }
     }
 
 }

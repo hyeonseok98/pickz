@@ -5,11 +5,21 @@ import lombok.Builder;
 @Builder
 public record ParticipantResponse(
 
+        Long id,
+
         Long roomId,
 
         String participantToken,
 
-        boolean isHost
+        String nickname,
+
+        boolean isHost,
+
+        String selectedCoachName,
+
+        Integer turnOrder,
+
+        boolean isReady
 
 ) {
 }

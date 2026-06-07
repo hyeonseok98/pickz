@@ -15,6 +15,7 @@ import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
 import team.pickz.api.domain.draft.domain.repository.DraftParticipantRepository;
 import team.pickz.api.domain.draft.domain.repository.DraftRoomRepository;
+import team.pickz.api.domain.draft.domain.type.RoomStatus;
 import team.pickz.api.domain.member.domain.MemberRepository;
 
 import java.util.List;
@@ -132,11 +133,15 @@ public class DraftRoomService {
 
     @Transactional
     public void leaveRoom(Long roomId, String participantToken) {
-        DraftRoom room = draftRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+        DraftRoom room = draftRoomRepository.findById(roomId).orElse(null);
+        if (room == null || room.getStatus() == RoomStatus.DELETED) {
+            return;
+        }
 
-        DraftParticipant participant = draftParticipantRepository.findByParticipantToken(participantToken)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 참여자입니다."));
+        DraftParticipant participant = draftParticipantRepository.findByParticipantToken(participantToken).orElse(null);
+        if (participant == null) {
+            return;
+        }
 
         if (participant.isHost()) {
             deleteRoom(roomId, participantToken);

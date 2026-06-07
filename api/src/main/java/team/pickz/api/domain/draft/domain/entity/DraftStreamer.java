@@ -7,7 +7,7 @@ import team.pickz.api.domain.draft.domain.type.Position;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class DraftRoomStreamer {
+public class DraftStreamer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +26,7 @@ public class DraftRoomStreamer {
     private int teamSlot;
 
     @Builder
-    public DraftRoomStreamer(Long roomId, String streamerName, String imageUrl, Position position, int teamSlot) {
+    public DraftStreamer(Long roomId, String streamerName, String imageUrl, Position position, int teamSlot) {
         this.roomId = roomId;
         this.streamerName = streamerName;
         this.imageUrl = imageUrl;

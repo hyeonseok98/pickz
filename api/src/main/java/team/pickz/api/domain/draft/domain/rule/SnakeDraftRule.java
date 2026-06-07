@@ -1,6 +1,7 @@
 package team.pickz.api.domain.draft.domain.rule;
 
 import org.springframework.stereotype.Component;
+import team.pickz.api.domain.draft.domain.type.DraftMode;
 
 @Component
 public class SnakeDraftRule implements DraftRule {
@@ -21,8 +22,8 @@ public class SnakeDraftRule implements DraftRule {
     }
 
     @Override
-    public String getRuleName() {
-        return "SNAKE";
+    public DraftMode getMode() {
+        return DraftMode.SNAKE;
     }
 
 }

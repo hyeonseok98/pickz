@@ -1,12 +1,19 @@
 package team.pickz.api.domain.draft.infrastructure;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
+import team.pickz.api.domain.draft.domain.entity.DraftRoom;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface DraftParticipantJpaRepository extends JpaRepository<DraftParticipant, Long> {
+
+    int countByRoomId(Long roomId);
 
     List<DraftParticipant> findAllByRoomId(Long roomId);
 

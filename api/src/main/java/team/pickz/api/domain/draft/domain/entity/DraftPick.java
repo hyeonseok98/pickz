@@ -24,13 +24,16 @@ public class DraftPick {
 
     private String streamerId; // 치지직 채널 ID
 
+    private String streamerName;
+
     private int roundIndex; // 몇 라운드에 뽑았는지
 
     @Builder
-    public DraftPick(Long roomId, Long participantId, String streamerId, int roundIndex) {
+    public DraftPick(Long roomId, Long participantId, String streamerId, String streamerName, int roundIndex) {
         this.roomId = roomId;
         this.participantId = participantId;
         this.streamerId = streamerId;
+        this.streamerName = streamerName;
         this.roundIndex = roundIndex;
     }
 

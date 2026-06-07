@@ -14,6 +14,10 @@ public interface DraftRoomJpaRepository extends JpaRepository<DraftRoom, Long> {
     Optional<DraftRoom> findByInviteCode(String inviteCode);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM DraftRoom r WHERE r.inviteCode = :inviteCode")
+    Optional<DraftRoom> findByInviteCodeWithLock(@Param("inviteCode") String inviteCode);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r FROM DraftRoom r WHERE r.id = :id")
     Optional<DraftRoom> findByIdForUpdate(@Param("id") Long id);
 

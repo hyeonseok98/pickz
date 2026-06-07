@@ -25,7 +25,7 @@ public class DraftMessageController implements DraftMessageDocsController {
             @DestinationVariable Long roomId,
             @Valid @Payload PickMessageRequest message
     ) {
-        draftPlayService.processPick(roomId, message.participantToken(), message.streamerId());
+        draftPlayService.processPick(roomId, message);
     }
 
     @MessageExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})

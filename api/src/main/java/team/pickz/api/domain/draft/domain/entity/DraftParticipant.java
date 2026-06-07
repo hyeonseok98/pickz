@@ -10,6 +10,9 @@ import java.util.UUID;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "draft_participant", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"room_id", "selected_coach_name"})
+})
 @Entity
 public class DraftParticipant {
 

@@ -33,4 +33,9 @@ public class DraftRoomRepositoryImpl implements DraftRoomRepository {
         return draftRoomJpaRepository.findByInviteCode(inviteCode);
     }
 
+    @Override
+    public Optional<DraftRoom> findByInviteCodeWithLock(String inviteCode) {
+        return draftRoomJpaRepository.findByInviteCodeWithLock(inviteCode);
+    }
+
 }

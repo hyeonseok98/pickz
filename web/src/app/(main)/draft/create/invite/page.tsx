@@ -48,6 +48,8 @@ function DraftInvitePage() {
   return (
     <DraftInviteScreen
       backHref={inviteRoom.backHref}
+      bootstrapErrorSource={inviteRoom.bootstrapErrorSource}
+      bootstrapStatus={inviteRoom.bootstrapStatus}
       connectionStatus={inviteRoom.connectionStatus}
       errorMessage={inviteRoom.errorMessage}
       infoMessage={inviteRoom.infoMessage}
@@ -56,12 +58,16 @@ function DraftInvitePage() {
       isInitializing={inviteRoom.isInitializing}
       isPartyMode={inviteRoom.isPartyMode}
       isStarting={inviteRoom.isStarting}
+      participantRosterCount={inviteRoom.participantRosterCount}
       participantCountLabel={inviteRoom.participantCountLabel}
       participants={inviteRoom.participants}
       primaryActionDisabled={inviteRoom.primaryActionDisabled}
       primaryActionLabel={inviteRoom.primaryActionLabel}
-      summaryItems={inviteRoom.summaryItems}
+      roleSlots={inviteRoom.roleSlots}
+      teamCountValue={inviteRoom.teamCountValue}
+      tournamentLabel={inviteRoom.tournamentLabel}
       onCopyInviteLink={inviteRoom.handleCopyInviteLink}
+      onMoveRoleSlot={inviteRoom.handleMoveRoleSlot}
       onStartDraft={inviteRoom.handleStartDraft}
     />
   );

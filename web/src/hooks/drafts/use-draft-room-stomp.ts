@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createDraftStompClient } from "@/libs/stomp";
+import { createDraftStompClient } from "@/lib/stomp";
 import type { Client, IMessage, StompSubscription } from "@stomp/stompjs";
 
 type DraftRoomStompConnectionStatus =

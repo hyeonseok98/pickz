@@ -7,8 +7,30 @@ interface CreateDraftStompClientParams {
   onWebSocketError?: (event: Event) => void;
 }
 
+function normalizeWebSocketUrl(rawValue: string) {
+  const trimmedValue = rawValue.trim();
+
+  if (trimmedValue.length === 0) {
+    return "";
+  }
+
+  if (trimmedValue.startsWith("ws://") || trimmedValue.startsWith("wss://")) {
+    return trimmedValue;
+  }
+
+  if (trimmedValue.startsWith("http://")) {
+    return `ws://${trimmedValue.slice("http://".length)}`;
+  }
+
+  if (trimmedValue.startsWith("https://")) {
+    return `wss://${trimmedValue.slice("https://".length)}`;
+  }
+
+  return trimmedValue;
+}
+
 function getDraftStompBrokerUrl() {
-  const brokerUrl = process.env.NEXT_PUBLIC_DRAFT_WS_URL?.trim() ?? "";
+  const brokerUrl = normalizeWebSocketUrl(process.env.NEXT_PUBLIC_DRAFT_WS_URL ?? "");
 
   if (brokerUrl.length === 0) {
     throw new Error("NEXT_PUBLIC_DRAFT_WS_URL 환경 변수가 없습니다.");

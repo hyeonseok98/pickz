@@ -15,7 +15,7 @@ import team.pickz.api.domain.draft.application.dto.response.WebSocketErrorRespon
 @Slf4j
 @RequiredArgsConstructor
 @Controller
-public class DraftMessageController implements DraftMessageDocsController {
+public class DraftMessageController {
 
     private final DraftPlayService draftPlayService;
     private final SimpMessagingTemplate messagingTemplate;

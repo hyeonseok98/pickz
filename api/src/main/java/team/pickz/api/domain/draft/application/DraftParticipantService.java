@@ -118,7 +118,7 @@ public class DraftParticipantService {
         return ParticipantResponse.builder()
                 .id(p.getId())
                 .roomId(p.getRoomId())
-                .participantToken(p.getParticipantToken())
+                .participantToken(null)
                 .nickname(p.getNickname())
                 .isHost(p.isHost())
                 .selectedCoachName(p.getSelectedCoachName())

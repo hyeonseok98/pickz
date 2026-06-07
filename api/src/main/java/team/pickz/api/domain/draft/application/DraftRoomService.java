@@ -160,7 +160,7 @@ public class DraftRoomService {
                 .map(p -> new ParticipantResponse(
                         p.getId(),
                         p.getRoomId(),
-                        p.getParticipantToken(),
+                        null,
                         p.getNickname(),
                         p.isHost(),
                         p.getSelectedCoachName(),

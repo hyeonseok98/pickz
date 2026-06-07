@@ -140,24 +140,27 @@ public interface DraftRoomDocsController {
             @PathVariable("roomId") Long roomId
     );
 
-//    @Operation(
-//            summary = "방 설정 완료 및 드래프트 시작",
-//            description = "방장이 팀 개수, 인원 등 최종 설정을 완료하고 드래프트를 시작합니다.<br>" +
-//                    "이 API 성공 시 서버에서 /topic/drafts/rooms/{roomId} 경로로 드래프트 시작 및 화면 전환 웹소켓 이벤트를 브로드캐스팅합니다."
-//    )
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "204", description = "설정 완료 및 시작 성공 (데이터 반환 없음)"),
-//            @ApiResponse(responseCode = "400", description = "방장이 아니거나, 유효하지 않은 설정값 (예: 인원수 불일치)", content = @Content(schema = @Schema(implementation = String.class)))
-//    })
-//    @PatchMapping("/{roomId}/settings")
-//    ResponseEntity<Void> configureAndStartRoom(
-//            @Parameter(description = "드래프트 방 ID", example = "1")
-//            @PathVariable("roomId") Long roomId,
-//
-//            @Parameter(description = "방장의 참여자 토큰", in = ParameterIn.HEADER, required = true)
-//            @RequestHeader("X-Participant-Token") String participantToken,
-//
-//            @Valid @RequestBody RoomConfigureRequest request
-//    );
+    @Operation(
+            summary = "방 삭제 (방장 전용)",
+            description = "방장이 대기실 또는 게임을 강제 종료하고 방을 삭제합니다.<br>" +
+                    "성공 시 /topic/drafts/rooms/{roomId}/deleted 경로로 웹소켓 이벤트가 발생하여 모든 참가자의 연결을 끊습니다."
+    )
+    @DeleteMapping("/{roomId}")
+    ResponseEntity<Void> deleteRoom(
+            @PathVariable("roomId") Long roomId,
+            @RequestHeader("X-Participant-Token") String participantToken
+    );
+
+    @Operation(
+            summary = "방 퇴장 (일반 참가자 전용)",
+            description = "일반 참가자가 스스로 방에서 퇴장합니다.<br>" +
+                    "방장이 이 API를 호출하면 자동으로 방 삭제 로직으로 전환됩니다.<br>" +
+                    "성공 시 남은 인원들에게 /topic/drafts/rooms/{roomId}/participants 경로로 갱신된 인원 목록이 브로드캐스팅됩니다."
+    )
+    @DeleteMapping("/{roomId}/participants")
+    ResponseEntity<Void> leaveRoom(
+            @PathVariable("roomId") Long roomId,
+            @RequestHeader("X-Participant-Token") String participantToken
+    );
 
 }

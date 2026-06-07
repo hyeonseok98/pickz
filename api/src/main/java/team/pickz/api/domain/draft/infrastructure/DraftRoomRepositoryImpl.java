@@ -19,6 +19,11 @@ public class DraftRoomRepositoryImpl implements DraftRoomRepository {
     }
 
     @Override
+    public void delete(DraftRoom draftRoom) {
+        draftRoomJpaRepository.delete(draftRoom);
+    }
+
+    @Override
     public Optional<DraftRoom> findById(Long roomId) {
         return draftRoomJpaRepository.findById(roomId);
     }

@@ -9,6 +9,8 @@ public interface DraftParticipantRepository {
 
     int countByRoomId(Long roomId);
 
+    void delete(DraftParticipant participant);
+
     List<DraftParticipant> findAllByRoomId(Long roomId);
 
     DraftParticipant save(DraftParticipant draftParticipant);

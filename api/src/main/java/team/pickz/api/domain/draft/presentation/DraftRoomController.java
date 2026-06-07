@@ -105,4 +105,24 @@ public class DraftRoomController implements DraftRoomDocsController {
         return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping("/{roomId}")
+    public ResponseEntity<Void> deleteRoom(
+            @PathVariable("roomId") Long roomId,
+            @RequestHeader("X-Participant-Token") String participantToken
+    ) {
+        draftRoomService.deleteRoom(roomId, participantToken);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{roomId}/participants")
+    public ResponseEntity<Void> leaveRoom(
+            @PathVariable("roomId") Long roomId,
+            @RequestHeader("X-Participant-Token") String participantToken
+    ) {
+        draftRoomService.leaveRoom(roomId, participantToken);
+
+        return ResponseEntity.ok().build();
+    }
+
 }

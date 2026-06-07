@@ -40,6 +40,11 @@ public class DraftParticipantRepositoryImpl implements DraftParticipantRepositor
     }
 
     @Override
+    public void delete(DraftParticipant participant) {
+        draftParticipantJpaRepository.delete(participant);
+    }
+
+    @Override
     public List<DraftParticipant> findAllByRoomId(Long roomId) {
         return draftParticipantJpaRepository.findAllByRoomId(roomId);
     }

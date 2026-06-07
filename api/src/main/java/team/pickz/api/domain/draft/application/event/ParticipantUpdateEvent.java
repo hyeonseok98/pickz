@@ -9,6 +9,8 @@ public record ParticipantUpdateEvent(
 
         int totalCount,
 
+        Long roomId,
+
         List<String> nicknames,
 
         String newParticipant

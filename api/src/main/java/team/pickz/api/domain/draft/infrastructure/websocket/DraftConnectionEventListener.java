@@ -26,8 +26,12 @@ public class DraftConnectionEventListener {
         String sessionId = accessor.getSessionId();
 
         if (participantToken != null && roomIdStr != null) {
-            Long roomId = Long.parseLong(roomIdStr);
-            sessionManager.addSession(sessionId, roomId, participantToken);
+            try {
+                Long roomId = Long.parseLong(roomIdStr);
+                sessionManager.addSession(sessionId, roomId, participantToken);
+            } catch (NumberFormatException e) {
+                log.warn("잘못된 roomId 형식: {}", roomIdStr);
+            }
         }
     }
 

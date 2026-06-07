@@ -152,7 +152,7 @@ public interface DraftRoomDocsController {
     );
 
     @Operation(
-            summary = "방 퇴장 (일반 참가자 전용)",
+            summary = "방 퇴장",
             description = "일반 참가자가 스스로 방에서 퇴장합니다.<br>" +
                     "방장이 이 API를 호출하면 자동으로 방 삭제 로직으로 전환됩니다.<br>" +
                     "성공 시 남은 인원들에게 /topic/drafts/rooms/{roomId}/participants 경로로 갱신된 인원 목록이 브로드캐스팅됩니다."

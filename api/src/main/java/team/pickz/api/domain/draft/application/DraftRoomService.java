@@ -116,7 +116,7 @@ public class DraftRoomService {
         DraftParticipant requestor = draftParticipantRepository.findByParticipantToken(participantToken)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 참여자입니다."));
 
-        if (!requestor.isHost()) {
+        if (!roomId.equals(requestor.getRoomId()) || !requestor.isHost()) {
             throw new IllegalArgumentException("방장만 방을 삭제할 수 있습니다.");
         }
 
@@ -156,7 +156,7 @@ public class DraftRoomService {
                 .map(p -> new ParticipantResponse(
                         p.getId(),
                         p.getRoomId(),
-                        p.getParticipantToken(), // 혹은 프론트가 필요한 필드들
+                        p.getParticipantToken(),
                         p.getNickname(),
                         p.isHost(),
                         p.getSelectedCoachName(),

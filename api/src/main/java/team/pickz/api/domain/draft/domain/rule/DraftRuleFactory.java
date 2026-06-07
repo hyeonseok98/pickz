@@ -13,12 +13,7 @@ public class DraftRuleFactory {
 
     public DraftRuleFactory(List<DraftRule> rules) {
         for(DraftRule rule : rules) {
-            if(rule.getRuleName().equals("SNAKE")) {
-                ruleMap.put(DraftMode.SNAKE, rule);
-            }
-            else if(rule.getRuleName().equals("AUCTION")) {
-                ruleMap.put(DraftMode.AUCTION, rule);
-            }
+            ruleMap.put(rule.getMode(), rule);
         }
     }
 

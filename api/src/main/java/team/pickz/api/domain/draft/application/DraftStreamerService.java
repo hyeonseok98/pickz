@@ -11,10 +11,10 @@ import team.pickz.api.domain.draft.application.dto.response.DraftPlayStateRespon
 import team.pickz.api.domain.draft.application.dto.response.DraftRoomStreamerResponse;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
-import team.pickz.api.domain.draft.domain.entity.DraftRoomStreamer;
+import team.pickz.api.domain.draft.domain.entity.DraftStreamer;
 import team.pickz.api.domain.draft.domain.repository.DraftParticipantRepository;
 import team.pickz.api.domain.draft.domain.repository.DraftRoomRepository;
-import team.pickz.api.domain.draft.domain.repository.DraftRoomStreamerRepository;
+import team.pickz.api.domain.draft.domain.repository.DraftStreamerRepository;
 import team.pickz.api.domain.draft.domain.type.Position;
 
 import java.util.Comparator;
@@ -26,7 +26,7 @@ public class DraftStreamerService {
 
     private final DraftRoomRepository draftRoomRepository;
     private final DraftParticipantRepository draftParticipantRepository;
-    private final DraftRoomStreamerRepository draftRoomStreamerRepository;
+    private final DraftStreamerRepository draftStreamerRepository;
 
     @Transactional
     public void saveDraftRoomStreamers(Long roomId, String participantToken, List<DraftRoomStreamerRequest> requests) {
@@ -37,7 +37,7 @@ public class DraftStreamerService {
             throw new IllegalArgumentException("방장만 스트리머 풀을 설정할 수 있습니다.");
         }
 
-        draftRoomStreamerRepository.deleteAllByRoomId(roomId);
+        draftStreamerRepository.deleteAllByRoomId(roomId);
 
         for (DraftRoomStreamerRequest req : requests) {
             savePositionStreamers(roomId, req.teamSlot(), Position.TOP, req.top());
@@ -52,19 +52,19 @@ public class DraftStreamerService {
     private void savePositionStreamers(Long roomId, int teamSlot, Position position, StreamerInfo info) {
         if (info == null || info.name() == null || info.name().isBlank()) return;
 
-        DraftRoomStreamer streamer = DraftRoomStreamer.builder()
+        DraftStreamer streamer = DraftStreamer.builder()
                 .roomId(roomId)
                 .teamSlot(teamSlot)
                 .position(position)
                 .streamerName(info.name())
                 .imageUrl(info.imageUrl())
                 .build();
-        draftRoomStreamerRepository.save(streamer);
+        draftStreamerRepository.save(streamer);
     }
 
     @Transactional(readOnly = true)
     public DraftRoomStreamerResponse getDraftRoomStreamers(Long roomId) {
-        List<DraftRoomStreamer> streamers = draftRoomStreamerRepository.findAllByRoomId(roomId);
+        List<DraftStreamer> streamers = draftStreamerRepository.findAllByRoomId(roomId);
 
         List<StreamerInfo> top = extractByPosition(streamers, Position.TOP);
         List<StreamerInfo> jungle = extractByPosition(streamers, Position.JUG);
@@ -76,10 +76,10 @@ public class DraftStreamerService {
         return new DraftRoomStreamerResponse(top, jungle, mid, adc, support, coach);
     }
 
-    private List<StreamerInfo> extractByPosition(List<DraftRoomStreamer> streamers, Position position) {
+    private List<StreamerInfo> extractByPosition(List<DraftStreamer> streamers, Position position) {
         return streamers.stream()
                 .filter(s -> s.getPosition() == position)
-                .sorted(Comparator.comparingInt(DraftRoomStreamer::getTeamSlot))
+                .sorted(Comparator.comparingInt(DraftStreamer::getTeamSlot))
                 .map(s -> new StreamerInfo(s.getStreamerName(), s.getImageUrl()))
                 .toList();
     }
@@ -112,7 +112,7 @@ public class DraftStreamerService {
                 .toList();
 
         // 2. 스트리머 풀 조회 로직 재활용
-        List<DraftRoomStreamer> streamers = draftRoomStreamerRepository.findAllByRoomId(roomId);
+        List<DraftStreamer> streamers = draftStreamerRepository.findAllByRoomId(roomId);
 
         DraftConfigResponse.StreamersByLine streamersByLine = new DraftConfigResponse.StreamersByLine(
                 extractByPosition(streamers, Position.TOP),

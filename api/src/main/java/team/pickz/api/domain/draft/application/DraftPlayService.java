@@ -7,8 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.draft.application.dto.response.PickResultResponse;
 import team.pickz.api.domain.draft.application.event.DraftPickedEvent;
 import team.pickz.api.domain.draft.application.util.RoomSequenceManager;
-import team.pickz.api.domain.draft.domain.entity.DraftRoomStreamer;
-import team.pickz.api.domain.draft.domain.repository.DraftRoomStreamerRepository;
+import team.pickz.api.domain.draft.domain.entity.DraftStreamer;
+import team.pickz.api.domain.draft.domain.repository.DraftStreamerRepository;
 import team.pickz.api.domain.draft.domain.rule.DraftRuleFactory;
 import team.pickz.api.domain.draft.domain.type.RoomStatus;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
@@ -29,7 +29,7 @@ public class DraftPlayService {
     private final DraftRoomRepository draftRoomRepository;
     private final DraftParticipantRepository draftParticipantRepository;
     private final DraftPickRepository draftPickRepository;
-    private final DraftRoomStreamerRepository draftRoomStreamerRepository;
+    private final DraftStreamerRepository draftStreamerRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final RoomSequenceManager roomSequenceManager;
 
@@ -61,7 +61,7 @@ public class DraftPlayService {
             throw new IllegalArgumentException("이미 선택된 스트리머입니다.");
         }
 
-        DraftRoomStreamer pickedStreamer = draftRoomStreamerRepository.findByRoomIdAndStreamerName(roomId, streamerId)
+        DraftStreamer pickedStreamer = draftStreamerRepository.findByRoomIdAndStreamerName(roomId, streamerId)
                 .orElseThrow(() -> new IllegalArgumentException("드래프트 풀에 존재하지 않는 스트리머입니다."));
 
         int currentRound = room.getCurrentPickCount() / room.getTeamCount();

@@ -4,31 +4,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import team.pickz.api.domain.draft.application.dto.StreamerInfo;
-import team.pickz.api.domain.draft.application.dto.request.DraftRoomStreamerRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomInitRequest;
 import team.pickz.api.domain.draft.application.dto.response.*;
 import team.pickz.api.domain.draft.application.event.DraftRoomStartedEvent;
-import team.pickz.api.domain.draft.application.event.ParticipantJoinedEvent;
-import team.pickz.api.domain.draft.application.event.ParticipantUpdateEvent;
 import team.pickz.api.domain.draft.application.event.RoomStatusEvent;
-import team.pickz.api.domain.draft.application.util.RandomNicknameGenerator;
-import team.pickz.api.domain.draft.application.util.RoomSequenceManager;
-import team.pickz.api.domain.draft.domain.repository.DraftRoomStreamerRepository;
 import team.pickz.api.domain.draft.domain.type.ParticipationType;
-import team.pickz.api.domain.draft.domain.type.Position;
-import team.pickz.api.domain.draft.domain.type.RoomStatus;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
-import team.pickz.api.domain.draft.domain.entity.DraftRoomStreamer;
 import team.pickz.api.domain.draft.domain.repository.DraftParticipantRepository;
 import team.pickz.api.domain.draft.domain.repository.DraftRoomRepository;
 import team.pickz.api.domain.member.domain.MemberRepository;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service

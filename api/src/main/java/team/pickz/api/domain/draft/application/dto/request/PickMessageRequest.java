@@ -11,7 +11,10 @@ public record PickMessageRequest(
         String participantToken,
 
         @NotBlank(message = "스트리머 ID는 필수입니다.")
-        String streamerId
+        String streamerId,
+
+        @NotBlank(message = "스트리머명은 필수입니다.")
+        String streamerName
 
 ) {
 }

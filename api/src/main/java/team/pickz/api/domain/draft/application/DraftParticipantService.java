@@ -49,14 +49,23 @@ public class DraftParticipantService {
         draftParticipantRepository.save(participant);
 
         List<DraftParticipant> participants = draftParticipantRepository.findAllByRoomId(room.getId());
-        List<String> nicknames = participants.stream()
-                .map(DraftParticipant::getNickname)
+
+        List<ParticipantResponse> participantResponses = participants.stream()
+                .map(p -> new ParticipantResponse(
+                        p.getId(),
+                        p.getRoomId(),
+                        p.getParticipantToken(), // 혹은 프론트가 필요한 필드들
+                        p.getNickname(),
+                        p.isHost(),
+                        p.getSelectedCoachName(),
+                        p.getTurnOrder(),
+                        p.isReady()
+                ))
                 .toList();
 
         ParticipantUpdateEvent event = ParticipantUpdateEvent.builder()
-                .totalCount(nicknames.size())
-                .nicknames(nicknames)
-                .newParticipant(nickname)
+                .roomId(room.getId())
+                .participants(participantResponses)
                 .build();
 
         applicationEventPublisher.publishEvent(
@@ -89,9 +98,33 @@ public class DraftParticipantService {
         }
 
         participant.selectCoach(coachName, targetTurnOrder);
+        draftParticipantRepository.flush();
 
-        // WebSocket 이벤트 발행 로직 (선택사항)
-        // applicationEventPublisher.publishEvent(...);
+        List<DraftParticipant> allParticipants = draftParticipantRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);
+
+        List<ParticipantResponse> updatedParticipants = allParticipants.stream()
+                .map(this::mapToParticipantResponse) // 위에서 만든 헬퍼 메서드 사용
+                .toList();
+
+        applicationEventPublisher.publishEvent(
+                ParticipantUpdateEvent.builder()
+                        .roomId(roomId)
+                        .participants(updatedParticipants)
+                        .build()
+        );
+    }
+
+    private ParticipantResponse mapToParticipantResponse(DraftParticipant p) {
+        return ParticipantResponse.builder()
+                .id(p.getId())
+                .roomId(p.getRoomId())
+                .participantToken(p.getParticipantToken())
+                .nickname(p.getNickname())
+                .isHost(p.isHost())
+                .selectedCoachName(p.getSelectedCoachName())
+                .turnOrder(p.getTurnOrder())
+                .isReady(p.getSelectedCoachName() != null)
+                .build();
     }
 
 }

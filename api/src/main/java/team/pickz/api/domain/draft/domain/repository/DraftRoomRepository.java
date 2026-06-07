@@ -9,6 +9,8 @@ public interface DraftRoomRepository {
 
     DraftRoom save(DraftRoom draftRoom);
 
+    void delete(DraftRoom draftRoom);
+
     Optional<DraftRoom> findById(Long roomId);
 
     Optional<DraftRoom> findByIdForUpdate(Long roomId);

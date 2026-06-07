@@ -96,4 +96,8 @@ public class DraftRoom {
         }
     }
 
+    public void delete() {
+        this.status = RoomStatus.DELETED;
+    }
+
 }

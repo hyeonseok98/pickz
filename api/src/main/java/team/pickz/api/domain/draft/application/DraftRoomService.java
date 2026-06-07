@@ -7,12 +7,15 @@ import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.draft.application.dto.request.RoomInitRequest;
 import team.pickz.api.domain.draft.application.dto.response.*;
 import team.pickz.api.domain.draft.application.event.DraftRoomStartedEvent;
+import team.pickz.api.domain.draft.application.event.ParticipantUpdateEvent;
+import team.pickz.api.domain.draft.application.event.RoomDeletedEvent;
 import team.pickz.api.domain.draft.application.event.RoomStatusEvent;
 import team.pickz.api.domain.draft.domain.type.ParticipationType;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
 import team.pickz.api.domain.draft.domain.repository.DraftParticipantRepository;
 import team.pickz.api.domain.draft.domain.repository.DraftRoomRepository;
+import team.pickz.api.domain.draft.domain.type.RoomStatus;
 import team.pickz.api.domain.member.domain.MemberRepository;
 
 import java.util.List;
@@ -101,6 +104,71 @@ public class DraftRoomService {
                 DraftRoomStartedEvent.builder()
                         .roomId(roomId)
                         .payload(event)
+                        .build()
+        );
+    }
+
+    @Transactional
+    public void deleteRoom(Long roomId, String participantToken) {
+        DraftRoom room = draftRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+
+        DraftParticipant requestor = draftParticipantRepository.findByParticipantToken(participantToken)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 참여자입니다."));
+
+        if (!requestor.isHost()) {
+            throw new IllegalArgumentException("방장만 방을 삭제할 수 있습니다.");
+        }
+
+        room.delete();
+        draftRoomRepository.delete(room);
+
+        applicationEventPublisher.publishEvent(
+                RoomDeletedEvent.builder()
+                        .roomId(roomId)
+                        .message("방장이 방을 삭제했습니다.")
+                        .build()
+        );
+    }
+
+    @Transactional
+    public void leaveRoom(Long roomId, String participantToken) {
+        DraftRoom room = draftRoomRepository.findById(roomId).orElse(null);
+        if (room == null || room.getStatus() == RoomStatus.DELETED) {
+            return;
+        }
+
+        DraftParticipant participant = draftParticipantRepository.findByParticipantToken(participantToken).orElse(null);
+        if (participant == null) {
+            return;
+        }
+
+        if (participant.isHost()) {
+            deleteRoom(roomId, participantToken);
+            return;
+        }
+
+        draftParticipantRepository.delete(participant);
+
+        List<DraftParticipant> remainingParticipants = draftParticipantRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);
+
+        List<ParticipantResponse> participantResponses = remainingParticipants.stream()
+                .map(p -> new ParticipantResponse(
+                        p.getId(),
+                        p.getRoomId(),
+                        p.getParticipantToken(), // 혹은 프론트가 필요한 필드들
+                        p.getNickname(),
+                        p.isHost(),
+                        p.getSelectedCoachName(),
+                        p.getTurnOrder(),
+                        p.isReady()
+                ))
+                .toList();
+
+        applicationEventPublisher.publishEvent(
+                ParticipantUpdateEvent.builder()
+                        .roomId(roomId)
+                        .participants(participantResponses)
                         .build()
         );
     }

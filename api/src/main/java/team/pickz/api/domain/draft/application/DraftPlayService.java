@@ -9,6 +9,7 @@ import team.pickz.api.domain.draft.application.event.DraftPickedEvent;
 import team.pickz.api.domain.draft.application.util.RoomSequenceManager;
 import team.pickz.api.domain.draft.domain.entity.DraftRoomStreamer;
 import team.pickz.api.domain.draft.domain.repository.DraftRoomStreamerRepository;
+import team.pickz.api.domain.draft.domain.rule.DraftRuleFactory;
 import team.pickz.api.domain.draft.domain.type.RoomStatus;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftPick;
@@ -24,11 +25,11 @@ import java.util.List;
 @Service
 public class DraftPlayService {
 
+    private final DraftRuleFactory draftRuleFactory;
     private final DraftRoomRepository draftRoomRepository;
     private final DraftParticipantRepository draftParticipantRepository;
     private final DraftPickRepository draftPickRepository;
     private final DraftRoomStreamerRepository draftRoomStreamerRepository;
-    private final DraftRule snakeDraftRule;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final RoomSequenceManager roomSequenceManager;
 
@@ -48,7 +49,8 @@ public class DraftPlayService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 참여자입니다."));
 
-        int nextTurnIndex = snakeDraftRule.calculateNextTurn(room.getCurrentPickCount(), room.getTeamCount());
+        DraftRule rule = draftRuleFactory.getRule(room.getDraftMode());
+        int nextTurnIndex = rule.calculateNextTurn(room.getCurrentPickCount(), room.getTeamCount());
         DraftParticipant expectedParticipant = participants.get(nextTurnIndex);
 
         if (!expectedParticipant.getParticipantToken().equals(participantToken)) {
@@ -79,7 +81,7 @@ public class DraftPlayService {
 
         String nextTurnNickname = null;
         if (room.getStatus() != RoomStatus.DONE) {
-            int nextExpectedTurnIndex = snakeDraftRule.calculateNextTurn(room.getCurrentPickCount(), room.getTeamCount());
+            int nextExpectedTurnIndex = rule.calculateNextTurn(room.getCurrentPickCount(), room.getTeamCount());
             nextTurnNickname = participants.get(nextExpectedTurnIndex).getNickname();
         }
 

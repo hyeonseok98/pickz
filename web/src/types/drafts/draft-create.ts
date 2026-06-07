@@ -1,5 +1,11 @@
-import type { BoardState, LineKey } from "./draft-board";
-import type { DraftType, ParticipationMode, RoomVisibility, TeamCount, TeamSize } from "./draft-config";
+import type { BoardState, LolLineKey } from "./draft-board";
+import type {
+  DraftType,
+  ParticipationMode,
+  RoomVisibility,
+  TeamCount,
+  TeamSize,
+} from "./draft-config";
 
 export interface DraftCreateFlowState {
   board: BoardState;
@@ -37,6 +43,6 @@ export interface InitializeDraftCreateSettingsParams {
 
 export interface MoveDraftParticipantParams {
   index: number;
-  line: LineKey;
+  line: LolLineKey;
   streamerId: string;
 }

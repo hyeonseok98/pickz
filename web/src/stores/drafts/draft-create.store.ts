@@ -1,21 +1,26 @@
-import { create } from "zustand";
 import { draftLineRows } from "@/constants/drafts";
-import { cloneDraftBoard, createEmptyDraftBoard, deriveDraftCreateBooleans, normalizeDraftBoard } from "@/utils";
 import type {
   ApplyTournamentSelectionParams,
   DraftCreateFlowState,
   InitializeDraftCreateSettingsParams,
-  LineKey,
+  LolLineKey,
   MoveDraftParticipantParams,
   TeamCount,
   TeamSize,
 } from "@/types/drafts";
+import {
+  cloneDraftBoard,
+  createEmptyDraftBoard,
+  deriveDraftCreateBooleans,
+  normalizeDraftBoard,
+} from "@/utils";
+import { create } from "zustand";
 
 interface DraftCreateStoreState extends DraftCreateFlowState {
   addParticipant: (streamerId: string) => void;
   applyTournamentSelection: (params: ApplyTournamentSelectionParams) => void;
   clearBoard: () => void;
-  clearBoardSlot: (line: LineKey, index: number) => void;
+  clearBoardSlot: (line: LolLineKey, index: number) => void;
   initializeSettings: (params: InitializeDraftCreateSettingsParams) => void;
   initializeStreamers: (state: DraftCreateFlowState) => void;
   isInitialized: boolean;
@@ -92,7 +97,13 @@ export const useDraftCreateStore = create<DraftCreateStoreState>((set) => ({
       };
     });
   },
-  applyTournamentSelection: ({ board, coachEnabled, headCoachEnabled, participantIds, tournamentId }) => {
+  applyTournamentSelection: ({
+    board,
+    coachEnabled,
+    headCoachEnabled,
+    participantIds,
+    tournamentId,
+  }) => {
     set(() => ({
       board,
       coachEnabled,
@@ -116,7 +127,16 @@ export const useDraftCreateStore = create<DraftCreateStoreState>((set) => ({
       };
     });
   },
-  initializeSettings: ({ coachEnabled, draftType, headCoachEnabled, participationMode, roomTitle = "", teamCount, teamSize, tournamentId }) => {
+  initializeSettings: ({
+    coachEnabled,
+    draftType,
+    headCoachEnabled,
+    participationMode,
+    roomTitle = "",
+    teamCount,
+    teamSize,
+    tournamentId,
+  }) => {
     const inferredBooleans = deriveDraftCreateBooleans(teamSize);
 
     set((current) => ({
@@ -156,7 +176,9 @@ export const useDraftCreateStore = create<DraftCreateStoreState>((set) => ({
   removeParticipant: (streamerId) => {
     set((current) => ({
       board: removeParticipantFromBoard(current.board, streamerId),
-      participantIds: current.participantIds.filter((participantId) => participantId !== streamerId),
+      participantIds: current.participantIds.filter(
+        (participantId) => participantId !== streamerId,
+      ),
     }));
   },
   resetDraftCreate: () => {

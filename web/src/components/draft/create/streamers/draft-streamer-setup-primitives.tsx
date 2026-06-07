@@ -1,6 +1,6 @@
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
+import type { LolLineKey } from "@/types/drafts";
 import { cn } from "@/utils";
-import type { LineKey } from "@/types/drafts";
 import type { DragEvent, ReactNode } from "react";
 
 export function FieldLabel({ children }: { children: ReactNode }) {
@@ -19,7 +19,12 @@ export function SectionCard({
   title: string;
 }) {
   return (
-    <section className={cn("rounded-3xl border border-border bg-surface p-4 shadow-sm sm:p-4.5", className)}>
+    <section
+      className={cn(
+        "rounded-3xl border border-border bg-surface p-4 shadow-sm sm:p-4.5",
+        className,
+      )}
+    >
       <div>
         <h2 className="text-base font-bold tracking-[-0.03em] text-text-primary">{title}</h2>
         <p className="mt-1 text-sm leading-5 text-text-secondary">{description}</p>
@@ -72,7 +77,7 @@ export function SelectField({
       onChange={(event) => {
         onChange(event.target.value);
       }}
-      className="h-11 w-full cursor-pointer rounded-2xl border border-border bg-surface px-4 text-sm text-text-primary outline-none transition focus:border-violet-300"
+      className="h-11 w-full cursor-pointer rounded-2xl border border-border bg-surface px-4 text-sm text-text-primary transition outline-none focus:border-violet-300"
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
@@ -100,7 +105,7 @@ interface BoardSlotProps {
   streamer?: {
     avatarDataUrl: string;
     id: string;
-    line: LineKey;
+    line: LolLineKey;
     name: string;
     note?: string;
   };

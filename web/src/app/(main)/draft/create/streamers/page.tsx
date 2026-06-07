@@ -1,5 +1,41 @@
 "use client";
 
+import {
+  DraftStepper,
+  DraftStreamerBoardSection,
+  DraftStreamerSearchSection,
+} from "@/components/draft/create";
+import { StatusChip } from "@/components/draft/create/streamers/draft-streamer-setup-primitives";
+import {
+  STREAMER_DIRECTORY,
+  STREAMER_DIRECTORY_BY_ID,
+  STREAMER_DIRECTORY_BY_NAME,
+  draftLineLabelMap,
+  draftLineRows,
+} from "@/constants/drafts";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
+import { useDraftCreateStore } from "@/stores/drafts";
+import type {
+  BoardState,
+  DraftCreateFlowState,
+  DraftType,
+  LolLineKey,
+  ParticipationMode,
+  StreamerDirectoryItem,
+  TeamCount,
+  TeamSize,
+} from "@/types/drafts";
+import {
+  compareDraftLineOrder,
+  createEmptyDraftBoard,
+  deriveDraftCreateBooleans,
+  getActiveDraftLines,
+  getPlacedDraftStreamerIds,
+  matchesStreamerSearchQuery,
+  normalizeDraftBoard,
+  parseDraftRoomSnapshot,
+  serializeDraftRoomSnapshot,
+} from "@/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -12,48 +48,12 @@ import {
   type DragEvent,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import {
-  STREAMER_DIRECTORY,
-  STREAMER_DIRECTORY_BY_ID,
-  STREAMER_DIRECTORY_BY_NAME,
-  draftLineLabelMap,
-  draftLineRows,
-} from "@/constants/drafts";
-import {
-  DraftStepper,
-  DraftStreamerBoardSection,
-  DraftStreamerSearchSection,
-} from "@/components/draft/create";
-import { StatusChip } from "@/components/draft/create/streamers/draft-streamer-setup-primitives";
-import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
-import { useDraftCreateStore } from "@/stores/drafts";
-import {
-  compareDraftLineOrder,
-  createEmptyDraftBoard,
-  deriveDraftCreateBooleans,
-  getActiveDraftLines,
-  getPlacedDraftStreamerIds,
-  matchesStreamerSearchQuery,
-  normalizeDraftBoard,
-  parseDraftRoomSnapshot,
-  serializeDraftRoomSnapshot,
-} from "@/utils";
-import type {
-  BoardState,
-  DraftType,
-  DraftCreateFlowState,
-  LineKey,
-  ParticipationMode,
-  StreamerDirectoryItem,
-  TeamCount,
-  TeamSize,
-} from "@/types/drafts";
 
 interface Streamer {
   avatarDataUrl: string;
   channelName: string;
   id: string;
-  line: LineKey;
+  line: LolLineKey;
   name: string;
   note?: string;
   profileImageUrl?: string | null;
@@ -69,7 +69,7 @@ interface Tournament {
 const leaveMessage = "이 페이지를 나가면 작성 중이던 내용이 사라집니다. 이동할까요?";
 
 const customTournamentId = "custom";
-const presetStreamerAliasMap: Partial<Record<LineKey, Record<string, string>>> = {
+const presetStreamerAliasMap: Partial<Record<LolLineKey, Record<string, string>>> = {
   adc: {
     캬하하: "캬하하 이석현",
   },
@@ -92,7 +92,7 @@ function createTournament(
   id: string,
   name: string,
   description: string,
-  rosterByLine: Partial<Record<LineKey, string[]>>,
+  rosterByLine: Partial<Record<LolLineKey, string[]>>,
 ): Tournament {
   return {
     description,
@@ -150,15 +150,20 @@ const tournaments = [
     adc: ["Ruler", "Elk", "GALA", "Noah", "Aiming"],
     support: ["Missing", "ON", "Keria", "Mikyx", "Life"],
   }),
-  createTournament("pickz-invitational", "2026 자낳대", "2026 자낳대 기준 기본 20인과 감독-코치 세트 자동 배치 프리셋", {
-    top: ["러너", "룩삼", "강소연", "샘웨"],
-    jungle: ["갱맘", "소우릎", "뱅", "운타라"],
-    mid: ["플레임", "앰비션", "헤징", "네클릿"],
-    adc: ["고수달", "크캣", "캬하하", "순당무"],
-    support: ["던", "푸린", "윤가놈", "침착맨"],
-    headCoach: ["마린", "베릴", "인간젤리", "큐베"],
-    coach: ["엄티", "로컨", "노페", "플라이"],
-  }),
+  createTournament(
+    "pickz-invitational",
+    "2026 자낳대",
+    "2026 자낳대 기준 기본 20인과 감독-코치 세트 자동 배치 프리셋",
+    {
+      top: ["러너", "룩삼", "강소연", "샘웨"],
+      jungle: ["갱맘", "소우릎", "뱅", "운타라"],
+      mid: ["플레임", "앰비션", "헤징", "네클릿"],
+      adc: ["고수달", "크캣", "캬하하", "순당무"],
+      support: ["던", "푸린", "윤가놈", "침착맨"],
+      headCoach: ["마린", "베릴", "인간젤리", "큐베"],
+      coach: ["엄티", "로컨", "노페", "플라이"],
+    },
+  ),
 ] satisfies Tournament[];
 
 const customTournament: Tournament = {
@@ -196,7 +201,9 @@ function createAutoBoard(
   const columnCount = Number(teamCount);
 
   activeLines.forEach(({ key }) => {
-    const lineRoster = tournament.roster.filter((streamer) => streamer.line === key).slice(0, columnCount);
+    const lineRoster = tournament.roster
+      .filter((streamer) => streamer.line === key)
+      .slice(0, columnCount);
 
     lineRoster.forEach((streamer, index) => {
       nextBoard[key][index] = streamer.id;
@@ -284,7 +291,9 @@ function sanitizeTeamCount(value: string | null): TeamCount {
 }
 
 function sanitizeTeamSize(value: string | null): TeamSize {
-  return value === "3" || value === "4" || value === "5" || value === "6" || value === "7" ? value : "7";
+  return value === "3" || value === "4" || value === "5" || value === "6" || value === "7"
+    ? value
+    : "7";
 }
 
 function sanitizeBooleanFlag(value: string | null) {
@@ -313,7 +322,8 @@ function createInitialDraftCreateFlowState({
     tournament.id === customTournamentId
       ? createEmptyDraftBoard()
       : createAutoBoard(tournament, teamCount, teamSize, { coachEnabled, headCoachEnabled });
-  const participantIds = tournament.id === customTournamentId ? [] : getPlacedDraftStreamerIds(board);
+  const participantIds =
+    tournament.id === customTournamentId ? [] : getPlacedDraftStreamerIds(board);
 
   return {
     board,
@@ -361,7 +371,14 @@ function createDraftCreateFlowStateFromSnapshot(snapshot: {
 
 function ArrowLeftIcon() {
   return (
-    <Image src="/icons/arrow_back.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
+    <Image
+      src="/icons/arrow_back.svg"
+      alt=""
+      width={16}
+      height={16}
+      aria-hidden
+      className="size-4"
+    />
   );
 }
 
@@ -410,7 +427,7 @@ function DraftStreamerSetupContent() {
     }),
   );
   const [selectedStreamerId, setSelectedStreamerId] = useState<string | null>(null);
-  const [hoveredSlot, setHoveredSlot] = useState<{ index: number; line: LineKey } | null>(null);
+  const [hoveredSlot, setHoveredSlot] = useState<{ index: number; line: LolLineKey } | null>(null);
   const searchFieldRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -646,7 +663,7 @@ function DraftStreamerSetupContent() {
     });
     setDraggingStreamerId(null);
     setHoveredSlot(null);
-      setSelectedStreamerId(null);
+    setSelectedStreamerId(null);
   };
 
   const clearAllSlots = () => {
@@ -656,7 +673,7 @@ function DraftStreamerSetupContent() {
     setSelectedStreamerId(null);
   };
 
-  const clearSlot = (line: LineKey, index: number) => {
+  const clearSlot = (line: LolLineKey, index: number) => {
     clearBoardSlot(line, index);
   };
 
@@ -664,7 +681,7 @@ function DraftStreamerSetupContent() {
     return participantIds.includes(streamerId) && streamerMap.has(streamerId);
   };
 
-  const placeStreamerIntoSlot = (streamerId: string, line: LineKey, index: number) => {
+  const placeStreamerIntoSlot = (streamerId: string, line: LolLineKey, index: number) => {
     if (!canPlaceStreamerOnBoard(streamerId)) {
       return;
     }
@@ -705,16 +722,12 @@ function DraftStreamerSetupContent() {
 
     if (isParticipant) {
       return (
-        <StatusChip className="border-violet-300 bg-violet-100 text-violet-700">
-          추가됨
-        </StatusChip>
+        <StatusChip className="border-violet-300 bg-violet-100 text-violet-700">추가됨</StatusChip>
       );
     }
 
     return (
-      <StatusChip className="border-border bg-surface text-text-secondary">
-        추가 가능
-      </StatusChip>
+      <StatusChip className="border-border bg-surface text-text-secondary">추가 가능</StatusChip>
     );
   };
 
@@ -762,7 +775,11 @@ function DraftStreamerSetupContent() {
     }
   };
 
-  const handleSlotDragEnter = (event: DragEvent<HTMLDivElement>, line: LineKey, index: number) => {
+  const handleSlotDragEnter = (
+    event: DragEvent<HTMLDivElement>,
+    line: LolLineKey,
+    index: number,
+  ) => {
     const streamerId = draggingStreamerId ?? event.dataTransfer.getData("text/plain");
 
     if (!streamerId || !canPlaceStreamerOnBoard(streamerId)) {
@@ -773,7 +790,11 @@ function DraftStreamerSetupContent() {
     setHoveredSlot({ index, line });
   };
 
-  const handleSlotDragOver = (event: DragEvent<HTMLDivElement>, line: LineKey, index: number) => {
+  const handleSlotDragOver = (
+    event: DragEvent<HTMLDivElement>,
+    line: LolLineKey,
+    index: number,
+  ) => {
     const streamerId = draggingStreamerId ?? event.dataTransfer.getData("text/plain");
 
     if (!streamerId || !canPlaceStreamerOnBoard(streamerId)) {
@@ -785,13 +806,13 @@ function DraftStreamerSetupContent() {
     setHoveredSlot({ index, line });
   };
 
-  const handleSlotDragLeave = (line: LineKey, index: number) => {
+  const handleSlotDragLeave = (line: LolLineKey, index: number) => {
     if (hoveredSlot?.line === line && hoveredSlot.index === index) {
       setHoveredSlot(null);
     }
   };
 
-  const handleSlotDrop = (event: DragEvent<HTMLDivElement>, line: LineKey, index: number) => {
+  const handleSlotDrop = (event: DragEvent<HTMLDivElement>, line: LolLineKey, index: number) => {
     const streamerId = draggingStreamerId ?? event.dataTransfer.getData("text/plain");
 
     if (!streamerId) {
@@ -802,7 +823,7 @@ function DraftStreamerSetupContent() {
     placeStreamerIntoSlot(streamerId, line, index);
   };
 
-  const handleSlotTap = (line: LineKey, index: number) => {
+  const handleSlotTap = (line: LolLineKey, index: number) => {
     if (!isMobileViewport || !selectedStreamerId) {
       return;
     }
@@ -814,7 +835,11 @@ function DraftStreamerSetupContent() {
     const nextHeadCoachEnabled = !headCoachEnabled;
     const nextCoachEnabled = coachEnabled;
     const nextTeamSize =
-      nextHeadCoachEnabled && nextCoachEnabled ? "7" : nextHeadCoachEnabled || nextCoachEnabled ? "6" : "5";
+      nextHeadCoachEnabled && nextCoachEnabled
+        ? "7"
+        : nextHeadCoachEnabled || nextCoachEnabled
+          ? "6"
+          : "5";
 
     setHeadCoachEnabled(nextHeadCoachEnabled);
     if (nextTeamSize !== teamSize) {
@@ -837,7 +862,11 @@ function DraftStreamerSetupContent() {
     const nextCoachEnabled = !coachEnabled;
     const nextHeadCoachEnabled = headCoachEnabled;
     const nextTeamSize =
-      nextHeadCoachEnabled && nextCoachEnabled ? "7" : nextHeadCoachEnabled || nextCoachEnabled ? "6" : "5";
+      nextHeadCoachEnabled && nextCoachEnabled
+        ? "7"
+        : nextHeadCoachEnabled || nextCoachEnabled
+          ? "6"
+          : "5";
 
     setCoachEnabled(nextCoachEnabled);
     if (nextTeamSize !== teamSize) {
@@ -928,7 +957,6 @@ function DraftStreamerSetupContent() {
               </p>
             </div>
           </div>
-
         </section>
 
         <div className="grid gap-3 xl:grid-cols-11">
@@ -1013,9 +1041,14 @@ function DraftStreamerSetupPage() {
   const participantIds = useDraftCreateStore((state) => state.participantIds);
   const tournamentId = useDraftCreateStore((state) => state.tournamentId);
   const hasHandledInitialSeedRef = useRef(false);
-  const snapshot = useMemo(() => parseDraftRoomSnapshot(searchParams.get("config")), [searchParams]);
+  const snapshot = useMemo(
+    () => parseDraftRoomSnapshot(searchParams.get("config")),
+    [searchParams],
+  );
   const initialParticipationMode = sanitizeParticipationMode(searchParams.get("mode"));
-  const initialDraftType = sanitizeDraftType(searchParams.get("draftType") ?? searchParams.get("type"));
+  const initialDraftType = sanitizeDraftType(
+    searchParams.get("draftType") ?? searchParams.get("type"),
+  );
   const initialTournamentId = sanitizeTournamentId(searchParams.get("tournament"));
   const initialTeamCount = sanitizeTeamCount(searchParams.get("teamCount"));
   const initialTeamSize = sanitizeTeamSize(
@@ -1023,7 +1056,8 @@ function DraftStreamerSetupPage() {
   );
   const { coachEnabled: inferredCoachEnabled, headCoachEnabled: inferredHeadCoachEnabled } =
     deriveDraftCreateBooleans(initialTeamSize);
-  const initialCoachEnabled = sanitizeBooleanFlag(searchParams.get("coachEnabled")) || inferredCoachEnabled;
+  const initialCoachEnabled =
+    sanitizeBooleanFlag(searchParams.get("coachEnabled")) || inferredCoachEnabled;
   const initialHeadCoachEnabled =
     sanitizeBooleanFlag(searchParams.get("headCoachEnabled")) || inferredHeadCoachEnabled;
   const placedStreamerCount = useMemo(() => getPlacedDraftStreamerIds(board).length, [board]);

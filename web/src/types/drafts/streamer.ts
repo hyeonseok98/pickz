@@ -1,4 +1,4 @@
-export type StreamerLine = "top" | "jungle" | "mid" | "adc" | "support" | "headCoach" | "coach";
+import { LolLineKey } from "./draft-board";
 
 export interface StreamerInfo {
   channelId: string;
@@ -17,7 +17,7 @@ export interface StreamerDirectoryItem {
   channelId: string;
   channelName: string;
   id: string;
-  line: StreamerLine;
+  line: LolLineKey;
   name: string;
   profileImageUrl: string | null;
   streamerInfo: StreamerInfo;

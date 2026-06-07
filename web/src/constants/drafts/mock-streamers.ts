@@ -1,4 +1,4 @@
-import type { StreamerDirectoryItem, StreamerInfo, StreamerLine } from "@/types/drafts";
+import type { LolLineKey, StreamerDirectoryItem, StreamerInfo } from "@/types/drafts";
 import { draftLineOrderMap } from "./draft-lines";
 
 export const streamerInfoMocks: StreamerInfo[] = [
@@ -2078,9 +2078,9 @@ export const streamerInfoMocks: StreamerInfo[] = [
   },
 ];
 
-const mockStreamerLineCycle: StreamerLine[] = ["top", "jungle", "mid", "adc", "support"];
+const mockStreamerLineCycle: LolLineKey[] = ["top", "jungle", "mid", "adc", "support"];
 
-const streamerLineOverrides: Partial<Record<string, StreamerLine>> = {
+const streamerLineOverrides: Partial<Record<string, LolLineKey>> = {
   갱맘: "jungle",
   "갱맘 GBM": "jungle",
   강소연: "top",

@@ -1,9 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState, type DragEvent } from "react";
-import { useSearchParams } from "next/navigation";
 import {
   DraftRoomHeader,
   DraftRoomSectionCard,
@@ -11,16 +7,16 @@ import {
 } from "@/components/draft/room";
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
 import { STREAMER_DIRECTORY_BY_ID, draftLineLabelMap, draftLineRows } from "@/constants/drafts";
-import type { LineKey } from "@/types/drafts";
-import {
-  cn,
-  parseDraftRoomSnapshot,
-  serializeDraftRoomSnapshot,
-} from "@/utils";
+import type { LolLineKey } from "@/types/drafts";
+import { cn, parseDraftRoomSnapshot, serializeDraftRoomSnapshot } from "@/utils";
+import Image from "next/image";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState, type DragEvent } from "react";
 
 interface PoolSelection {
   id: string;
-  line: LineKey;
+  line: LolLineKey;
 }
 
 interface PlacementSelection extends PoolSelection {
@@ -119,14 +115,16 @@ function buildSnakePickBoard(
         assignment,
         line: assignment?.line ?? null,
         roundIndex,
-        streamer: assignment ? STREAMER_DIRECTORY_BY_ID.get(assignment.id) ?? null : null,
+        streamer: assignment ? (STREAMER_DIRECTORY_BY_ID.get(assignment.id) ?? null) : null,
       };
     }),
   }));
 }
 
 function findPlacedPickNumber(assignments: BoardAssignments, streamerId: string) {
-  const matchedEntry = Object.entries(assignments).find(([, assignment]) => assignment?.id === streamerId);
+  const matchedEntry = Object.entries(assignments).find(
+    ([, assignment]) => assignment?.id === streamerId,
+  );
 
   return matchedEntry ? Number(matchedEntry[0]) : null;
 }
@@ -147,11 +145,7 @@ function cloneAssignments(assignments: BoardAssignments): BoardAssignments {
   return nextAssignments;
 }
 
-function TeamHeaderBlock({
-  avatarDataUrl,
-  subtitle,
-  title,
-}: SnakeDraftTeamHeader) {
+function TeamHeaderBlock({ avatarDataUrl, subtitle, title }: SnakeDraftTeamHeader) {
   return (
     <div className="flex flex-col items-center justify-center gap-1 text-center">
       {avatarDataUrl ? (
@@ -181,7 +175,10 @@ function resolvePresetTeamHeaderFallback(
 
 function SnakeDraftRoomPage() {
   const searchParams = useSearchParams();
-  const snapshot = useMemo(() => parseDraftRoomSnapshot(searchParams.get("config")), [searchParams]);
+  const snapshot = useMemo(
+    () => parseDraftRoomSnapshot(searchParams.get("config")),
+    [searchParams],
+  );
   const [boardAssignments, setBoardAssignments] = useState<BoardAssignments>({});
   const [assignmentHistory, setAssignmentHistory] = useState<BoardAssignments[]>([]);
   const [draggingSelection, setDraggingSelection] = useState<PlacementSelection | null>(null);
@@ -223,7 +220,14 @@ function SnakeDraftRoomPage() {
             href="/draft/create/streamers"
             className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-4 text-sm font-semibold text-text-primary"
           >
-            <Image src="/icons/arrow_back.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
+            <Image
+              src="/icons/arrow_back.svg"
+              alt=""
+              width={16}
+              height={16}
+              aria-hidden
+              className="size-4"
+            />
             <span>방 설정으로 돌아가기</span>
           </Link>
         </section>
@@ -240,10 +244,18 @@ function SnakeDraftRoomPage() {
   const teamHeaders = Array.from({ length: teamCount }, (_, teamIndex) => {
     const headCoachId = snapshot.board.headCoach?.[teamIndex] ?? null;
     const coachId = snapshot.board.coach?.[teamIndex] ?? null;
-    const headCoach = headCoachId ? STREAMER_DIRECTORY_BY_ID.get(headCoachId) ?? null : null;
-    const coach = coachId ? STREAMER_DIRECTORY_BY_ID.get(coachId) ?? null : null;
-    const headCoachFallbackName = resolvePresetTeamHeaderFallback(snapshot.tournamentId, "headCoach", teamIndex);
-    const coachFallbackName = resolvePresetTeamHeaderFallback(snapshot.tournamentId, "coach", teamIndex);
+    const headCoach = headCoachId ? (STREAMER_DIRECTORY_BY_ID.get(headCoachId) ?? null) : null;
+    const coach = coachId ? (STREAMER_DIRECTORY_BY_ID.get(coachId) ?? null) : null;
+    const headCoachFallbackName = resolvePresetTeamHeaderFallback(
+      snapshot.tournamentId,
+      "headCoach",
+      teamIndex,
+    );
+    const coachFallbackName = resolvePresetTeamHeaderFallback(
+      snapshot.tournamentId,
+      "coach",
+      teamIndex,
+    );
     const headCoachName = headCoach?.name ?? headCoachFallbackName;
     const coachName = coach?.name ?? coachFallbackName;
 
@@ -274,10 +286,9 @@ function SnakeDraftRoomPage() {
     };
   });
   const snakePickBoard = buildSnakePickBoard(teamHeaders, snakeOrderByRound, boardAssignments);
-  const pickedStreamerIds = 
-    Object.values(boardAssignments)
-      .filter((assignment): assignment is PoolSelection => Boolean(assignment))
-      .map((assignment) => assignment.id);
+  const pickedStreamerIds = Object.values(boardAssignments)
+    .filter((assignment): assignment is PoolSelection => Boolean(assignment))
+    .map((assignment) => assignment.id);
   const isSoloMode = snapshot.participationMode === "solo";
   const backToStreamersParams = new URLSearchParams({
     config: serializeDraftRoomSnapshot(snapshot),
@@ -455,7 +466,7 @@ function SnakeDraftRoomPage() {
   };
 
   return (
-    <main className="overflow-y-auto bg-slate-50 px-3 py-3 sm:px-5 xl:px-6 lg:h-[calc(100dvh-var(--header-height))] lg:overflow-hidden">
+    <main className="overflow-y-auto bg-slate-50 px-3 py-3 sm:px-5 lg:h-[calc(100dvh-var(--header-height))] lg:overflow-hidden xl:px-6">
       <div className="mx-auto flex max-w-screen-2xl flex-col gap-2.5 lg:h-full">
         <DraftRoomHeader
           action={
@@ -492,11 +503,7 @@ function SnakeDraftRoomPage() {
               </>
             ) : undefined
           }
-          backHref={
-            isSoloMode
-              ? backToStreamersHref
-              : undefined
-          }
+          backHref={isSoloMode ? backToStreamersHref : undefined}
           backLabel="방 설정으로 돌아가기"
           description="왼쪽 스트리머 풀에서 현재 선택 가능한 팀 칸으로 바로 배치합니다."
           title="스네이크 드래프트"
@@ -538,7 +545,9 @@ function SnakeDraftRoomPage() {
                     >
                       <div>
                         <p className="text-sm font-semibold text-text-primary">{lineGroup.label}</p>
-                        <p className="mt-0.5 text-[10px] text-text-secondary">남은 {remainingCount}명</p>
+                        <p className="mt-0.5 text-[10px] text-text-secondary">
+                          남은 {remainingCount}명
+                        </p>
                       </div>
                     </div>,
                     ...lineGroup.streamers.map((streamer) => {
@@ -547,10 +556,7 @@ function SnakeDraftRoomPage() {
                       const disabled = alreadyPicked;
 
                       return (
-                        <div
-                          key={streamer.id}
-                          className={cn(disabled ? "opacity-50" : "")}
-                        >
+                        <div key={streamer.id} className={cn(disabled ? "opacity-50" : "")}>
                           <DraftStreamerCard
                             avatarDataUrl={streamer.avatarDataUrl}
                             className="h-full rounded-lg p-1"
@@ -603,7 +609,9 @@ function SnakeDraftRoomPage() {
                         <p className="text-sm font-semibold text-text-primary">{lineGroup.label}</p>
                         <p className="mt-1 text-xs text-text-secondary">남은 {remainingCount}명</p>
                       </div>
-                      <DraftRoomStatusChip tone="muted">{draftLineLabelMap[lineGroup.key]}</DraftRoomStatusChip>
+                      <DraftRoomStatusChip tone="muted">
+                        {draftLineLabelMap[lineGroup.key]}
+                      </DraftRoomStatusChip>
                     </div>
 
                     <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -668,7 +676,8 @@ function SnakeDraftRoomPage() {
                         "w-full",
                         selectedPlacement &&
                           teamRow.picks.some(
-                            (pick) => pick.absolutePickNumber === selectedPlacement.sourcePickNumber,
+                            (pick) =>
+                              pick.absolutePickNumber === selectedPlacement.sourcePickNumber,
                           )
                           ? "text-violet-700"
                           : "",
@@ -712,8 +721,10 @@ function SnakeDraftRoomPage() {
                           handleBoardSlotDrop(event, pick.absolutePickNumber);
                         }}
                         className={cn(
-                          "relative h-full rounded-lg border p-1 transition-colors overflow-hidden",
-                          isMobileViewport || draggingSelection ? "cursor-pointer" : "cursor-default",
+                          "relative h-full overflow-hidden rounded-lg border p-1 transition-colors",
+                          isMobileViewport || draggingSelection
+                            ? "cursor-pointer"
+                            : "cursor-default",
                           pick.streamer
                             ? "border-violet-200 bg-violet-50 shadow-sm"
                             : "border-border bg-surface",
@@ -786,9 +797,10 @@ function SnakeDraftRoomPage() {
                       className={cn(
                         "min-w-0",
                         selectedPlacement &&
-                        teamRow.picks.some(
-                          (pick) => pick.absolutePickNumber === selectedPlacement.sourcePickNumber,
-                        )
+                          teamRow.picks.some(
+                            (pick) =>
+                              pick.absolutePickNumber === selectedPlacement.sourcePickNumber,
+                          )
                           ? "text-violet-700"
                           : "text-text-primary",
                       )}
@@ -796,7 +808,8 @@ function SnakeDraftRoomPage() {
                       <TeamHeaderBlock {...teamRow.teamHeader} />
                     </div>
                     <p className="text-xs text-text-secondary">
-                      {teamRow.picks.filter((pick) => Boolean(pick.streamer)).length} / {playerLines.length}
+                      {teamRow.picks.filter((pick) => Boolean(pick.streamer)).length} /{" "}
+                      {playerLines.length}
                     </p>
                   </div>
 
@@ -820,13 +833,11 @@ function SnakeDraftRoomPage() {
                             handleBoardSlotTap(pick.absolutePickNumber, slotSelection);
                           }}
                           className={cn(
-                            "relative aspect-square rounded-2xl border p-2 text-left transition-colors overflow-hidden cursor-pointer",
+                            "relative aspect-square cursor-pointer overflow-hidden rounded-2xl border p-2 text-left transition-colors",
                             pick.streamer
                               ? "border-violet-200 bg-violet-50 shadow-sm"
                               : "border-border bg-surface",
-                            selectedFromThisSlot
-                              ? "border-violet-300 bg-violet-50 shadow-sm"
-                              : "",
+                            selectedFromThisSlot ? "border-violet-300 bg-violet-50 shadow-sm" : "",
                           )}
                         >
                           {pick.streamer ? (

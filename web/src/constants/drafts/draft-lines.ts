@@ -1,7 +1,7 @@
-import type { LineKey } from "@/types/drafts";
+import type { LolLineKey } from "@/types/drafts";
 
 export interface DraftLineDefinition {
-  key: LineKey;
+  key: LolLineKey;
   label: string;
 }
 
@@ -15,9 +15,17 @@ export const draftLineRows: DraftLineDefinition[] = [
   { key: "coach", label: "코치" },
 ];
 
-export const draftLineOrder: LineKey[] = ["top", "jungle", "mid", "adc", "support", "headCoach", "coach"];
+export const draftLineOrder: LolLineKey[] = [
+  "top",
+  "jungle",
+  "mid",
+  "adc",
+  "support",
+  "headCoach",
+  "coach",
+];
 
-export const draftLineOrderMap: Record<LineKey, number> = {
+export const draftLineOrderMap: Record<LolLineKey, number> = {
   top: 0,
   jungle: 1,
   mid: 2,
@@ -27,7 +35,7 @@ export const draftLineOrderMap: Record<LineKey, number> = {
   coach: 6,
 };
 
-export const draftLineLabelMap: Record<LineKey, string> = {
+export const draftLineLabelMap: Record<LolLineKey, string> = {
   top: "탑",
   jungle: "정글",
   mid: "미드",

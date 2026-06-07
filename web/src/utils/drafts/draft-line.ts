@@ -1,11 +1,11 @@
 import { draftLineOrderMap } from "@/constants/drafts";
-import type { LineKey } from "@/types/drafts";
+import type { LolLineKey } from "@/types/drafts";
 
 interface DraftLineSortable {
-  line: LineKey;
+  line: LolLineKey;
 }
 
-export function compareDraftLineOrder(leftLine: LineKey, rightLine: LineKey) {
+export function compareDraftLineOrder(leftLine: LolLineKey, rightLine: LolLineKey) {
   return draftLineOrderMap[leftLine] - draftLineOrderMap[rightLine];
 }
 

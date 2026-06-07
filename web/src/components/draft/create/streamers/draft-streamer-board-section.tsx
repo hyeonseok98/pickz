@@ -1,7 +1,7 @@
+import type { BoardState, LolLineKey, StreamerDirectoryItem } from "@/types/drafts";
+import type { DragEvent } from "react";
 import { DraftActionFooter } from "../common/draft-action-footer";
 import { BoardSlot, SectionCard } from "./draft-streamer-setup-primitives";
-import type { BoardState, LineKey, StreamerDirectoryItem } from "@/types/drafts";
-import type { DragEvent } from "react";
 
 function RefreshIcon() {
   return (
@@ -24,26 +24,26 @@ function RefreshIcon() {
 }
 
 interface DraftStreamerBoardSectionProps {
-  activeLineRows: Array<{ key: LineKey; label: string }>;
+  activeLineRows: Array<{ key: LolLineKey; label: string }>;
   board: BoardState;
   canCreateRoom: boolean;
   coachEnabled: boolean;
   headCoachEnabled: boolean;
-  hoveredSlot: { index: number; line: LineKey } | null;
+  hoveredSlot: { index: number; line: LolLineKey } | null;
   isPartyMode: boolean;
   onClearAllSlots: () => void;
   onCoachSlotToggle: () => void;
   onHeadCoachSlotToggle: () => void;
-  onClearSlot: (line: LineKey, index: number) => void;
+  onClearSlot: (line: LolLineKey, index: number) => void;
   onCreateRoom: () => void;
   onParticipantDragEnd: (event: DragEvent<HTMLDivElement>) => void;
   onParticipantDragStart: (event: DragEvent<HTMLDivElement>, streamerId: string) => void;
   onRunAutoPlacement: () => void;
-  onSlotDragEnter: (event: DragEvent<HTMLDivElement>, line: LineKey, index: number) => void;
-  onSlotDragLeave: (line: LineKey, index: number) => void;
-  onSlotDragOver: (event: DragEvent<HTMLDivElement>, line: LineKey, index: number) => void;
-  onSlotDrop: (event: DragEvent<HTMLDivElement>, line: LineKey, index: number) => void;
-  onSlotTap: (line: LineKey, index: number) => void;
+  onSlotDragEnter: (event: DragEvent<HTMLDivElement>, line: LolLineKey, index: number) => void;
+  onSlotDragLeave: (line: LolLineKey, index: number) => void;
+  onSlotDragOver: (event: DragEvent<HTMLDivElement>, line: LolLineKey, index: number) => void;
+  onSlotDrop: (event: DragEvent<HTMLDivElement>, line: LolLineKey, index: number) => void;
+  onSlotTap: (line: LolLineKey, index: number) => void;
   onStreamerSelect: (streamerId: string) => void;
   selectedStreamerId: string | null;
   streamerMap: Map<string, StreamerDirectoryItem>;
@@ -134,7 +134,7 @@ export function DraftStreamerBoardSection({
             <button
               type="button"
               onClick={onClearAllSlots}
-            className="inline-flex h-8 cursor-pointer items-center justify-center rounded-2xl border border-border bg-surface px-3.5 text-sm font-semibold text-text-primary"
+              className="inline-flex h-8 cursor-pointer items-center justify-center rounded-2xl border border-border bg-surface px-3.5 text-sm font-semibold text-text-primary"
             >
               전체 초기화
             </button>
@@ -166,9 +166,9 @@ export function DraftStreamerBoardSection({
                 >
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{line.label}</p>
-                      <p className="mt-1 text-[11px] text-text-secondary">
-                        {fillCount} / {visibleColumnCount} 배치
-                      </p>
+                    <p className="mt-1 text-[11px] text-text-secondary">
+                      {fillCount} / {visibleColumnCount} 배치
+                    </p>
                   </div>
                 </div>,
                 ...board[line.key].slice(0, visibleColumnCount).map((streamerId, index) => (
@@ -222,7 +222,8 @@ export function DraftStreamerBoardSection({
               <div className="text-center">
                 <p className="text-sm font-semibold text-text-primary">{line.label}</p>
                 <p className="mt-1 text-[11px] font-semibold text-text-secondary">
-                  {board[line.key].slice(0, visibleColumnCount).filter(Boolean).length} / {visibleColumnCount} 배치
+                  {board[line.key].slice(0, visibleColumnCount).filter(Boolean).length} /{" "}
+                  {visibleColumnCount} 배치
                 </p>
               </div>
 

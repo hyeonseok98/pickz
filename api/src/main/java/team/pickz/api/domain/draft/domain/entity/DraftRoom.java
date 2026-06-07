@@ -67,16 +67,24 @@ public class DraftRoom {
         this.status = RoomStatus.IN_PROGRESS;
     }
 
+    public void verifyPickable() {
+        if(this.status != RoomStatus.DONE) {
+            throw new IllegalArgumentException("드래프트가 이미 종료되었습니다.");
+        }
+        if(this.status == RoomStatus.WAITING) {
+            throw new IllegalArgumentException("드래프트가 아직 시작되지 않았습니다.");
+        }
+    }
+
+    public boolean isDraftDone() {
+        return this.status == RoomStatus.DONE;
+    }
+
     public void incrementPickCount() {
         this.currentPickCount++;
         if (this.currentPickCount >= (this.teamCount * this.teamSize)) {
             this.status = RoomStatus.DONE;
         }
     }
-
-//    public void updateSettings(int teamCount, int teamSize) {
-//        this.teamCount = teamCount;
-//        this.teamSize = teamSize;
-//    }
 
 }

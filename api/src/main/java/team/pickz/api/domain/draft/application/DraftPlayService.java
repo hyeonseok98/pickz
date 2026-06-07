@@ -38,9 +38,7 @@ public class DraftPlayService {
         DraftRoom room = draftRoomRepository.findByIdForUpdate(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
 
-        if(room.getStatus() == RoomStatus.DONE) {
-            throw new IllegalArgumentException("드래프트가 종료되었습니다.");
-        }
+        room.verifyPickable();
 
         List<DraftParticipant> participants = draftParticipantRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);
 
@@ -53,11 +51,11 @@ public class DraftPlayService {
         int nextTurnIndex = rule.calculateNextTurn(room.getCurrentPickCount(), room.getTeamCount());
         DraftParticipant expectedParticipant = participants.get(nextTurnIndex);
 
-        if (!expectedParticipant.getParticipantToken().equals(participantToken)) {
+        if(!expectedParticipant.getParticipantToken().equals(participantToken)) {
             throw new IllegalArgumentException("현재 당신의 픽 차례가 아닙니다.");
         }
 
-        if (draftPickRepository.existsByRoomIdAndStreamerId(roomId, streamerId)) {
+        if(draftPickRepository.existsByRoomIdAndStreamerId(roomId, streamerId)) {
             throw new IllegalArgumentException("이미 선택된 스트리머입니다.");
         }
 
@@ -75,12 +73,12 @@ public class DraftPlayService {
         draftPickRepository.save(pick);
 
         room.incrementPickCount();
-        if (room.getStatus() == RoomStatus.DONE) {
+        if(room.isDraftDone()) {
             roomSequenceManager.removeRoomSequence(roomId);
         }
 
         String nextTurnNickname = null;
-        if (room.getStatus() != RoomStatus.DONE) {
+        if(room.getStatus() != RoomStatus.DONE) {
             int nextExpectedTurnIndex = rule.calculateNextTurn(room.getCurrentPickCount(), room.getTeamCount());
             nextTurnNickname = participants.get(nextExpectedTurnIndex).getNickname();
         }

@@ -78,6 +78,10 @@ public class DraftParticipantService {
         DraftParticipant participant = draftParticipantRepository.findByParticipantToken(participantToken)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 참여자입니다."));
 
+        if (!participant.getRoomId().equals(roomId)) {
+            throw new IllegalArgumentException("참여자가 해당 방에 속하지 않습니다.");
+        }
+
         // 동시성 처리 고려: 이미 누군가 해당 감독/순서를 골랐는지 검증
         boolean isAlreadySelected = draftParticipantRepository.existsByRoomIdAndSelectedCoachName(roomId, coachName);
         if (isAlreadySelected) {

@@ -35,7 +35,7 @@ public class DraftEventListener {
                 "/topic/drafts/rooms/" + event.roomId(), event.payload());
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleRoomDeletedEvent(RoomDeletedEvent event) {
         // 프론트엔드는 이 구독 채널에서 메시지를 받으면 socket.disconnect()를 호출하고 홈으로 튕겨냅니다.
         messagingTemplate.convertAndSend(

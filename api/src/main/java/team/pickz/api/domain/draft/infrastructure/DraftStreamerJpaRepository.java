@@ -12,6 +12,6 @@ public interface DraftStreamerJpaRepository extends JpaRepository<DraftStreamer,
 
     List<DraftStreamer> findAllByRoomId(Long roomId);
 
-    Optional<DraftStreamer> findByRoomIdAndStreamerName(Long roomId, String streamerId);
+    Optional<DraftStreamer> findByRoomIdAndStreamerName(Long roomId, String streamerName);
 
 }

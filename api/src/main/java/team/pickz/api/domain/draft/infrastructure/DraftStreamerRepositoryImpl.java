@@ -30,8 +30,8 @@ public class DraftStreamerRepositoryImpl implements DraftStreamerRepository {
     }
 
     @Override
-    public Optional<DraftStreamer> findByRoomIdAndStreamerName(Long roomId, String streamerId) {
-        return draftRoomStreamerJpaRepository.findByRoomIdAndStreamerName(roomId, streamerId);
+    public Optional<DraftStreamer> findByRoomIdAndStreamerName(Long roomId, String streamerName) {
+        return draftRoomStreamerJpaRepository.findByRoomIdAndStreamerName(roomId, streamerName);
     }
 
 }

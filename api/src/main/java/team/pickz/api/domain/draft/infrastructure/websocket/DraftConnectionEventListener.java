@@ -41,7 +41,7 @@ public class DraftConnectionEventListener {
         DraftSessionManager.SessionInfo info = sessionManager.removeSession(sessionId);
 
         if (info != null) {
-            log.info("비정상 종료 감지 - SessionId: {}, RoomId: {}", sessionId, info.roomId());
+            log.info("WebSocket 연결 해제 - SessionId: {}, RoomId: {}", sessionId, info.roomId());
             try {
                 draftRoomService.leaveRoom(info.roomId(), info.participantToken());
             } catch (Exception e) {

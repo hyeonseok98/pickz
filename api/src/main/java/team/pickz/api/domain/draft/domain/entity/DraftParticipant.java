@@ -54,9 +54,7 @@ public class DraftParticipant {
     public void selectCoach(String coachName, int turnOrder) {
         this.selectedCoachName = coachName;
         this.turnOrder = turnOrder;
-        if(coachName != null) {
-            this.isReady = true;
-        }
+        this.isReady = (coachName != null);
     }
 
 }

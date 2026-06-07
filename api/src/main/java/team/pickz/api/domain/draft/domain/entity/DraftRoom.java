@@ -68,7 +68,7 @@ public class DraftRoom {
     }
 
     public void verifyPickable() {
-        if(this.status != RoomStatus.DONE) {
+        if(this.status == RoomStatus.DONE) {
             throw new IllegalArgumentException("드래프트가 이미 종료되었습니다.");
         }
         if(this.status == RoomStatus.WAITING) {

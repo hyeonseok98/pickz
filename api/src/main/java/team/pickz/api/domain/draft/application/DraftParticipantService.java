@@ -31,7 +31,9 @@ public class DraftParticipantService {
         DraftRoom room = draftRoomRepository.findByInviteCodeWithLock(inviteCode)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
 
-        room.verifyPickable();
+        if(room.getStatus() != RoomStatus.WAITING) {
+            throw new IllegalStateException("드래프트가 진행 중이거나 종료되었습니다.");
+        }
 
         int currentCount = draftParticipantRepository.countByRoomId(room.getId());
         if(currentCount >= room.getTeamCount()) {

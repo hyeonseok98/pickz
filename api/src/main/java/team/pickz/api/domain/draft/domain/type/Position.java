@@ -6,5 +6,6 @@ public enum Position {
     MID,
     ADC,
     SUP,
+    HEAD_COACH,
     COACH
 }

@@ -10,6 +10,7 @@ import team.pickz.api.domain.draft.application.event.DraftRoomStartedEvent;
 import team.pickz.api.domain.draft.application.event.ParticipantUpdateEvent;
 import team.pickz.api.domain.draft.application.event.RoomDeletedEvent;
 import team.pickz.api.domain.draft.application.event.RoomStatusEvent;
+import team.pickz.api.domain.draft.domain.type.DraftMode;
 import team.pickz.api.domain.draft.domain.type.ParticipationType;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
@@ -28,6 +29,7 @@ public class DraftRoomService {
     private final DraftRoomRepository draftRoomRepository;
     private final DraftParticipantRepository draftParticipantRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final AuctionRoomService auctionRoomService;
 
     @Transactional
     public RoomInitResponse initRoom(/**Long hostMemberId,**/RoomInitRequest request) {
@@ -91,8 +93,10 @@ public class DraftRoomService {
 
         room.start();
 
-        // 기존의 Collections.shuffle(participants)는 삭제합니다.
-        // -> 참가자가 직접 감독을 선택하면서 픽 순서(turnOrder)가 결정되었기 때문입니다.
+        if (room.getDraftMode() == DraftMode.AUCTION) {
+            // 경매 모드일 경우 인메모리 상태 세팅 및 타이머 가동
+            auctionRoomService.setupAuctionAndStartTimer(roomId);
+        }
 
         RoomStatusEvent event = RoomStatusEvent.builder()
                 .code("SUCCESS")

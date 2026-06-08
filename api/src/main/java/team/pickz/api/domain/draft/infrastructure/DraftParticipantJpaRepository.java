@@ -25,4 +25,7 @@ public interface DraftParticipantJpaRepository extends JpaRepository<DraftPartic
 
     Optional<DraftParticipant> findByRoomIdAndParticipantToken(Long roomId, String participantToken);
 
+    @Query("SELECT dp.id FROM DraftParticipant dp WHERE dp.roomId = :roomId ORDER BY dp.turnOrder ASC")
+    List<Long> findParticipantIdsByDraftRoomId(@Param("roomId") Long roomId);
 }
+

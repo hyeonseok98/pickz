@@ -1,5 +1,6 @@
 package team.pickz.api.domain.draft.domain.repository;
 
+import org.springframework.data.repository.query.Param;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 
 import java.util.List;
@@ -24,5 +25,7 @@ public interface DraftParticipantRepository {
     Optional<DraftParticipant> findByParticipantToken(String participantToken);
 
     Optional<DraftParticipant> findByRoomIdAndParticipantToken(Long roomId, String participantToken);
+
+    List<Long> findParticipantIdsByDraftRoomId(Long roomId);
 
 }

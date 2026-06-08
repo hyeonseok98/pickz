@@ -15,10 +15,11 @@ public record DraftConfigResponse(
 
     public record StreamersByLine(
             List<StreamerInfo> top,
-            List<StreamerInfo> jungle,
+            List<StreamerInfo> jug,
             List<StreamerInfo> mid,
             List<StreamerInfo> adc,
-            List<StreamerInfo> support,
+            List<StreamerInfo> sup,
+            List<StreamerInfo> headCoach,
             List<StreamerInfo> coach
     ) {}
 

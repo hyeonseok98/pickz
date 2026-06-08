@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import team.pickz.api.domain.draft.domain.type.Position;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -26,14 +27,18 @@ public class DraftPick {
 
     private String streamerName;
 
+    @Enumerated(EnumType.STRING)
+    private Position position;
+
     private int roundIndex; // 몇 라운드에 뽑았는지
 
     @Builder
-    public DraftPick(Long roomId, Long participantId, String streamerId, String streamerName, int roundIndex) {
+    public DraftPick(Long roomId, Long participantId, String streamerId, String streamerName, Position position, int roundIndex) {
         this.roomId = roomId;
         this.participantId = participantId;
         this.streamerId = streamerId;
         this.streamerName = streamerName;
+        this.position = position;
         this.roundIndex = roundIndex;
     }
 

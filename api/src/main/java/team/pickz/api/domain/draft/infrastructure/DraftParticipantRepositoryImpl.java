@@ -59,4 +59,9 @@ public class DraftParticipantRepositoryImpl implements DraftParticipantRepositor
         return draftParticipantJpaRepository.findByRoomIdAndParticipantToken(roomId, participantToken);
     }
 
+    @Override
+    public List<Long> findParticipantIdsByDraftRoomId(Long roomId) {
+        return draftParticipantJpaRepository.findParticipantIdsByDraftRoomId(roomId);
+    }
+
 }

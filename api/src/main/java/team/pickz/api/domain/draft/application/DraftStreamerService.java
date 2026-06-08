@@ -54,6 +54,7 @@ public class DraftStreamerService {
             savePositionStreamers(roomId, req.teamSlot(), Position.MID, req.mid());
             savePositionStreamers(roomId, req.teamSlot(), Position.ADC, req.adc());
             savePositionStreamers(roomId, req.teamSlot(), Position.SUP, req.sup());
+            savePositionStreamers(roomId, req.teamSlot(), Position.HEAD_COACH, req.headCoach());
             savePositionStreamers(roomId, req.teamSlot(), Position.COACH, req.coach());
         }
     }
@@ -80,13 +81,14 @@ public class DraftStreamerService {
         List<DraftStreamer> streamers = draftStreamerRepository.findAllByRoomId(roomId);
 
         List<StreamerInfo> top = extractByPosition(streamers, Position.TOP, teamCount);
-        List<StreamerInfo> jungle = extractByPosition(streamers, Position.JUG, teamCount);
+        List<StreamerInfo> jug = extractByPosition(streamers, Position.JUG, teamCount);
         List<StreamerInfo> mid = extractByPosition(streamers, Position.MID, teamCount);
         List<StreamerInfo> adc = extractByPosition(streamers, Position.ADC, teamCount);
-        List<StreamerInfo> support = extractByPosition(streamers, Position.SUP, teamCount);
+        List<StreamerInfo> sup = extractByPosition(streamers, Position.SUP, teamCount);
+        List<StreamerInfo> headCoach = extractByPosition(streamers, Position.HEAD_COACH, teamCount);
         List<StreamerInfo> coach = extractByPosition(streamers, Position.COACH, teamCount);
 
-        return new DraftRoomStreamerResponse(top, jungle, mid, adc, support, coach);
+        return new DraftRoomStreamerResponse(top, jug, mid, adc, sup, headCoach, coach);
     }
 
     private List<StreamerInfo> extractByPosition(List<DraftStreamer> streamers, Position position, int teamCount) {
@@ -141,6 +143,7 @@ public class DraftStreamerService {
                 extractByPosition(streamers, Position.MID, teamCount),
                 extractByPosition(streamers, Position.ADC, teamCount),
                 extractByPosition(streamers, Position.SUP, teamCount),
+                extractByPosition(streamers, Position.HEAD_COACH, teamCount),
                 extractByPosition(streamers, Position.COACH, teamCount)
         );
 

@@ -3,10 +3,18 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { createDraftRoom, joinDraftRoomByInviteCode, startDraftRoom } from "@/apis/drafts";
-import { useDraftCreateStore } from "@/stores/drafts";
-import type { CreateDraftRoomRequest } from "@/types/drafts";
-import { getDraftParticipantSession, saveDraftParticipantSession } from "@/utils";
+import { createDraftRoom, joinDraftRoomByInviteCode, saveDraftRoomStreamerPool, startDraftRoom } from "@/apis/draft";
+import { useDraftRoomSettingsStore, useDraftStreamerSetupStore } from "@/stores/draft";
+import type {
+  CreateDraftRoomRequest,
+  CreateDraftRoomResponse,
+  JoinDraftRoomResponse,
+} from "@/types/draft";
+import {
+  createDraftRoomStreamerTeamSlotsFromBoard,
+  getDraftParticipantSession,
+  saveDraftParticipantSession,
+} from "@/utils";
 import { useDraftRoomStomp } from "./use-draft-room-stomp";
 
 interface DraftInviteParticipantItem {
@@ -62,6 +70,95 @@ interface DraftParticipantEventPayload {
   newParticipant?: string;
   nicknames: string[];
   totalCount: number;
+}
+
+const draftInviteCodeSessionStorageKeyPrefix = "pickz:draft-invite-session";
+const pendingCreateRoomRequestsByKey = new Map<string, Promise<CreateDraftRoomResponse>>();
+const pendingJoinRoomRequestsByInviteCode = new Map<string, Promise<JoinDraftRoomResponse>>();
+
+function createDraftInviteCodeSessionStorageKey(inviteCode: string) {
+  return `${draftInviteCodeSessionStorageKeyPrefix}:${inviteCode}`;
+}
+
+function isJoinDraftRoomResponseValue(value: unknown): value is JoinDraftRoomResponse {
+  return (
+    isRecordValue(value) &&
+    typeof value.isHost === "boolean" &&
+    typeof value.participantToken === "string" &&
+    typeof value.roomId === "number"
+  );
+}
+
+function getStoredJoinRoomResponse(inviteCode: string) {
+  try {
+    const storedValue = sessionStorage.getItem(createDraftInviteCodeSessionStorageKey(inviteCode));
+
+    if (!storedValue) {
+      return null;
+    }
+
+    const parsedValue = JSON.parse(storedValue) as unknown;
+
+    return isJoinDraftRoomResponseValue(parsedValue) ? parsedValue : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveJoinRoomResponse(inviteCode: string, response: JoinDraftRoomResponse) {
+  try {
+    sessionStorage.setItem(
+      createDraftInviteCodeSessionStorageKey(inviteCode),
+      JSON.stringify(response),
+    );
+  } catch {
+    // sessionStorage를 사용할 수 없는 환경에서는 중복 방지 캐시만 사용합니다.
+  }
+}
+
+function createDraftRoomOnce(createRoomRequest: CreateDraftRoomRequest) {
+  const createRoomRequestKey = JSON.stringify(createRoomRequest);
+  const pendingCreateRoomRequest = pendingCreateRoomRequestsByKey.get(createRoomRequestKey);
+
+  if (pendingCreateRoomRequest) {
+    return pendingCreateRoomRequest;
+  }
+
+  const createRoomRequestPromise = createDraftRoom(createRoomRequest).finally(() => {
+    pendingCreateRoomRequestsByKey.delete(createRoomRequestKey);
+  });
+
+  pendingCreateRoomRequestsByKey.set(createRoomRequestKey, createRoomRequestPromise);
+
+  return createRoomRequestPromise;
+}
+
+function joinDraftRoomOnce(inviteCode: string) {
+  const storedJoinRoomResponse = getStoredJoinRoomResponse(inviteCode);
+
+  if (storedJoinRoomResponse) {
+    return Promise.resolve(storedJoinRoomResponse);
+  }
+
+  const pendingJoinRoomRequest = pendingJoinRoomRequestsByInviteCode.get(inviteCode);
+
+  if (pendingJoinRoomRequest) {
+    return pendingJoinRoomRequest;
+  }
+
+  const joinRoomRequestPromise = joinDraftRoomByInviteCode(inviteCode)
+    .then((joinRoomResponse) => {
+      saveJoinRoomResponse(inviteCode, joinRoomResponse);
+
+      return joinRoomResponse;
+    })
+    .finally(() => {
+      pendingJoinRoomRequestsByInviteCode.delete(inviteCode);
+    });
+
+  pendingJoinRoomRequestsByInviteCode.set(inviteCode, joinRoomRequestPromise);
+
+  return joinRoomRequestPromise;
 }
 
 function createInviteLink({
@@ -136,6 +233,26 @@ function createParticipantItem({
     nickname,
     status,
   };
+}
+
+async function saveDraftRoomStreamerPoolWithoutBlockingInvite({
+  participantToken,
+  roomId,
+  teamStreamerSlots,
+}: Parameters<typeof saveDraftRoomStreamerPool>[0]) {
+  try {
+    await saveDraftRoomStreamerPool({
+      participantToken,
+      roomId,
+      teamStreamerSlots,
+    });
+
+    return "";
+  } catch (error) {
+    return error instanceof Error
+      ? error.message
+      : "스트리머 풀 저장 API 호출에 실패했습니다.";
+  }
 }
 
 function getDisplayNickname(nickname: string | undefined, fallbackLabel: string) {
@@ -260,7 +377,8 @@ export function useDraftInviteRoom({
   teamSize: teamSizeFromQuery,
 }: UseDraftInviteRoomParams): UseDraftInviteRoomResult {
   const router = useRouter();
-  const { participantIds, roomTitle, tournamentId } = useDraftCreateStore();
+  const { roomTitle, tournamentId } = useDraftRoomSettingsStore();
+  const { board, participantIds } = useDraftStreamerSetupStore();
   const teamCountValue = Number(teamCountFromQuery);
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
@@ -281,8 +399,8 @@ export function useDraftInviteRoom({
   const bootstrapCompletedRef = useRef(false);
 
   const createRoomMutation = useMutation({
-    mutationFn: () =>
-      createDraftRoom(
+    mutationFn: async () => {
+      const createdDraftRoom = await createDraftRoomOnce(
         createDraftRoomRequest({
           draftType,
           mode,
@@ -291,7 +409,23 @@ export function useDraftInviteRoom({
           teamSize: teamSizeFromQuery,
           tournamentId,
         }),
-      ),
+      );
+      const teamStreamerSlots = createDraftRoomStreamerTeamSlotsFromBoard({
+        board,
+        teamCount: teamCountValue,
+      });
+
+      const streamerPoolSaveErrorMessage = await saveDraftRoomStreamerPoolWithoutBlockingInvite({
+        participantToken: createdDraftRoom.participantToken,
+        roomId: createdDraftRoom.roomId,
+        teamStreamerSlots,
+      });
+
+      return {
+        ...createdDraftRoom,
+        streamerPoolSaveErrorMessage,
+      };
+    },
     onMutate: () => {
       setBootstrapStatus("creating_room");
       setBootstrapErrorSource(null);
@@ -319,7 +453,11 @@ export function useDraftInviteRoom({
         }),
       ]);
       setBootstrapStatus("ready");
-      setInfoMessage("방이 생성되었습니다. 참가자를 초대한 뒤 시작할 수 있습니다.");
+      setInfoMessage(
+        response.streamerPoolSaveErrorMessage
+          ? `방은 생성되었습니다. 다만 스트리머 풀 저장은 실패했습니다: ${response.streamerPoolSaveErrorMessage}`
+          : "방이 생성되었습니다. 참가자를 초대한 뒤 시작할 수 있습니다.",
+      );
       setErrorMessage("");
     },
     onError: (error) => {
@@ -330,7 +468,7 @@ export function useDraftInviteRoom({
   });
 
   const joinRoomMutation = useMutation({
-    mutationFn: (code: string) => joinDraftRoomByInviteCode(code),
+    mutationFn: (code: string) => joinDraftRoomOnce(code),
     onMutate: () => {
       setBootstrapStatus("joining_room");
       setBootstrapErrorSource(null);
@@ -338,6 +476,10 @@ export function useDraftInviteRoom({
       setInfoMessage("초대 링크로 방에 입장하는 중입니다.");
     },
     onSuccess: (response) => {
+      if (initialInviteCode) {
+        saveJoinRoomResponse(initialInviteCode, response);
+      }
+
       saveDraftParticipantSession({
         inviteCode: initialInviteCode,
         isHost: response.isHost,

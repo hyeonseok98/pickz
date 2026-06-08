@@ -1,5 +1,5 @@
-import { draftLineOrderMap } from "@/constants/drafts";
-import type { LolLineKey } from "@/types/drafts";
+import { draftLineOrderMap } from "@/constants/draft";
+import type { LolLineKey } from "@/types/draft";
 
 interface DraftLineSortable {
   line: LolLineKey;

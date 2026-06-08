@@ -9,10 +9,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { createDraftRoom, joinDraftRoomByInviteCode, startDraftRoom } from "@/apis/drafts";
-import { useDraftRoomStomp } from "@/hooks/drafts";
-import type { DraftParticipantSession, JoinDraftRoomResponse } from "@/types/drafts";
+import { createDraftRoom, joinDraftRoomByInviteCode, saveDraftRoomStreamerPool, startDraftRoom } from "@/apis/draft";
+import { useDraftRoomStomp } from "@/hooks/draft";
+import type { DraftParticipantSession, JoinDraftRoomResponse } from "@/types/draft";
 import {
+  createDraftRoomStreamerTeamSlotsForTest,
   cn,
   getDraftParticipantSession,
   removeDraftParticipantSession,
@@ -763,7 +764,21 @@ export default function DraftWebSocketTestPage() {
 
   const createRoomMutation = useMutation({
     mutationKey: ["draft-room-create"],
-    mutationFn: () => createDraftRoom(),
+    mutationFn: async () => {
+      const createdDraftRoom = await createDraftRoom();
+
+      try {
+        await saveDraftRoomStreamerPool({
+          participantToken: createdDraftRoom.participantToken,
+          roomId: createdDraftRoom.roomId,
+          teamStreamerSlots: createDraftRoomStreamerTeamSlotsForTest(fixedTeamCount),
+        });
+      } catch (error) {
+        console.warn("[draft ws-test] streamer pool save failed", error);
+      }
+
+      return createdDraftRoom;
+    },
     onSuccess: (response) => {
       const nextSession: TestParticipantSession = {
         isHost: response.isHost,

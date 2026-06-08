@@ -6,8 +6,8 @@ import {
   DraftRoomStatusChip,
 } from "@/components/draft/room";
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
-import { STREAMER_DIRECTORY_BY_ID, draftLineLabelMap, draftLineRows } from "@/constants/drafts";
-import type { LolLineKey } from "@/types/drafts";
+import { STREAMER_DIRECTORY_BY_ID, draftLineLabelMap, draftLineRows } from "@/constants/draft";
+import type { LolLineKey } from "@/types/draft";
 import { cn, parseDraftRoomSnapshot, serializeDraftRoomSnapshot } from "@/utils";
 import Image from "next/image";
 import Link from "next/link";

@@ -3,6 +3,8 @@ export {
   cloneDraftBoard,
   compareDraftLineOrder,
   createEmptyDraftBoard,
+  createDraftRoomStreamerTeamSlotsForTest,
+  createDraftRoomStreamerTeamSlotsFromBoard,
   deriveDraftCreateBooleans,
   getActiveDraftLines,
   getDraftParticipantSession,
@@ -14,4 +16,4 @@ export {
   saveDraftParticipantSession,
   serializeDraftRoomSnapshot,
   sortByDraftLineOrder,
-} from "./drafts";
+} from "./draft";

@@ -1,4 +1,4 @@
-import type { BoardState, LolLineKey, StreamerDirectoryItem } from "@/types/drafts";
+import type { BoardState, LolLineKey, StreamerDirectoryItem } from "@/types/draft";
 import type { DragEvent } from "react";
 import { DraftActionFooter } from "../common/draft-action-footer";
 import { BoardSlot, SectionCard } from "./draft-streamer-setup-primitives";

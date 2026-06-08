@@ -1,5 +1,5 @@
-import { draftLineRows, maxTeamCount } from "@/constants/drafts";
-import type { BoardState, TeamCount, TeamSize } from "@/types/drafts";
+import { draftLineRows, maxTeamCount } from "@/constants/draft";
+import type { BoardState, TeamCount, TeamSize } from "@/types/draft";
 
 interface DraftLineOptions {
   coachEnabled?: boolean;

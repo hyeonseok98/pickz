@@ -1,6 +1,6 @@
 import { DraftRoomHeader, DraftRoomSectionCard, DraftRoomStatusChip } from "@/components/draft/room";
-import { draftTypeLabelMap, participationModeLabelMap } from "@/constants/drafts";
-import type { DraftType, ParticipationMode } from "@/types/drafts";
+import { draftTypeLabelMap, participationModeLabelMap } from "@/constants/draft";
+import type { DraftType, ParticipationMode } from "@/types/draft";
 
 interface PartyDraftPlayPageProps {
   params: Promise<{

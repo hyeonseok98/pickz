@@ -12,9 +12,9 @@ import {
   STREAMER_DIRECTORY_BY_NAME,
   draftLineLabelMap,
   draftLineRows,
-} from "@/constants/drafts";
+} from "@/constants/draft";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
-import { useDraftCreateStore } from "@/stores/drafts";
+import { useDraftRoomSettingsStore, useDraftStreamerSetupStore } from "@/stores/draft";
 import type {
   BoardState,
   DraftCreateFlowState,
@@ -24,7 +24,7 @@ import type {
   StreamerDirectoryItem,
   TeamCount,
   TeamSize,
-} from "@/types/drafts";
+} from "@/types/draft";
 import {
   compareDraftLineOrder,
   createEmptyDraftBoard,
@@ -385,26 +385,28 @@ function ArrowLeftIcon() {
 function DraftStreamerSetupContent() {
   const router = useRouter();
   const {
-    addParticipant: addParticipantToDraft,
-    applyTournamentSelection,
-    board,
-    coachEnabled,
-    clearBoard,
-    clearBoardSlot,
     draftType,
-    headCoachEnabled,
-    participantIds,
     participationMode,
-    placeParticipant,
-    removeParticipant: removeParticipantFromDraft,
-    setCoachEnabled,
-    setHeadCoachEnabled,
     setTeamSize,
     teamCount,
     teamSize,
     tournamentId,
     visibility,
-  } = useDraftCreateStore();
+  } = useDraftRoomSettingsStore();
+  const {
+    addParticipant: addParticipantToDraft,
+    applyTournamentStreamerSetup,
+    board,
+    coachEnabled,
+    clearBoard,
+    clearBoardSlot,
+    headCoachEnabled,
+    participantIds,
+    placeParticipant,
+    removeParticipant: removeParticipantFromDraft,
+    setCoachEnabled: setStreamerCoachEnabled,
+    setHeadCoachEnabled: setStreamerHeadCoachEnabled,
+  } = useDraftStreamerSetupStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [draggingStreamerId, setDraggingStreamerId] = useState<string | null>(null);
   const [highlightedSearchIndex, setHighlightedSearchIndex] = useState(-1);
@@ -654,7 +656,7 @@ function DraftStreamerSetupContent() {
     const nextParticipantIds =
       tournament.id === customTournamentId ? participantIds : getPlacedDraftStreamerIds(board);
 
-    applyTournamentSelection({
+    applyTournamentStreamerSetup({
       board,
       coachEnabled: nextCoachEnabled,
       headCoachEnabled: nextHeadCoachEnabled,
@@ -841,7 +843,11 @@ function DraftStreamerSetupContent() {
           ? "6"
           : "5";
 
-    setHeadCoachEnabled(nextHeadCoachEnabled);
+    setStreamerHeadCoachEnabled({
+      enabled: nextHeadCoachEnabled,
+      teamCount,
+      teamSize: nextTeamSize,
+    });
     if (nextTeamSize !== teamSize) {
       setTeamSize(nextTeamSize);
     }
@@ -868,7 +874,11 @@ function DraftStreamerSetupContent() {
           ? "6"
           : "5";
 
-    setCoachEnabled(nextCoachEnabled);
+    setStreamerCoachEnabled({
+      enabled: nextCoachEnabled,
+      teamCount,
+      teamSize: nextTeamSize,
+    });
     if (nextTeamSize !== teamSize) {
       setTeamSize(nextTeamSize);
     }
@@ -1035,11 +1045,15 @@ function DraftStreamerSetupContent() {
 
 function DraftStreamerSetupPage() {
   const searchParams = useSearchParams();
-  const board = useDraftCreateStore((state) => state.board);
-  const initializeStreamers = useDraftCreateStore((state) => state.initializeStreamers);
-  const isInitialized = useDraftCreateStore((state) => state.isInitialized);
-  const participantIds = useDraftCreateStore((state) => state.participantIds);
-  const tournamentId = useDraftCreateStore((state) => state.tournamentId);
+  const initializeRoomSettings = useDraftRoomSettingsStore((state) => state.initializeRoomSettings);
+  const isSettingsInitialized = useDraftRoomSettingsStore((state) => state.isSettingsInitialized);
+  const board = useDraftStreamerSetupStore((state) => state.board);
+  const initializeStreamerSetup = useDraftStreamerSetupStore((state) => state.initializeStreamerSetup);
+  const isStreamerSetupInitialized = useDraftStreamerSetupStore(
+    (state) => state.isStreamerSetupInitialized,
+  );
+  const participantIds = useDraftStreamerSetupStore((state) => state.participantIds);
+  const tournamentId = useDraftStreamerSetupStore((state) => state.tournamentId);
   const hasHandledInitialSeedRef = useRef(false);
   const snapshot = useMemo(
     () => parseDraftRoomSnapshot(searchParams.get("config")),
@@ -1075,8 +1089,18 @@ function DraftStreamerSetupPage() {
           tournamentId: initialTournamentId,
         });
 
-    if (!isInitialized) {
-      initializeStreamers(nextInitialState);
+    if (!isSettingsInitialized) {
+      initializeRoomSettings({
+        draftType: nextInitialState.draftType,
+        participationMode: nextInitialState.participationMode,
+        teamCount: nextInitialState.teamCount,
+        teamSize: nextInitialState.teamSize,
+        tournamentId: nextInitialState.tournamentId,
+      });
+    }
+
+    if (!isStreamerSetupInitialized) {
+      initializeStreamerSetup(nextInitialState);
       hasHandledInitialSeedRef.current = true;
       return;
     }
@@ -1098,13 +1122,13 @@ function DraftStreamerSetupPage() {
       (participantIds.length > 0 || placedStreamerCount > 0);
 
     if (shouldSeedPresetBoard) {
-      initializeStreamers(nextInitialState);
+      initializeStreamerSetup(nextInitialState);
       hasHandledInitialSeedRef.current = true;
       return;
     }
 
     if (shouldResetCustomBoard) {
-      initializeStreamers(nextInitialState);
+      initializeStreamerSetup(nextInitialState);
       hasHandledInitialSeedRef.current = true;
       return;
     }
@@ -1119,15 +1143,17 @@ function DraftStreamerSetupPage() {
     initialTeamCount,
     initialTeamSize,
     initialTournamentId,
-    initializeStreamers,
-    isInitialized,
+    initializeRoomSettings,
+    initializeStreamerSetup,
+    isSettingsInitialized,
+    isStreamerSetupInitialized,
     participantIds.length,
     placedStreamerCount,
     snapshot,
     tournamentId,
   ]);
 
-  if (!isInitialized) {
+  if (!isSettingsInitialized || !isStreamerSetupInitialized) {
     return (
       <main className="min-h-[calc(100dvh-var(--header-height))] bg-background px-6 py-6 xl:px-8">
         <section className="rounded-3xl border border-border bg-surface p-6 text-sm font-semibold text-text-secondary shadow-sm">

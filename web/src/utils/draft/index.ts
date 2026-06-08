@@ -12,5 +12,9 @@ export {
   removeDraftParticipantSession,
   saveDraftParticipantSession,
 } from "./draft-participant-storage";
+export {
+  createDraftRoomStreamerTeamSlotsForTest,
+  createDraftRoomStreamerTeamSlotsFromBoard,
+} from "./draft-room-streamer-pool";
 export { parseDraftRoomSnapshot, serializeDraftRoomSnapshot } from "./draft-room-snapshot";
 export { matchesStreamerSearchQuery } from "./streamer-search";

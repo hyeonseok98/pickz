@@ -9,7 +9,7 @@ import {
   DraftSettingsSummary,
   DraftStepper,
 } from "@/components/draft/create";
-import { useDraftRoomSettings } from "@/hooks/drafts";
+import { useDraftRoomSettings } from "@/hooks/draft";
 
 function DraftRoomSettingsPage() {
   const settings = useDraftRoomSettings();

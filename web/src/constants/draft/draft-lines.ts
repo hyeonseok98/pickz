@@ -1,4 +1,4 @@
-import type { LolLineKey } from "@/types/drafts";
+import type { LolLineKey } from "@/types/draft";
 
 export interface DraftLineDefinition {
   key: LolLineKey;

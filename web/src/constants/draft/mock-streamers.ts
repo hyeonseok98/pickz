@@ -1,4 +1,4 @@
-import type { LolLineKey, StreamerDirectoryItem, StreamerInfo } from "@/types/drafts";
+import type { LolLineKey, StreamerDirectoryItem, StreamerInfo } from "@/types/draft";
 import { draftLineOrderMap } from "./draft-lines";
 
 export const streamerInfoMocks: StreamerInfo[] = [

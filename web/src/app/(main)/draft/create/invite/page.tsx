@@ -3,8 +3,8 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { DraftInviteScreen } from "@/components/draft/create/invite";
-import { useDraftInviteRoom } from "@/hooks/drafts";
-import type { DraftType, ParticipationMode, TeamCount, TeamSize } from "@/types/drafts";
+import { useDraftInviteRoom } from "@/hooks/draft";
+import type { DraftType, ParticipationMode, TeamCount, TeamSize } from "@/types/draft";
 
 function sanitizeDraftType(value: string | null): DraftType {
   return value === "auction" ? "auction" : "snake";

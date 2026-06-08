@@ -3,8 +3,8 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { useDraftCreateStore } from "@/stores/drafts";
-import type { DraftType, ParticipationMode } from "@/types/drafts";
+import { useDraftRoomSettingsStore, useDraftStreamerSetupStore } from "@/stores/draft";
+import type { DraftType, ParticipationMode } from "@/types/draft";
 import { cn } from "@/utils";
 
 interface DraftRoomListItem {
@@ -128,7 +128,8 @@ function RoomModeBadge({ mode }: { mode: DraftType }) {
 
 export default function DraftPage() {
   const router = useRouter();
-  const resetDraftCreate = useDraftCreateStore((state) => state.resetDraftCreate);
+  const resetRoomSettings = useDraftRoomSettingsStore((state) => state.resetRoomSettings);
+  const resetStreamerSetup = useDraftStreamerSetupStore((state) => state.resetStreamerSetup);
   const [selectedDraftType] = useState<DraftType>("snake");
   const [selectedParticipationMode, setSelectedParticipationMode] =
     useState<ParticipationMode>("solo");
@@ -143,12 +144,14 @@ export default function DraftPage() {
   }, [selectedDraftType, selectedParticipationMode]);
 
   const startCreateFlow = () => {
-    resetDraftCreate();
+    resetRoomSettings();
+    resetStreamerSetup();
     router.push(nextCreateHref);
   };
 
   const startModeCreateFlow = (participationMode: ParticipationMode) => {
-    resetDraftCreate();
+    resetRoomSettings();
+    resetStreamerSetup();
     const params = new URLSearchParams({
       draftType: selectedDraftType,
       mode: participationMode,
@@ -240,7 +243,8 @@ export default function DraftPage() {
                           type="button"
                           onClick={() => {
                             setSelectedParticipationMode("party");
-                            resetDraftCreate();
+                            resetRoomSettings();
+                            resetStreamerSetup();
                             router.push("/draft/create/invite?draftType=snake&mode=party&inviteCode=94be2958&teamCount=5&teamSize=5");
                           }}
                           className="inline-flex h-9 cursor-pointer items-center justify-center rounded-2xl border border-violet-200 bg-white px-4 text-sm font-bold text-violet-700"

@@ -1,5 +1,5 @@
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
-import type { LolLineKey } from "@/types/drafts";
+import type { LolLineKey } from "@/types/draft";
 import { cn } from "@/utils";
 import type { DragEvent, ReactNode } from "react";
 

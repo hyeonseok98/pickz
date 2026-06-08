@@ -1,5 +1,5 @@
 import { cn } from "@/utils";
-import type { ParticipationMode } from "@/types/drafts";
+import type { ParticipationMode } from "@/types/draft";
 
 export type DraftCreateStep = "draft" | "settings" | "streamers" | "invite";
 

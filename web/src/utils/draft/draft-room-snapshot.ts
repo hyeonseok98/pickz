@@ -1,4 +1,4 @@
-import { draftLineRows, maxTeamCount } from "@/constants/drafts";
+import { draftLineRows, maxTeamCount } from "@/constants/draft";
 import type {
   BoardState,
   DraftRoomSnapshot,
@@ -7,7 +7,7 @@ import type {
   RoomVisibility,
   TeamCount,
   TeamSize,
-} from "@/types/drafts";
+} from "@/types/draft";
 
 const validDraftTypes: DraftType[] = ["snake", "auction"];
 const validParticipationModes: ParticipationMode[] = ["solo", "party"];

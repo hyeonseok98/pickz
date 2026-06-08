@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/utils";
-import type { DraftInviteRoleSlot } from "@/hooks/drafts/use-draft-invite-room";
+import type { DraftInviteRoleSlot } from "@/hooks/draft/use-draft-invite-room";
 import { DraftInviteLinkCard } from "./draft-invite-link-card";
 import { DraftInviteParticipantList } from "./draft-invite-participant-list";
 
@@ -52,8 +52,8 @@ function InviteProgressBar() {
   ];
 
   return (
-    <div className="mt-2 overflow-x-auto">
-      <div className="grid min-w-[760px] grid-cols-4 gap-4">
+    <div className="mt-2">
+      <div className="grid grid-cols-4 gap-3">
         {steps.map((step, index) => (
           <div key={step.id} className="flex items-center gap-3">
             <span
@@ -69,7 +69,7 @@ function InviteProgressBar() {
             <span className={cn("text-sm font-semibold", step.isActive ? "text-violet-700" : "text-text-secondary")}>
               {step.label}
             </span>
-            {index < steps.length - 1 ? <span className="h-px flex-1 bg-border" /> : null}
+            {index < steps.length - 1 ? <span className="h-px min-w-4 flex-1 bg-border" /> : null}
           </div>
         ))}
       </div>
@@ -162,25 +162,25 @@ function InviteRoleSelection({
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   return (
-    <section className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
+    <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold tracking-[-0.03em] text-text-primary">감독(역할) 선택</h2>
+            <h2 className="text-lg font-bold tracking-[-0.03em] text-text-primary">감독(역할) 선택</h2>
             <span className="inline-flex size-5 items-center justify-center rounded-full border border-violet-200 bg-violet-50 text-[11px] font-bold text-violet-700">
               ?
             </span>
           </div>
-          <p className="mt-2 text-sm leading-5 text-text-secondary">
+          <p className="mt-1 text-xs leading-5 text-text-secondary">
             드래그하여 순서를 변경할 수 있습니다.
           </p>
         </div>
-        <p className="text-sm font-semibold text-text-secondary">팀당 1명씩 선택됩니다.</p>
+        <p className="text-xs font-semibold text-text-secondary">팀당 1명씩 선택됩니다.</p>
       </div>
 
-      <div className="mt-5 flex items-center gap-4 overflow-x-auto pb-1">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {roleSlots.map((slot, index) => (
-          <div key={slot.teamNumber} className="flex items-center gap-4">
+          <div key={slot.teamNumber} className="relative min-w-0">
             <article
               draggable
               onDragStart={() => setDraggingIndex(index)}
@@ -197,34 +197,34 @@ function InviteRoleSelection({
               }}
               onDragEnd={() => setDraggingIndex(null)}
               className={cn(
-                "w-[180px] shrink-0 rounded-3xl border p-4 text-center shadow-sm",
+                "group min-h-[158px] cursor-grab rounded-2xl border p-3 text-center shadow-sm transition-all hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md active:cursor-grabbing",
                 slot.participant
                   ? "border-violet-200 bg-violet-50/50"
                   : "border-border bg-surface",
-                draggingIndex === index ? "opacity-70" : "",
+                draggingIndex === index ? "scale-[0.98] opacity-70 ring-2 ring-violet-300" : "",
               )}
             >
               <Image
                 src="/icons/more_vertical.svg"
                 alt=""
-                width={18}
-                height={18}
+                width={16}
+                height={16}
                 aria-hidden
-                className="mx-auto size-[18px] opacity-70"
+                className="mx-auto size-4 opacity-60 transition-opacity group-hover:opacity-100"
               />
-              <div className="mx-auto mt-4 flex size-20 items-center justify-center overflow-hidden rounded-full border border-border bg-surface">
+              <div className="mx-auto mt-2 flex size-12 items-center justify-center overflow-hidden rounded-full border border-border bg-surface">
                 {slot.participant ? (
                   <span className="text-[11px] font-bold text-violet-700">{slot.participant.nickname.slice(0, 2)}</span>
                 ) : (
-                  <Image src="/icons/person_outline.svg" alt="" width={34} height={34} aria-hidden className="size-[34px] opacity-70" />
+                  <Image src="/icons/person_outline.svg" alt="" width={24} height={24} aria-hidden className="size-6 opacity-70" />
                 )}
               </div>
-              <p className="mt-4 text-[28px] leading-none text-text-secondary">→</p>
-              <p className="mt-4 text-[26px] font-bold tracking-[-0.04em] text-text-primary">{slot.teamNumber}팀 감독</p>
+              <p className="mt-2 text-xs font-semibold text-text-secondary">픽 순서 {index + 1}</p>
+              <p className="mt-1 truncate text-base font-bold tracking-[-0.03em] text-text-primary">{slot.teamNumber}팀 감독</p>
               <button
                 type="button"
                 className={cn(
-                  "mt-5 inline-flex h-10 w-full items-center justify-center rounded-2xl border text-base font-bold transition-colors",
+                  "mt-3 inline-flex h-8 w-full cursor-pointer items-center justify-center rounded-xl border text-sm font-bold transition-colors",
                   slot.participant
                     ? "border-border bg-surface-muted text-text-secondary"
                     : "border-violet-300 bg-surface text-violet-700",
@@ -233,20 +233,24 @@ function InviteRoleSelection({
                 {slot.participant ? "선택됨" : "선택"}
               </button>
             </article>
-            {index < roleSlots.length - 1 ? <span className="text-4xl text-text-secondary">→</span> : null}
+            {index < roleSlots.length - 1 ? (
+              <span className="pointer-events-none absolute -right-2 top-1/2 hidden -translate-y-1/2 text-lg font-bold text-text-secondary lg:block">
+                →
+              </span>
+            ) : null}
           </div>
         ))}
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-4">
-        <p className="text-sm text-text-secondary">
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="text-xs text-text-secondary">
           참여자는 선택한 팀의 감독(코치) 역할로 게임에 참여합니다.
         </p>
         <button
           type="button"
-          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-violet-300 bg-surface px-4 text-sm font-bold text-violet-700"
+          className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-violet-300 bg-surface px-3 text-xs font-bold text-violet-700"
         >
-          <Image src="/icons/group_outline.svg" alt="" width={18} height={18} aria-hidden className="size-[18px]" />
+          <Image src="/icons/group_outline.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
           <span>참여 선수 목록 보기 ({participantRosterCount})</span>
         </button>
       </div>
@@ -267,7 +271,7 @@ function StartSection({
 }) {
   return (
     <section className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-      <div className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
+      <div className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
         <div className="flex items-start gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-violet-200 bg-violet-50 text-xl font-bold text-violet-700">
             i
@@ -288,7 +292,7 @@ function StartSection({
         onClick={onStartDraft}
         disabled={primaryActionDisabled}
         className={cn(
-          "inline-flex min-h-[92px] items-center justify-center gap-3 rounded-3xl px-6 text-2xl font-bold tracking-[-0.03em] transition-colors",
+          "inline-flex min-h-20 items-center justify-center gap-3 rounded-3xl px-6 text-xl font-bold tracking-[-0.03em] transition-colors",
           primaryActionDisabled
             ? "cursor-not-allowed bg-surface-muted text-text-muted"
             : "cursor-pointer bg-violet-600 text-white hover:bg-violet-700",
@@ -344,9 +348,9 @@ export function DraftInviteScreen({
   }));
 
   return (
-    <main className="min-h-full bg-background px-4 py-4 sm:px-6 sm:py-6">
-      <div className="mx-auto flex max-w-screen-[1680px] flex-col gap-4">
-        <section className="rounded-3xl border border-border bg-surface px-5 py-5 shadow-sm">
+    <main className="min-h-full bg-background px-4 py-3 sm:px-6 sm:py-4">
+      <div className="mx-auto flex max-w-screen-2xl flex-col gap-3">
+        <section className="rounded-3xl border border-border bg-surface px-5 py-4 shadow-sm">
           <Link
             href={backHref}
             className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary"
@@ -357,18 +361,18 @@ export function DraftInviteScreen({
 
           <InviteProgressBar />
 
-          <div className="mt-5">
-            <h1 className="text-[2.2rem] font-bold tracking-[-0.05em] text-text-primary">참가자 초대</h1>
-            <p className="mt-2 text-base text-text-secondary">친구를 초대해 드래프트 방에 함께 참여하세요.</p>
+          <div className="mt-4">
+            <h1 className="text-[1.9rem] font-bold tracking-[-0.05em] text-text-primary">참가자 초대</h1>
+            <p className="mt-1 text-sm text-text-secondary">친구를 초대해 드래프트 방에 함께 참여하세요.</p>
           </div>
 
-          <div className="mt-6 grid gap-4 rounded-3xl border border-border bg-surface p-5 shadow-sm lg:grid-cols-[1fr_1fr_1fr_220px]">
+          <div className="mt-4 grid gap-3 rounded-3xl border border-border bg-surface p-4 shadow-sm lg:grid-cols-[1fr_1fr_1fr_160px]">
             <SummaryCard iconSrc="/icons/trophy_outline.svg" label="프리셋" value={tournamentLabel} />
             <SummaryCard iconSrc="/icons/setting_outline.svg" label="카테고리" value="롤 (League of Legends)" />
             <SummaryCard iconSrc="/icons/group_outline.svg" label="팀 개수" value={`${teamCountValue}팀`} />
             <div className="hidden items-center justify-center rounded-3xl bg-violet-50/70 lg:flex">
-              <div className="relative flex size-[148px] items-center justify-center rounded-[32px] bg-gradient-to-br from-violet-100 to-white shadow-inner">
-                <Image src="/icons/link.svg" alt="" width={48} height={48} aria-hidden className="size-12" />
+              <div className="relative flex size-28 items-center justify-center rounded-[28px] bg-gradient-to-br from-violet-100 to-white shadow-inner">
+                <Image src="/icons/link.svg" alt="" width={38} height={38} aria-hidden className="size-[38px]" />
                 <span className="absolute left-5 top-5 size-2 rounded-full bg-violet-300" />
                 <span className="absolute bottom-6 right-6 size-2 rounded-full bg-sky-300" />
                 <span className="absolute right-4 top-10 size-1.5 rounded-full bg-emerald-300" />

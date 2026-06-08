@@ -1,4 +1,4 @@
-import type { DraftType, ParticipationMode, TeamCount, TeamSize } from "@/types/drafts";
+import type { DraftType, ParticipationMode, TeamCount, TeamSize } from "@/types/draft";
 
 export const draftTypeLabelMap: Record<DraftType, string> = {
   auction: "경매",

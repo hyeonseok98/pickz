@@ -3,7 +3,7 @@ import { DraftStreamerCard } from "@/components/draft/streamer-card";
 import { cn } from "@/utils";
 import { SectionCard, StatusChip } from "./draft-streamer-setup-primitives";
 import type { DragEvent, KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject } from "react";
-import type { StreamerDirectoryItem } from "@/types/drafts";
+import type { StreamerDirectoryItem } from "@/types/draft";
 
 interface SearchResultItem extends StreamerDirectoryItem {
   isParticipant: boolean;

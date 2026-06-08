@@ -8,7 +8,7 @@ import type {
   SaveDraftRoomStreamerPoolParams,
   SelectDraftRoomCoachParams,
   StartDraftRoomParams,
-} from "@/types/drafts";
+} from "@/types/draft";
 
 const defaultCreateDraftRoomRequest: CreateDraftRoomRequest = {
   draftMode: "SNAKE",
@@ -22,6 +22,10 @@ const defaultCreateDraftRoomRequest: CreateDraftRoomRequest = {
 function createApiPath(pathname: string) {
   return `/api/${pathname.replace(/^\/+/, "")}`;
 }
+
+const draftRoomCreateFetchCredentials = "include" satisfies RequestCredentials;
+const draftRoomInviteFetchCredentials = "omit" satisfies RequestCredentials;
+const draftRoomParticipantTokenFetchCredentials = "omit" satisfies RequestCredentials;
 
 async function readResponsePayload(response: Response) {
   const contentType = response.headers.get("content-type") ?? "";
@@ -161,7 +165,7 @@ export async function createDraftRoom(
   const response = await fetch(createApiPath("drafts/rooms"), {
     method: "POST",
     cache: "no-store",
-    credentials: "include",
+    credentials: draftRoomCreateFetchCredentials,
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
@@ -187,7 +191,7 @@ export async function joinDraftRoomByInviteCode(inviteCode: string) {
     {
       method: "POST",
       cache: "no-store",
-      credentials: "include",
+      credentials: draftRoomInviteFetchCredentials,
       headers: {
         Accept: "application/json",
       },
@@ -213,7 +217,7 @@ export async function startDraftRoom({
   const response = await fetch(createApiPath(`drafts/rooms/${roomId}/start`), {
     method: "POST",
     cache: "no-store",
-    credentials: "include",
+    credentials: draftRoomParticipantTokenFetchCredentials,
     headers: {
       Accept: "text/plain",
       "X-Participant-Token": participantToken,
@@ -230,7 +234,7 @@ export async function getDraftRoomStreamerPool(roomId: number) {
   const response = await fetch(createApiPath(`drafts/rooms/${roomId}/streamers`), {
     method: "GET",
     cache: "no-store",
-    credentials: "include",
+    credentials: draftRoomParticipantTokenFetchCredentials,
     headers: {
       Accept: "application/json",
     },
@@ -256,7 +260,7 @@ export async function saveDraftRoomStreamerPool({
   const response = await fetch(createApiPath(`drafts/rooms/${roomId}/streamers`), {
     method: "POST",
     cache: "no-store",
-    credentials: "include",
+    credentials: draftRoomParticipantTokenFetchCredentials,
     headers: {
       Accept: "text/plain",
       "Content-Type": "application/json",
@@ -279,7 +283,7 @@ export async function selectDraftRoomCoach({
   const response = await fetch(createApiPath(`drafts/rooms/${roomId}/participants/coach`), {
     method: "PATCH",
     cache: "no-store",
-    credentials: "include",
+    credentials: draftRoomParticipantTokenFetchCredentials,
     headers: {
       Accept: "text/plain",
       "Content-Type": "application/json",
@@ -298,7 +302,7 @@ export async function getDraftRoomState(roomId: number) {
   const response = await fetch(createApiPath(`drafts/rooms/${roomId}/state`), {
     method: "GET",
     cache: "no-store",
-    credentials: "include",
+    credentials: draftRoomParticipantTokenFetchCredentials,
     headers: {
       Accept: "application/json",
     },
@@ -323,7 +327,7 @@ export async function deleteDraftRoom({
   const response = await fetch(createApiPath(`drafts/rooms/${roomId}`), {
     method: "DELETE",
     cache: "no-store",
-    credentials: "include",
+    credentials: draftRoomParticipantTokenFetchCredentials,
     headers: {
       Accept: "text/plain",
       "X-Participant-Token": participantToken,
@@ -343,7 +347,7 @@ export async function leaveDraftRoom({
   const response = await fetch(createApiPath(`drafts/rooms/${roomId}/participants`), {
     method: "DELETE",
     cache: "no-store",
-    credentials: "include",
+    credentials: draftRoomParticipantTokenFetchCredentials,
     headers: {
       Accept: "text/plain",
       "X-Participant-Token": participantToken,

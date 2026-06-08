@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { DraftRoomSettingsSummaryItem } from "@/hooks/drafts";
+import type { DraftRoomSettingsSummaryItem } from "@/hooks/draft";
 
 interface DraftSettingsSummaryProps {
   items: DraftRoomSettingsSummaryItem[];

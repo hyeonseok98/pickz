@@ -1,4 +1,4 @@
-import type { DraftRoomSettingsFormProps, DraftRoomSettingsOption } from "@/hooks/drafts";
+import type { DraftRoomSettingsFormProps, DraftRoomSettingsOption } from "@/hooks/draft";
 import type { ReactNode } from "react";
 import { DraftOptionCard } from "./draft-option-card";
 

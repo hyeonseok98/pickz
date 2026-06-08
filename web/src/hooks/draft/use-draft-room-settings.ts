@@ -5,9 +5,9 @@ import {
   participationModeLabelMap,
   teamCountOptions,
   teamSizeOptions,
-} from "@/constants/drafts";
-import { useDraftCreateStore } from "@/stores/drafts";
-import type { DraftType, ParticipationMode, TeamCount, TeamSize } from "@/types/drafts";
+} from "@/constants/draft";
+import { useDraftRoomSettingsStore, useDraftStreamerSetupStore } from "@/stores/draft";
+import type { DraftType, ParticipationMode, TeamCount, TeamSize } from "@/types/draft";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 
@@ -183,14 +183,12 @@ export function useDraftRoomSettings() {
   const initialRoomTitle = searchParams.get("roomTitle") ?? "";
   const {
     draftType,
-    initializeSettings,
-    isInitialized,
+    initializeRoomSettings,
+    isSettingsInitialized,
     participationMode,
     roomTitle,
     setDraftType,
     setParticipationMode,
-    setCoachEnabled,
-    setHeadCoachEnabled,
     setRoomTitle,
     setTeamCount,
     setTeamSize,
@@ -198,16 +196,20 @@ export function useDraftRoomSettings() {
     teamCount,
     teamSize,
     tournamentId,
+  } = useDraftRoomSettingsStore();
+  const {
     coachEnabled,
     headCoachEnabled,
-  } = useDraftCreateStore();
+    setCoachEnabled,
+    setHeadCoachEnabled,
+  } = useDraftStreamerSetupStore();
 
   useEffect(() => {
-    if (isInitialized) {
+    if (isSettingsInitialized) {
       return;
     }
 
-    initializeSettings({
+    initializeRoomSettings({
       draftType: initialDraftType,
       participationMode: initialParticipationMode,
       roomTitle: initialRoomTitle,
@@ -216,14 +218,14 @@ export function useDraftRoomSettings() {
       tournamentId: initialTournamentId,
     });
   }, [
-    initializeSettings,
+    initializeRoomSettings,
     initialDraftType,
     initialParticipationMode,
     initialRoomTitle,
     initialTeamCount,
     initialTeamSize,
     initialTournamentId,
-    isInitialized,
+    isSettingsInitialized,
   ]);
 
   const selectedTournament = useMemo(
@@ -237,15 +239,15 @@ export function useDraftRoomSettings() {
     if (nextTournamentId === defaultTournamentId) {
       setTeamCount("4");
       setTeamSize("7");
-      setHeadCoachEnabled(true);
-      setCoachEnabled(true);
+      setHeadCoachEnabled({ enabled: true, teamCount: "4", teamSize: "7" });
+      setCoachEnabled({ enabled: true, teamCount: "4", teamSize: "7" });
       return;
     }
 
     setTeamCount("5");
     setTeamSize("5");
-    setHeadCoachEnabled(false);
-    setCoachEnabled(false);
+    setHeadCoachEnabled({ enabled: false, teamCount: "5", teamSize: "5" });
+    setCoachEnabled({ enabled: false, teamCount: "5", teamSize: "5" });
   };
 
   const summaryItems = useMemo<DraftRoomSettingsSummaryItem[]>(
@@ -314,7 +316,7 @@ export function useDraftRoomSettings() {
   return {
     formState,
     handleNext,
-    isReady: isInitialized,
+    isReady: isSettingsInitialized,
     participationMode,
     summaryItems,
   };

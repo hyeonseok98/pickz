@@ -18,7 +18,7 @@ public class AuctionMessageController {
      * 입찰 요청 처리 (PUB)
      * 프론트엔드 전송 경로: /app/draft/room/{roomId}/bid
      */
-    @MessageMapping("/draft/room/{roomId}/bid")
+    @MessageMapping("/drafts/rooms/{roomId}/bid")
     public void handleBid(
             @DestinationVariable("roomId") Long roomId,
             @Payload AuctionBidRequest request

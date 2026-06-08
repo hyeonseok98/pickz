@@ -45,7 +45,7 @@ public class AuctionPlayService {
             String streamerName = state.getMainQueue().peek().getStreamerName();
             String chatMessage = String.format("%s - %s - %d포인트", teamName, streamerName, amount);
 
-            messagingTemplate.convertAndSend("/topic/draft/room/" + roomId + "/chat", chatMessage);
+            messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId + "/chat", chatMessage);
 
             // UI 업데이트를 위한 입찰 상황 동기화
             broadcastRoomState(roomId, state);
@@ -92,7 +92,7 @@ public class AuctionPlayService {
                     AuctionRoomState.TeamState targetTeam = state.getTeamStates().get(targetTeamId);
                     targetTeam.addStreamer(currentStreamer); // 0포인트로 로스터 합류
 
-                    messagingTemplate.convertAndSend("/topic/draft/room/" + roomId + "/chat",
+                    messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId + "/chat",
                             String.format("[시스템] %s 선수가 %s에 자동 배정되었습니다.", currentStreamer.getStreamerName(), targetTeam.getTeamName()));
                 }
             }
@@ -108,9 +108,9 @@ public class AuctionPlayService {
         if (state.getMainQueue().isEmpty()) {
             if (!state.getUnbidQueue().isEmpty() && !state.isReAuctionPhase()) {
                 state.startReAuctionPhase();
-                messagingTemplate.convertAndSend("/topic/draft/room/" + roomId + "/chat", "[시스템] 모든 경매가 종료되어 유찰자 재경매를 시작합니다.");
+                messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId + "/chat", "[시스템] 모든 경매가 종료되어 유찰자 재경매를 시작합니다.");
             } else {
-                messagingTemplate.convertAndSend("/topic/draft/room/" + roomId + "/finish", "경매가 모두 종료되었습니다.");
+                messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId + "/finish", "경매가 모두 종료되었습니다.");
                 return;
             }
         }
@@ -132,7 +132,7 @@ public class AuctionPlayService {
 
     public void broadcastRoomState(Long roomId, AuctionRoomState state) {
         AuctionSyncResponse response = AuctionSyncResponse.from(state);
-        messagingTemplate.convertAndSend("/topic/draft/room/" + roomId + "/sync", response);
+        messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId + "/sync", response);
     }
 
     /**
@@ -184,7 +184,7 @@ public class AuctionPlayService {
     private void broadcastPhase(Long roomId, AuctionPhase phase, int remainSeconds) {
         AuctionPhaseResponse payload = new AuctionPhaseResponse(phase, remainSeconds);
 
-        messagingTemplate.convertAndSend("/topic/draft/room/" + roomId + "/phase", payload);
+        messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId + "/phase", payload);
     }
 
     private int getTeamCountHavingPosition(Long roomId, Position position) {
@@ -240,7 +240,7 @@ public class AuctionPlayService {
                         .reason(String.format("해당 포지션(%s)의 마지막 선수이므로 자동 배정", position))
                         .build());
 
-                messagingTemplate.convertAndSend("/topic/draft/room/" + roomId + "/chat",
+                messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId + "/chat",
                         String.format("[시스템] %s 선수가 포지션 독점 방지를 위해 %s에 자동 배정되었습니다.", lastStreamer.getStreamerName(), targetTeam.getTeamName()));
             }
         }

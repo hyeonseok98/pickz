@@ -1,13 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/utils";
-import type { DraftInviteRoleSlot } from "@/hooks/draft/use-draft-invite-room";
-
-interface DraftInviteParticipantItem {
-  id: string;
-  isHost: boolean;
-  nickname: string;
-  status: string;
-}
+import type { DraftInviteParticipantItem, DraftInviteRoleSlot } from "@/types/draft";
 
 interface DraftInviteParticipantListProps {
   participantCountLabel: string;

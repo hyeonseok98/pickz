@@ -66,7 +66,9 @@ function requireStreamerFromBoardSlot(
 }
 
 function createWsTestStreamer(lineKey: LolLineKey, teamSlot: number): DraftRoomApiStreamer {
-  const streamerProfile = STREAMER_DIRECTORY.filter((streamer) => streamer.line === lineKey)[teamSlot];
+  const streamerProfile = STREAMER_DIRECTORY.filter((streamer) => streamer.line === lineKey)[
+    teamSlot
+  ];
 
   if (!streamerProfile) {
     return {
@@ -81,14 +83,11 @@ function createWsTestStreamer(lineKey: LolLineKey, teamSlot: number): DraftRoomA
   };
 }
 
-// 백엔드 streamers 저장 API는 감독/코치를 coach 필드 하나로 받기 때문에 감독을 우선 저장합니다.
-export function createDraftRoomStreamerTeamSlotsFromBoard({
-  board,
-  teamCount,
-}: {
-  board: BoardState;
-  teamCount: number;
-}): DraftRoomStreamerTeamSlotRequest[] {
+/** 방 생성 후 저장할 라인별 스트리머 배치 요청 목록 생성 */
+export function createDraftRoomStreamerTeamSlotsFromBoard(
+  board: BoardState,
+  teamCount: number,
+): DraftRoomStreamerTeamSlotRequest[] {
   return Array.from({ length: teamCount }, (_, teamSlot) => {
     const coachStreamerId = board.headCoach[teamSlot] ?? board.coach[teamSlot];
 
@@ -104,6 +103,7 @@ export function createDraftRoomStreamerTeamSlotsFromBoard({
   });
 }
 
+/** WebSocket 테스트 화면에서 쓸 기본 스트리머 배치 요청 목록 생성 */
 export function createDraftRoomStreamerTeamSlotsForTest(
   teamCount: number,
 ): DraftRoomStreamerTeamSlotRequest[] {

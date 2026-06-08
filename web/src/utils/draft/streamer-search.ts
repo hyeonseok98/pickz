@@ -75,6 +75,7 @@ function matchesOrderedCharacters(source: string, query: string) {
   return false;
 }
 
+/** 스트리머 검색창에서 이름과 초성 검색 일치 여부 확인 */
 export function matchesStreamerSearchQuery(searchTargets: string | string[], query: string) {
   const targets = Array.isArray(searchTargets) ? searchTargets : [searchTargets];
   const normalizedQuery = query.trim().toLowerCase();

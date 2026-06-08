@@ -8,26 +8,23 @@ import { useDraftRoomSettingsStore, useDraftStreamerSetupStore } from "@/stores/
 import type {
   CreateDraftRoomRequest,
   CreateDraftRoomResponse,
+  DraftInviteParticipantItem,
+  DraftInviteRoleSlot,
   JoinDraftRoomResponse,
 } from "@/types/draft";
 import {
+  createDraftInviteLink,
   createDraftRoomStreamerTeamSlotsFromBoard,
+  createDraftRoomCreateRequest,
+  getDraftInviteDisplayNickname,
   getDraftParticipantSession,
+  isJoinDraftRoomResponseValue,
+  mergeDraftInviteParticipantList,
+  parseDraftParticipantEvent,
+  parseDraftStartEvent,
   saveDraftParticipantSession,
 } from "@/utils";
 import { useDraftRoomStomp } from "./use-draft-room-stomp";
-
-interface DraftInviteParticipantItem {
-  id: string;
-  isHost: boolean;
-  nickname: string;
-  status: string;
-}
-
-export interface DraftInviteRoleSlot {
-  id: string;
-  teamNumber: number;
-}
 
 interface UseDraftInviteRoomParams {
   coachEnabled?: boolean;
@@ -66,27 +63,12 @@ interface UseDraftInviteRoomResult {
   handleStartDraft: () => void;
 }
 
-interface DraftParticipantEventPayload {
-  newParticipant?: string;
-  nicknames: string[];
-  totalCount: number;
-}
-
 const draftInviteCodeSessionStorageKeyPrefix = "pickz:draft-invite-session";
 const pendingCreateRoomRequestsByKey = new Map<string, Promise<CreateDraftRoomResponse>>();
 const pendingJoinRoomRequestsByInviteCode = new Map<string, Promise<JoinDraftRoomResponse>>();
 
 function createDraftInviteCodeSessionStorageKey(inviteCode: string) {
   return `${draftInviteCodeSessionStorageKeyPrefix}:${inviteCode}`;
-}
-
-function isJoinDraftRoomResponseValue(value: unknown): value is JoinDraftRoomResponse {
-  return (
-    isRecordValue(value) &&
-    typeof value.isHost === "boolean" &&
-    typeof value.participantToken === "string" &&
-    typeof value.roomId === "number"
-  );
 }
 
 function getStoredJoinRoomResponse(inviteCode: string) {
@@ -161,80 +143,6 @@ function joinDraftRoomOnce(inviteCode: string) {
   return joinRoomRequestPromise;
 }
 
-function createInviteLink({
-  baseUrl,
-  coachEnabled,
-  draftType,
-  headCoachEnabled,
-  inviteCode,
-  teamCount,
-  teamSize,
-}: {
-  baseUrl: string;
-  coachEnabled?: boolean;
-  draftType: "snake" | "auction";
-  headCoachEnabled?: boolean;
-  inviteCode: string;
-  teamCount: string;
-  teamSize: string;
-}) {
-  const searchParams = new URLSearchParams({
-    draftType,
-    mode: "party",
-    teamCount,
-    teamSize,
-  });
-
-  if (headCoachEnabled) {
-    searchParams.set("headCoachEnabled", "true");
-  }
-
-  if (coachEnabled) {
-    searchParams.set("coachEnabled", "true");
-  }
-
-  return `${baseUrl}/join/${inviteCode}?${searchParams.toString()}`;
-}
-
-function createDraftRoomRequest({
-  draftType,
-  mode,
-  roomTitle,
-  teamCount,
-  teamSize,
-  tournamentId,
-}: {
-  draftType: "snake" | "auction";
-  mode: "solo" | "party";
-  roomTitle: string;
-  teamCount: string;
-  teamSize: string;
-  tournamentId: string;
-}): CreateDraftRoomRequest {
-  return {
-    draftMode: draftType === "auction" ? "AUCTION" : "SNAKE",
-    participationType: mode === "party" ? "TOGETHER" : "SOLO",
-    preset: tournamentId,
-    teamCount: Number(teamCount),
-    teamSize: Number(teamSize),
-    title: roomTitle.trim() || "Pickz 드래프트 방",
-  };
-}
-
-function createParticipantItem({
-  id,
-  isHost,
-  nickname,
-  status,
-}: DraftInviteParticipantItem): DraftInviteParticipantItem {
-  return {
-    id,
-    isHost,
-    nickname,
-    status,
-  };
-}
-
 async function saveDraftRoomStreamerPoolWithoutBlockingInvite({
   participantToken,
   roomId,
@@ -253,118 +161,6 @@ async function saveDraftRoomStreamerPoolWithoutBlockingInvite({
       ? error.message
       : "스트리머 풀 저장 API 호출에 실패했습니다.";
   }
-}
-
-function getDisplayNickname(nickname: string | undefined, fallbackLabel: string) {
-  const normalizedNickname = nickname?.trim();
-
-  if (!normalizedNickname || normalizedNickname === "null") {
-    return fallbackLabel;
-  }
-
-  return normalizedNickname;
-}
-
-function isRecordValue(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object";
-}
-
-function parseParticipantEvent(messageBody: string): DraftParticipantEventPayload | null {
-  try {
-    const parsedValue = JSON.parse(messageBody) as unknown;
-
-    if (!isRecordValue(parsedValue)) {
-      return null;
-    }
-
-    const eventPayload = isRecordValue(parsedValue.payload) ? parsedValue.payload : parsedValue;
-    const nicknames = Array.isArray(eventPayload.nicknames)
-      ? eventPayload.nicknames
-          .filter((nickname): nickname is string => typeof nickname === "string")
-          .map((nickname) => nickname.trim())
-          .filter((nickname) => nickname.length > 0 && nickname !== "null")
-      : [];
-    const newParticipant =
-      typeof eventPayload.newParticipant === "string" && eventPayload.newParticipant.trim().length > 0
-        ? eventPayload.newParticipant.trim()
-        : undefined;
-    const totalCount = typeof eventPayload.totalCount === "number" ? eventPayload.totalCount : nicknames.length;
-
-    if (nicknames.length === 0 && totalCount === 0 && !newParticipant) {
-      return null;
-    }
-
-    return {
-      newParticipant,
-      nicknames,
-      totalCount,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function parseStartEvent(messageBody: string): { redirectUrl: string } | null {
-  try {
-    const parsedValue = JSON.parse(messageBody) as unknown;
-
-    if (!isRecordValue(parsedValue) || parsedValue.code !== "SUCCESS" || !isRecordValue(parsedValue.payload)) {
-      return null;
-    }
-
-    return typeof parsedValue.payload.redirectUrl === "string"
-      ? { redirectUrl: parsedValue.payload.redirectUrl }
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-function mergeParticipantList({
-  currentParticipants,
-  eventPayload,
-  fallbackHostName,
-}: {
-  currentParticipants: DraftInviteParticipantItem[];
-  eventPayload: DraftParticipantEventPayload;
-  fallbackHostName: string;
-}) {
-  const nextNicknames =
-    eventPayload.nicknames.length > 0
-      ? eventPayload.nicknames
-      : eventPayload.newParticipant
-        ? [...currentParticipants.map((participant) => participant.nickname), eventPayload.newParticipant]
-        : currentParticipants.map((participant) => participant.nickname);
-  const normalizedTotalCount = Math.max(eventPayload.totalCount, nextNicknames.length, 1);
-  const paddedNicknames = Array.from({ length: normalizedTotalCount }, (_, index) => {
-    const existingNickname = nextNicknames[index];
-
-    if (existingNickname) {
-      return existingNickname;
-    }
-
-    if (index === 0) {
-      return fallbackHostName;
-    }
-
-    return `참가자 ${index}`;
-  });
-
-  return paddedNicknames.map((nickname, index) => {
-    const matchedParticipant = currentParticipants.find((participant) => participant.nickname === nickname);
-
-    return createParticipantItem({
-      id: matchedParticipant?.id ?? `${index}-${nickname}`,
-      isHost: matchedParticipant?.isHost ?? index === 0,
-      nickname,
-      status:
-        nickname === fallbackHostName && index === 0
-          ? "방장"
-          : matchedParticipant
-            ? matchedParticipant.status
-            : "새로 입장",
-    });
-  });
 }
 
 export function useDraftInviteRoom({
@@ -401,7 +197,7 @@ export function useDraftInviteRoom({
   const createRoomMutation = useMutation({
     mutationFn: async () => {
       const createdDraftRoom = await createDraftRoomOnce(
-        createDraftRoomRequest({
+        createDraftRoomCreateRequest({
           draftType,
           mode,
           roomTitle,
@@ -445,12 +241,12 @@ export function useDraftInviteRoom({
       setParticipantToken(response.participantToken);
       setRoomId(response.roomId);
       setParticipants([
-        createParticipantItem({
+        {
           id: response.participantToken,
           isHost: true,
-          nickname: getDisplayNickname(response.nickname, "방장"),
+          nickname: getDraftInviteDisplayNickname(response.nickname, "방장"),
           status: "입장 완료",
-        }),
+        },
       ]);
       setBootstrapStatus("ready");
       setInfoMessage(
@@ -491,12 +287,12 @@ export function useDraftInviteRoom({
       setParticipantToken(response.participantToken);
       setRoomId(response.roomId);
       setParticipants([
-        createParticipantItem({
+        {
           id: response.participantToken,
           isHost: false,
-          nickname: getDisplayNickname(response.nickname, "참가자"),
+          nickname: getDraftInviteDisplayNickname(response.nickname, "참가자"),
           status: "입장 완료",
-        }),
+        },
       ]);
       setBootstrapStatus("ready");
       setInfoMessage("대기실에 입장했습니다. 방장이 시작할 때까지 기다려 주세요.");
@@ -549,7 +345,7 @@ export function useDraftInviteRoom({
   }, [createRoom, initialInviteCode, joinRoom, mode]);
 
   const handleParticipantRoomMessage = (messageBody: string) => {
-    const participantEvent = parseParticipantEvent(messageBody);
+    const participantEvent = parseDraftParticipantEvent(messageBody);
 
     if (!participantEvent) {
       return;
@@ -557,9 +353,11 @@ export function useDraftInviteRoom({
 
     setParticipants((currentParticipants) => {
       const session = roomId ? getDraftParticipantSession(roomId) : null;
-      const fallbackHostName = session?.isHost ? getDisplayNickname(session.nickname, "방장") : "방장";
+      const fallbackHostName = session?.isHost
+        ? getDraftInviteDisplayNickname(session.nickname, "방장")
+        : "방장";
 
-      return mergeParticipantList({
+      return mergeDraftInviteParticipantList({
         currentParticipants,
         eventPayload: participantEvent,
         fallbackHostName,
@@ -581,7 +379,7 @@ export function useDraftInviteRoom({
       setErrorMessage(message);
     },
     onRoomMessage: (messageBody) => {
-      const startEvent = parseStartEvent(messageBody);
+      const startEvent = parseDraftStartEvent(messageBody);
 
       if (startEvent) {
         router.push(startEvent.redirectUrl);
@@ -606,7 +404,7 @@ export function useDraftInviteRoom({
         return "";
       }
 
-      return createInviteLink({
+      return createDraftInviteLink({
         baseUrl: window.location.origin,
         coachEnabled,
         draftType,

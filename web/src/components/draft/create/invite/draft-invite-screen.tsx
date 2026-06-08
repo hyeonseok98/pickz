@@ -2,16 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/utils";
-import type { DraftInviteRoleSlot } from "@/hooks/draft/use-draft-invite-room";
+import type { DraftInviteParticipantItem, DraftInviteRoleSlot } from "@/types/draft";
 import { DraftInviteLinkCard } from "./draft-invite-link-card";
 import { DraftInviteParticipantList } from "./draft-invite-participant-list";
-
-interface DraftInviteParticipantItem {
-  id: string;
-  isHost: boolean;
-  nickname: string;
-  status: string;
-}
 
 interface DraftInviteScreenProps {
   backHref: string;

@@ -13,6 +13,11 @@ export type {
   MoveDraftParticipantParams,
 } from "./draft-create";
 export type {
+  DraftInviteParticipantItem,
+  DraftInviteRoleSlot,
+  DraftParticipantEventPayload,
+} from "./draft-invite-room";
+export type {
   CreateDraftRoomRequest,
   CreateDraftRoomResponse,
   DraftRoomApiDraftMode,

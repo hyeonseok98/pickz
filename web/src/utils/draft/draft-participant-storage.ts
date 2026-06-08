@@ -7,7 +7,7 @@ function createDraftParticipantStorageKey(roomId: number) {
 }
 
 function getSessionStorage() {
-  // sessionStorage는 브라우저에서만 접근 가능함.
+  // 브라우저에서만 sessionStorage 접근 가능
   if (typeof window === "undefined") {
     return null;
   }
@@ -36,6 +36,7 @@ function isDraftParticipantSession(value: unknown): value is DraftParticipantSes
   );
 }
 
+/** 대기실 새로고침 재접속을 위한 참가자 세션 저장 */
 export function saveDraftParticipantSession(session: DraftParticipantSession) {
   const storage = getSessionStorage();
 
@@ -46,6 +47,7 @@ export function saveDraftParticipantSession(session: DraftParticipantSession) {
   storage.setItem(createDraftParticipantStorageKey(session.roomId), JSON.stringify(session));
 }
 
+/** 대기실 새로고침 시 저장된 참가자 세션 조회 */
 export function getDraftParticipantSession(roomId: number) {
   const storage = getSessionStorage();
 
@@ -68,6 +70,7 @@ export function getDraftParticipantSession(roomId: number) {
   }
 }
 
+/** 대기실을 나갈 때 저장된 참가자 세션 삭제 */
 export function removeDraftParticipantSession(roomId: number) {
   const storage = getSessionStorage();
 

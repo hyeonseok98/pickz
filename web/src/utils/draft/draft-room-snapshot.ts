@@ -64,10 +64,12 @@ function isDraftRoomSnapshot(value: unknown): value is DraftRoomSnapshot {
   );
 }
 
+/** 게임룸에서 되돌아올 때 쓸 드래프트 방 상태를 문자열로 변환 */
 export function serializeDraftRoomSnapshot(snapshot: DraftRoomSnapshot) {
   return JSON.stringify(snapshot);
 }
 
+/** URL에 담긴 드래프트 방 상태 문자열을 화면 상태로 복원 */
 export function parseDraftRoomSnapshot(encodedSnapshot: string | null): DraftRoomSnapshot | null {
   if (!encodedSnapshot) {
     return null;

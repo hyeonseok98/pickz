@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { DraftInviteScreen } from "@/components/draft/create/invite";
 import { useDraftInviteRoom } from "@/hooks/draft";
 import type { DraftType, ParticipationMode, TeamCount, TeamSize } from "@/types/draft";
+import { parseDraftInviteRoleOrder } from "@/utils";
 
 function sanitizeDraftType(value: string | null): DraftType {
   return value === "auction" ? "auction" : "snake";
@@ -35,10 +36,16 @@ function DraftInvitePage() {
   const teamSize = sanitizeTeamSize(searchParams.get("teamSize") ?? searchParams.get("membersPerTeam"));
   const headCoachEnabled = sanitizeBooleanFlag(searchParams.get("headCoachEnabled"));
   const coachEnabled = sanitizeBooleanFlag(searchParams.get("coachEnabled"));
+  const roleOrderValue = searchParams.get("roleOrder");
+  const initialRoleOrderNames = useMemo(
+    () => parseDraftInviteRoleOrder(roleOrderValue),
+    [roleOrderValue],
+  );
   const inviteRoom = useDraftInviteRoom({
     coachEnabled,
     draftType,
     headCoachEnabled,
+    initialRoleOrderNames,
     inviteCode,
     mode,
     teamCount,
@@ -57,7 +64,9 @@ function DraftInvitePage() {
       isHost={inviteRoom.isHost}
       isInitializing={inviteRoom.isInitializing}
       isPartyMode={inviteRoom.isPartyMode}
+      isRoleOrderLocked={inviteRoom.isRoleOrderLocked}
       isStarting={inviteRoom.isStarting}
+      nicknameLabel={inviteRoom.nicknameLabel}
       participantRosterCount={inviteRoom.participantRosterCount}
       participantCountLabel={inviteRoom.participantCountLabel}
       participants={inviteRoom.participants}
@@ -66,6 +75,7 @@ function DraftInvitePage() {
       roleSlots={inviteRoom.roleSlots}
       teamCountValue={inviteRoom.teamCountValue}
       tournamentLabel={inviteRoom.tournamentLabel}
+      onCompleteRoleOrder={inviteRoom.handleCompleteRoleOrder}
       onCopyInviteLink={inviteRoom.handleCopyInviteLink}
       onMoveRoleSlot={inviteRoom.handleMoveRoleSlot}
       onSelectRoleSlot={inviteRoom.handleSelectRoleSlot}

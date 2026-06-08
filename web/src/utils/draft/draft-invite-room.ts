@@ -1,6 +1,7 @@
 import type {
   CreateDraftRoomRequest,
   DraftInviteParticipantItem,
+  DraftInviteRoleSlot,
   DraftParticipantEventPayload,
   DraftType,
   JoinDraftRoomResponse,
@@ -13,6 +14,7 @@ interface CreateDraftInviteLinkParams {
   draftType: DraftType;
   headCoachEnabled?: boolean;
   inviteCode: string;
+  roleSlots?: DraftInviteRoleSlot[];
   teamCount: string;
   teamSize: string;
 }
@@ -58,6 +60,33 @@ function createDraftRoomApiTeamSize(teamSize: string) {
   return Math.min(Number(teamSize), 5);
 }
 
+/** 고정된 감독 순서를 링크 query 문자열로 직렬화 */
+export function serializeDraftInviteRoleOrder(roleSlots: DraftInviteRoleSlot[]) {
+  return JSON.stringify(roleSlots.map((roleSlot) => roleSlot.coachName));
+}
+
+/** 초대 링크 query의 감독 순서 문자열을 이름 목록으로 복원 */
+export function parseDraftInviteRoleOrder(value: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsedValue = JSON.parse(value) as unknown;
+
+    if (!Array.isArray(parsedValue)) {
+      return [];
+    }
+
+    return parsedValue.filter(
+      (roleName): roleName is string =>
+        typeof roleName === "string" && roleName.trim().length > 0,
+    );
+  } catch {
+    return [];
+  }
+}
+
 /** 초대 코드와 방 설정으로 참가자가 열 수 있는 공유 링크 생성 */
 export function createDraftInviteLink({
   baseUrl,
@@ -65,6 +94,7 @@ export function createDraftInviteLink({
   draftType,
   headCoachEnabled,
   inviteCode,
+  roleSlots,
   teamCount,
   teamSize,
 }: CreateDraftInviteLinkParams) {
@@ -81,6 +111,10 @@ export function createDraftInviteLink({
 
   if (coachEnabled) {
     searchParams.set("coachEnabled", "true");
+  }
+
+  if (roleSlots && roleSlots.length > 0) {
+    searchParams.set("roleOrder", serializeDraftInviteRoleOrder(roleSlots));
   }
 
   return `${baseUrl}/join/${inviteCode}?${searchParams.toString()}`;

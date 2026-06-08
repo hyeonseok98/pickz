@@ -26,10 +26,12 @@ export {
   getDraftInviteDisplayNickname,
   isJoinDraftRoomResponseValue,
   mergeDraftInviteParticipantList,
+  parseDraftInviteRoleOrder,
   parseDraftParticipantEvent,
   parseDraftStartEvent,
 } from "./draft-invite-room";
 export {
+  createDraftInviteRoleSlotsFromCoachNames,
   createDraftInviteRoleSlotsFromBoard,
   createDraftRoomStreamerTeamSlotsForTest,
   createDraftRoomStreamerTeamSlotsFromBoard,

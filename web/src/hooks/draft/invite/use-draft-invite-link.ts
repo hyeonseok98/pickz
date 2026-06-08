@@ -1,7 +1,9 @@
 "use client";
 
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
-import type { DraftType } from "@/types/draft";
+import type { DraftInviteRoleSlot, DraftType } from "@/types/draft";
 import { createDraftInviteLink } from "@/utils/draft/draft-invite-room";
 
 interface UseDraftInviteLinkParams {
@@ -9,6 +11,7 @@ interface UseDraftInviteLinkParams {
   draftType: DraftType;
   headCoachEnabled?: boolean;
   inviteCode?: string;
+  roleSlots?: DraftInviteRoleSlot[];
   teamCount: string;
   teamSize: string;
 }
@@ -35,6 +38,7 @@ export function useDraftInviteLink({
   draftType,
   headCoachEnabled,
   inviteCode,
+  roleSlots,
   teamCount,
   teamSize,
 }: UseDraftInviteLinkParams) {
@@ -51,6 +55,7 @@ export function useDraftInviteLink({
       draftType,
       headCoachEnabled,
       inviteCode,
+      roleSlots,
       teamCount,
       teamSize,
     });
@@ -60,6 +65,7 @@ export function useDraftInviteLink({
     draftType,
     headCoachEnabled,
     inviteCode,
+    roleSlots,
     teamCount,
     teamSize,
   ]);

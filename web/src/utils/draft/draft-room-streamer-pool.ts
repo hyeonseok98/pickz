@@ -132,6 +132,18 @@ export function createDraftInviteRoleSlotsFromBoard(
   });
 }
 
+/** 고정된 감독 순서 이름 목록으로 참가자 초대 역할 슬롯 생성 */
+export function createDraftInviteRoleSlotsFromCoachNames(
+  coachNames: string[],
+): DraftInviteRoleSlot[] {
+  return coachNames.map((coachName, index) => ({
+    coachImageUrl: null,
+    coachName,
+    id: `locked-role-slot-${index + 1}`,
+    teamNumber: index + 1,
+  }));
+}
+
 /** 방 생성 후 저장할 라인별 스트리머 배치 요청 목록 생성 */
 export function createDraftRoomStreamerTeamSlotsFromBoard(
   board: BoardState,

@@ -83,7 +83,7 @@ export function DraftInviteParticipantList({
 
           return (
             <div
-              key={participant?.id ?? `empty-${index}`}
+              key={`waiting-room-row-${roleSlot.id}-${index}`}
               className="grid grid-cols-[80px_200px_minmax(0,1fr)_140px] items-center border-t border-border px-4 py-2.5"
             >
               <div className="flex justify-center">

@@ -22,7 +22,9 @@ interface DraftInviteScreenProps {
   isHost: boolean;
   isInitializing: boolean;
   isPartyMode: boolean;
+  isRoleOrderLocked: boolean;
   isStarting: boolean;
+  nicknameLabel: string;
   participantCountLabel: string;
   participantRosterCount: number;
   participants: DraftInviteParticipantItem[];
@@ -31,6 +33,7 @@ interface DraftInviteScreenProps {
   roleSlots: DraftInviteRoleSlot[];
   teamCountValue: number;
   tournamentLabel: string;
+  onCompleteRoleOrder: () => void;
   onCopyInviteLink: () => void;
   onMoveRoleSlot: (fromIndex: number, toIndex: number) => void;
   onSelectRoleSlot: (roleSlot: DraftInviteRoleSlot, roleIndex: number) => void;
@@ -58,8 +61,11 @@ interface InviteInfoBannerProps {
 }
 
 interface InviteRoleSelectionProps {
+  isHost: boolean;
+  isRoleOrderLocked: boolean;
   participantRosterCount: number;
   roleSlots: InviteRoleSlot[];
+  onCompleteRoleOrder: () => void;
   onMoveRoleSlot: (fromIndex: number, toIndex: number) => void;
   onSelectRoleSlot: (roleSlot: DraftInviteRoleSlot, roleIndex: number) => void;
 }
@@ -169,8 +175,11 @@ function InviteInfoBanner({
 }
 
 function InviteRoleSelection({
+  isHost,
+  isRoleOrderLocked,
   participantRosterCount,
   roleSlots,
+  onCompleteRoleOrder,
   onMoveRoleSlot,
   onSelectRoleSlot,
 }: InviteRoleSelectionProps) {
@@ -187,23 +196,46 @@ function InviteRoleSelection({
             </span>
           </div>
           <p className="mt-1 text-xs leading-5 text-text-secondary">
-            드래그하여 순서를 변경할 수 있습니다.
+            {isRoleOrderLocked
+              ? "픽 순서가 고정되었습니다. 참가자는 이 순서 기준으로 감독을 선택합니다."
+              : "방장이 드래그로 픽 순서를 정한 뒤 고정해야 참가자를 초대할 수 있습니다."}
           </p>
         </div>
-        <p className="text-xs font-semibold text-text-secondary">팀당 1명씩 선택됩니다.</p>
+        <div className="flex flex-col items-end gap-2">
+          <p className="text-xs font-semibold text-text-secondary">팀당 1명씩 선택됩니다.</p>
+          {isHost && !isRoleOrderLocked ? (
+            <button
+              type="button"
+              onClick={onCompleteRoleOrder}
+              className="inline-flex h-9 cursor-pointer items-center rounded-xl bg-violet-600 px-4 text-xs font-bold text-white"
+            >
+              픽 순서 배치 완료
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {roleSlots.map((slot, index) => (
           <div key={slot.roleSlot.id} className="relative min-w-0">
             <article
-              draggable
-              onDragStart={() => setDraggingIndex(index)}
+              draggable={isHost && !isRoleOrderLocked}
+              onDragStart={() => {
+                if (!isHost || isRoleOrderLocked) {
+                  return;
+                }
+
+                setDraggingIndex(index);
+              }}
               onDragOver={(event) => {
+                if (!isHost || isRoleOrderLocked) {
+                  return;
+                }
+
                 event.preventDefault();
               }}
               onDrop={() => {
-                if (draggingIndex === null) {
+                if (!isHost || isRoleOrderLocked || draggingIndex === null) {
                   return;
                 }
 
@@ -213,6 +245,7 @@ function InviteRoleSelection({
               onDragEnd={() => setDraggingIndex(null)}
               className={cn(
                 "group min-h-[158px] cursor-grab rounded-2xl border p-3 text-center shadow-sm transition-all hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md active:cursor-grabbing",
+                !isHost || isRoleOrderLocked ? "cursor-default" : "",
                 slot.participant
                   ? "border-violet-200 bg-violet-50/50"
                   : "border-border bg-surface",
@@ -253,8 +286,10 @@ function InviteRoleSelection({
                 onClick={() => {
                   onSelectRoleSlot(slot.roleSlot, index);
                 }}
+                disabled={!isRoleOrderLocked}
                 className={cn(
                   "mt-3 inline-flex h-8 w-full cursor-pointer items-center justify-center rounded-xl border text-sm font-bold transition-colors",
+                  !isRoleOrderLocked ? "cursor-not-allowed border-border bg-surface-muted text-text-muted" : "",
                   slot.participant
                     ? "border-border bg-surface-muted text-text-secondary"
                     : "border-violet-300 bg-surface text-violet-700",
@@ -341,7 +376,9 @@ export function DraftInviteScreen({
   isHost,
   isInitializing,
   isPartyMode,
+  isRoleOrderLocked,
   isStarting,
+  nicknameLabel,
   participantCountLabel,
   participantRosterCount,
   participants,
@@ -350,6 +387,7 @@ export function DraftInviteScreen({
   roleSlots,
   teamCountValue,
   tournamentLabel,
+  onCompleteRoleOrder,
   onCopyInviteLink,
   onMoveRoleSlot,
   onSelectRoleSlot,
@@ -419,17 +457,23 @@ export function DraftInviteScreen({
           isInitializing={isInitializing}
         />
 
-        <div className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <InviteRoleSelection
+            isHost={isHost}
+            isRoleOrderLocked={isRoleOrderLocked}
+            participantRosterCount={participantRosterCount}
+            roleSlots={inviteRoleSlots}
+            onCompleteRoleOrder={onCompleteRoleOrder}
+            onMoveRoleSlot={onMoveRoleSlot}
+            onSelectRoleSlot={onSelectRoleSlot}
+          />
           <DraftInviteLinkCard
             inviteLink={inviteLink}
             isHost={isHost}
+            isRoleOrderLocked={isRoleOrderLocked}
+            nicknameLabel={nicknameLabel}
+            onCompleteRoleOrder={onCompleteRoleOrder}
             onCopyInviteLink={onCopyInviteLink}
-          />
-          <InviteRoleSelection
-            participantRosterCount={participantRosterCount}
-            roleSlots={inviteRoleSlots}
-            onMoveRoleSlot={onMoveRoleSlot}
-            onSelectRoleSlot={onSelectRoleSlot}
           />
         </div>
 

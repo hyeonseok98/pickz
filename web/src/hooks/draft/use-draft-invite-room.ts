@@ -12,9 +12,10 @@ import type {
   DraftInviteRoleSlot,
 } from "@/types/draft";
 import {
+  createDraftInviteRoleSlotsFromCoachNames,
   createDraftRoomWithPendingRequestCache,
-  createDraftInviteRoleSlotsFromBoard,
   createDraftRoomStreamerTeamSlotsFromBoard,
+  createDraftInviteRoleSlotsFromBoard,
   createDraftRoomCreateRequest,
   getDraftInviteDisplayNickname,
   getDraftParticipantSession,
@@ -31,6 +32,7 @@ interface UseDraftInviteRoomParams {
   coachEnabled?: boolean;
   draftType: "snake" | "auction";
   headCoachEnabled?: boolean;
+  initialRoleOrderNames?: string[];
   inviteCode?: string;
   mode: "solo" | "party";
   teamCount: string;
@@ -49,7 +51,9 @@ interface UseDraftInviteRoomResult {
   isHost: boolean;
   isInitializing: boolean;
   isPartyMode: boolean;
+  isRoleOrderLocked: boolean;
   isStarting: boolean;
+  nicknameLabel: string;
   participantRosterCount: number;
   participantCountLabel: string;
   participants: DraftInviteParticipantItem[];
@@ -59,6 +63,7 @@ interface UseDraftInviteRoomResult {
   roomId: number | null;
   teamCountValue: number;
   tournamentLabel: string;
+  handleCompleteRoleOrder: () => void;
   handleCopyInviteLink: () => Promise<void>;
   handleMoveRoleSlot: (fromIndex: number, toIndex: number) => void;
   handleSelectRoleSlot: (roleSlot: DraftInviteRoleSlot, roleIndex: number) => void;
@@ -115,6 +120,7 @@ export function useDraftInviteRoom({
   coachEnabled,
   draftType,
   headCoachEnabled,
+  initialRoleOrderNames,
   inviteCode: initialInviteCode,
   mode,
   teamCount: teamCountFromQuery,
@@ -134,16 +140,16 @@ export function useDraftInviteRoom({
   const [inviteRoomStatus, setInviteRoomStatus] = useState<DraftInviteRoomStatus>("idle");
   const [inviteRoomErrorSource, setInviteRoomErrorSource] =
     useState<DraftInviteRoomErrorSource>(null);
-  const initialRoleSlots = useMemo(
-    () => createDraftInviteRoleSlotsFromBoard(board, teamCountValue),
-    [board, teamCountValue],
-  );
-  const [roleSlots, setRoleSlots] = useState<DraftInviteRoleSlot[]>(initialRoleSlots);
-  const hasInitializedInviteRoomRef = useRef(false);
+  const initialRoleSlots = useMemo(() => {
+    if (initialRoleOrderNames && initialRoleOrderNames.length > 0) {
+      return createDraftInviteRoleSlotsFromCoachNames(initialRoleOrderNames);
+    }
 
-  useEffect(() => {
-    setRoleSlots(initialRoleSlots);
-  }, [initialRoleSlots]);
+    return createDraftInviteRoleSlotsFromBoard(board, teamCountValue);
+  }, [board, initialRoleOrderNames, teamCountValue]);
+  const [roleSlots, setRoleSlots] = useState<DraftInviteRoleSlot[]>(initialRoleSlots);
+  const [isRoleOrderLocked, setIsRoleOrderLocked] = useState(Boolean(initialInviteCode));
+  const hasInitializedInviteRoomRef = useRef(false);
 
   const createRoomMutation = useMutation({
     mutationFn: async () => {
@@ -212,6 +218,8 @@ export function useDraftInviteRoom({
       setInfoMessage("초대 링크로 방에 입장하는 중입니다.");
     },
     onSuccess: (response) => {
+      console.info("[draft join response]", response);
+
       saveDraftParticipantSession({
         inviteCode: initialInviteCode,
         isHost: response.isHost,
@@ -394,7 +402,8 @@ export function useDraftInviteRoom({
     coachEnabled,
     draftType,
     headCoachEnabled,
-    inviteCode,
+    inviteCode: isHost && !isRoleOrderLocked ? undefined : inviteCode,
+    roleSlots: isRoleOrderLocked ? roleSlots : undefined,
     teamCount: teamCountFromQuery,
     teamSize: teamSizeFromQuery,
   });
@@ -407,6 +416,9 @@ export function useDraftInviteRoom({
   const primaryActionDisabled = !isHost || isStarting || !isReadyToStart || roomId === null;
   const primaryActionLabel = isHost ? "게임 시작하기" : "방장 시작 대기 중";
   const tournamentLabel = tournamentId === "pickz-invitational" ? "2026 자낳대" : "사용자 설정";
+  const currentParticipant =
+    participants.find((participant) => participant.id === participantToken) ?? null;
+  const nicknameLabel = currentParticipant?.nickname ?? (isHost ? "방장" : "참가자");
   const backSearchParams = new URLSearchParams({
     draftType,
     mode: "party",
@@ -436,7 +448,9 @@ export function useDraftInviteRoom({
     isHost,
     isInitializing,
     isPartyMode,
+    isRoleOrderLocked,
     isStarting,
+    nicknameLabel,
     participantRosterCount: participantIds.length,
     participantCountLabel,
     participants,
@@ -446,8 +460,20 @@ export function useDraftInviteRoom({
     roomId,
     teamCountValue,
     tournamentLabel,
+    handleCompleteRoleOrder: () => {
+      if (!isHost) {
+        return;
+      }
+
+      setIsRoleOrderLocked(true);
+      setInfoMessage("픽 순서를 고정했습니다. 이제 링크를 복사해 참가자를 초대할 수 있습니다.");
+      setErrorMessage("");
+    },
     handleCopyInviteLink: async () => {
       if (!inviteLink) {
+        if (isHost && !isRoleOrderLocked) {
+          setErrorMessage("먼저 픽 순서 배치 완료를 눌러 감독 순서를 고정해 주세요.");
+        }
         return;
       }
 
@@ -463,12 +489,21 @@ export function useDraftInviteRoom({
       startDraftMutation.mutate();
     },
     handleSelectRoleSlot: (roleSlot, roleIndex) => {
+      if (!isRoleOrderLocked) {
+        setErrorMessage("먼저 픽 순서를 고정한 뒤 감독을 선택해 주세요.");
+        return;
+      }
+
       selectCoachMutation.mutate({
         roleIndex,
         roleSlot,
       });
     },
     handleMoveRoleSlot: (fromIndex, toIndex) => {
+      if (isRoleOrderLocked) {
+        return;
+      }
+
       if (fromIndex === toIndex) {
         return;
       }

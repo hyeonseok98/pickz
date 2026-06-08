@@ -14,6 +14,6 @@ public interface DraftPickRepository {
 
     int countDistinctTeamIdByDraftRoomIdAndPosition(Long roomId, Position position);
 
-    List<Long> findTeamIdsByDraftRoomIdAndPosition(Long roomId, Position position);
+    List<Long> findParticipantIdsByDraftRoomIdAndPosition(Long roomId, Position position);
 
 }

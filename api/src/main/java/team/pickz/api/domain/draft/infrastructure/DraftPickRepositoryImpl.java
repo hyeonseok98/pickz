@@ -25,8 +25,8 @@ public class DraftPickRepositoryImpl implements DraftPickRepository {
     }
 
     @Override
-    public List<Long> findTeamIdsByDraftRoomIdAndPosition(Long roomId, Position position) {
-        return List.of();
+    public List<Long> findParticipantIdsByDraftRoomIdAndPosition(Long roomId, Position position) {
+        return draftPickJpaRepository.findParticipantIdsByDraftRoomIdAndPosition(roomId, position);
     }
 
     @Override

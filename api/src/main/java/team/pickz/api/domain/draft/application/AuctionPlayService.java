@@ -210,7 +210,7 @@ public class AuctionPlayService {
 
     private Long getTeamWithoutPosition(Long roomId, Position position) {
         List<Long> allTeamIds = draftParticipantRepository.findParticipantIdsByDraftRoomId(roomId);
-        List<Long> teamIdsWithPosition = draftPickRepository.findTeamIdsByDraftRoomIdAndPosition(roomId, position);
+        List<Long> teamIdsWithPosition = draftPickRepository.findParticipantIdsByDraftRoomIdAndPosition(roomId, position);
 
         return allTeamIds.stream()
                 .filter(teamId -> !teamIdsWithPosition.contains(teamId))

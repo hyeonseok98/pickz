@@ -28,12 +28,22 @@ public class AuctionRoomService {
 
     @Transactional(readOnly = true)
     public void setupAuctionAndStartTimer(Long roomId) {
+        DraftRoom room = draftRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다. roomId: " + roomId));
+
+        if (room.getStatus() != RoomStatus.IN_PROGRESS) {
+            throw new IllegalStateException("경매를 시작할 수 없는 방 상태입니다.");
+        }
 
         // 1. 참가자(팀) 정보 조회
         List<AuctionRoomState.TeamInfo> teamInfos = draftParticipantRepository.findAllByRoomId(roomId)
                 .stream()
                 .map(p -> new AuctionRoomState.TeamInfo(p.getId(), p.getNickname()))
                 .collect(Collectors.toList());
+
+        if (teamInfos.isEmpty()) {
+            throw new IllegalStateException("경매를 시작할 참가자가 없습니다.");
+        }
 
         // 2. 경매 대상 스트리머 정보 조회
         List<DraftStreamer> draftStreamers = draftStreamerRepository.findAllByRoomId(roomId);
@@ -45,6 +55,10 @@ public class AuctionRoomService {
                         s.getPosition()
                 ))
                 .collect(Collectors.toList());
+
+        if (auctionItems.isEmpty()) {
+            throw new IllegalStateException("경매 대상 스트리머가 없습니다.");
+        }
 
         // 3. 인메모리 방 상태 세팅
         auctionSessionManager.createRoomState(roomId, teamInfos, auctionItems);

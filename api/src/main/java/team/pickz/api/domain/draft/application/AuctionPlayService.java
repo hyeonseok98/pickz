@@ -1,5 +1,6 @@
 package team.pickz.api.domain.draft.application;
 
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,19 @@ public class AuctionPlayService {
     private final DraftParticipantRepository draftParticipantRepository;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
     private final Map<Long, ScheduledFuture<?>> roomTaskMap = new ConcurrentHashMap<>();
+
+    @PreDestroy
+    public void destroy() {
+        scheduler.shutdown();
+        try {
+            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                scheduler.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            scheduler.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
 
     public void handleBid(Long roomId, String participantToken, int amount) {
         AuctionRoomState state = sessionManager.getRoomState(roomId);

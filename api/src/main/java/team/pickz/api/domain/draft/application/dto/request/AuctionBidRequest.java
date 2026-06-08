@@ -8,6 +8,6 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuctionBidRequest {
-    private Long teamId;
+    private String participantToken;
     private int amount; // 입찰 포인트 (5의 배수)
 }

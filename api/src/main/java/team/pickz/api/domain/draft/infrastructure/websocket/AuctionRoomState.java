@@ -20,11 +20,12 @@ public class AuctionRoomState {
 
     private final Map<Long, TeamState> teamStates = new ConcurrentHashMap<>();
 
-    private Long currentHighestBidTeamId;
+    private Long currentHighestBidParticipantId;
     private int currentHighestBidAmount = 0;
 
     public AuctionRoomState(Long roomId, List<TeamInfo> teams, List<StreamerAuctionItem> streamers) {
         this.roomId = roomId;
+        this.currentPhase = AuctionPhase.STANDBY;
 
         Collections.shuffle(streamers);
         this.mainQueue = new ConcurrentLinkedDeque<>(streamers);
@@ -33,21 +34,21 @@ public class AuctionRoomState {
     }
 
     // 입찰 시도 (동시성 제어를 위해 synchronized 처리, 실제 환경에선 Redisson 분산락 권장)
-    public synchronized boolean placeBid(Long teamId, int amount) {
+    public synchronized boolean placeBid(Long participantId, int amount) {
         if (this.currentPhase != AuctionPhase.BIDDING) return false;
         if (amount % 5 != 0) return false; // 5단위 검증
         if (amount <= currentHighestBidAmount) return false; // 이전보다 낮거나 같으면 불가
 
-        int availablePoints = teamStates.get(teamId).getRemainingPoints();
+        int availablePoints = teamStates.get(participantId).getRemainingPoints();
         if (amount > availablePoints) return false; // 포인트 부족
 
-        this.currentHighestBidTeamId = teamId;
+        this.currentHighestBidParticipantId = participantId;
         this.currentHighestBidAmount = amount;
         return true;
     }
 
     public void resetBidInfo() {
-        this.currentHighestBidTeamId = null;
+        this.currentHighestBidParticipantId = null;
         this.currentHighestBidAmount = 0;
     }
 

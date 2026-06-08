@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.draft.application.dto.response.AuctionPhaseResponse;
 import team.pickz.api.domain.draft.application.dto.response.AuctionSyncResponse;
 import team.pickz.api.domain.draft.application.dto.response.AuctionResultResponse;
+import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftPick;
 import team.pickz.api.domain.draft.domain.type.AuctionPhase;
 import team.pickz.api.domain.draft.domain.type.Position;
@@ -30,13 +31,16 @@ public class AuctionPlayService {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
     private final Map<Long, ScheduledFuture<?>> roomTaskMap = new ConcurrentHashMap<>();
 
-    public void handleBid(Long roomId, Long teamId, int amount) {
+    public void handleBid(Long roomId, String participantToken, int amount) {
         AuctionRoomState state = sessionManager.getRoomState(roomId);
 
-        if (state.placeBid(teamId, amount)) {
+        DraftParticipant requestor = draftParticipantRepository.findByParticipantToken(participantToken)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 참가자입니다."));
+
+        if (state.placeBid(requestor.getId(), amount)) {
             resetBiddingTimer(roomId, state);
 
-            String teamName = state.getTeamStates().get(teamId).getTeamName();
+            String teamName = state.getTeamStates().get(requestor.getId()).getTeamName();
             String streamerName = state.getMainQueue().peek().getStreamerName();
             String chatMessage = String.format("%s - %s - %d포인트", teamName, streamerName, amount);
 
@@ -56,8 +60,8 @@ public class AuctionPlayService {
 
         List<AuctionResultResponse.AutoAssignResult> autoAssignResults = new ArrayList<>();
 
-        if (state.getCurrentHighestBidTeamId() != null) {
-            Long winningTeamId = state.getCurrentHighestBidTeamId();
+        if (state.getCurrentHighestBidParticipantId() != null) {
+            Long winningTeamId = state.getCurrentHighestBidParticipantId();
             int winningBid = state.getCurrentHighestBidAmount();
 
             AuctionRoomState.TeamState winningTeam = state.getTeamStates().get(winningTeamId);

@@ -37,7 +37,7 @@ public class AuctionSyncResponse {
                 .upcomingStreamers(state.getMainQueue().stream().skip(1).collect(Collectors.toList()))
                 .unbidStreamers(List.copyOf(state.getUnbidQueue()))
                 .teamStates(state.getTeamStates())
-                .currentHighestBidTeamId(state.getCurrentHighestBidTeamId())
+                .currentHighestBidTeamId(state.getCurrentHighestBidParticipantId())
                 .currentHighestBidAmount(state.getCurrentHighestBidAmount())
                 .build();
     }

@@ -36,10 +36,13 @@ public class AuctionRoomState {
     // 입찰 시도 (동시성 제어를 위해 synchronized 처리, 실제 환경에선 Redisson 분산락 권장)
     public synchronized boolean placeBid(Long participantId, int amount) {
         if (this.currentPhase != AuctionPhase.BIDDING) return false;
+        if (amount <= 0) return false;
         if (amount % 5 != 0) return false; // 5단위 검증
         if (amount <= currentHighestBidAmount) return false; // 이전보다 낮거나 같으면 불가
 
-        int availablePoints = teamStates.get(participantId).getRemainingPoints();
+        TeamState teamState = teamStates.get(participantId);
+        if (teamState == null) return false;
+        int availablePoints = teamState.getRemainingPoints();
         if (amount > availablePoints) return false; // 포인트 부족
 
         this.currentHighestBidParticipantId = participantId;

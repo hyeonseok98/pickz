@@ -91,9 +91,6 @@ public class DraftRoomService {
 
         room.start();
 
-        // 기존의 Collections.shuffle(participants)는 삭제합니다.
-        // -> 참가자가 직접 감독을 선택하면서 픽 순서(turnOrder)가 결정되었기 때문입니다.
-
         RoomStatusEvent event = RoomStatusEvent.builder()
                 .code("SUCCESS")
                 .roomStatus(room.getStatus())

@@ -1,5 +1,7 @@
 package team.pickz.api.domain.draft.application.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -8,6 +10,11 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuctionBidRequest {
+
+    @NotBlank
     private String participantToken;
-    private int amount; // 입찰 포인트 (5의 배수)
+
+    @Positive
+    private int amount;
+
 }

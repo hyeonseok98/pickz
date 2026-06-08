@@ -1,5 +1,6 @@
 package team.pickz.api.domain.draft.presentation;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -17,7 +18,7 @@ public class AuctionMessageController {
     @MessageMapping("/drafts/rooms/{roomId}/bid")
     public void handleBid(
             @DestinationVariable("roomId") Long roomId,
-            @Payload AuctionBidRequest request
+            @Payload @Valid AuctionBidRequest request
     ) {
         // 서비스 로직 호출 (유효성 검사 및 최고가 갱신 로직 실행)
         auctionPlayService.handleBid(roomId, request.getParticipantToken(), request.getAmount());

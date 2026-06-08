@@ -10,6 +10,21 @@ export interface DraftInviteRoleSlot {
   teamNumber: number;
 }
 
+export type DraftInviteRoomErrorSource =
+  | "createRoom"
+  | "joinRoom"
+  | "session"
+  | "stomp"
+  | "startDraft"
+  | null;
+
+export type DraftInviteRoomStatus =
+  | "idle"
+  | "creatingRoom"
+  | "joiningRoom"
+  | "ready"
+  | "failed";
+
 export interface DraftParticipantEventPayload {
   newParticipant?: string;
   nicknames: string[];

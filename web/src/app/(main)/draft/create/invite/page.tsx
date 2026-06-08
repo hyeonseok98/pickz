@@ -48,12 +48,12 @@ function DraftInvitePage() {
   return (
     <DraftInviteScreen
       backHref={inviteRoom.backHref}
-      bootstrapErrorSource={inviteRoom.bootstrapErrorSource}
-      bootstrapStatus={inviteRoom.bootstrapStatus}
       connectionStatus={inviteRoom.connectionStatus}
       errorMessage={inviteRoom.errorMessage}
       infoMessage={inviteRoom.infoMessage}
       inviteLink={inviteRoom.inviteLink}
+      inviteRoomErrorSource={inviteRoom.inviteRoomErrorSource}
+      inviteRoomStatus={inviteRoom.inviteRoomStatus}
       isHost={inviteRoom.isHost}
       isInitializing={inviteRoom.isInitializing}
       isPartyMode={inviteRoom.isPartyMode}

@@ -14,6 +14,8 @@ export type {
 } from "./draft-create";
 export type {
   DraftInviteParticipantItem,
+  DraftInviteRoomErrorSource,
+  DraftInviteRoomStatus,
   DraftInviteRoleSlot,
   DraftParticipantEventPayload,
 } from "./draft-invite-room";

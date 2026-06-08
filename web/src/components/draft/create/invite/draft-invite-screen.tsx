@@ -2,18 +2,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/utils";
-import type { DraftInviteParticipantItem, DraftInviteRoleSlot } from "@/types/draft";
+import type {
+  DraftInviteParticipantItem,
+  DraftInviteRoomErrorSource,
+  DraftInviteRoomStatus,
+  DraftInviteRoleSlot,
+} from "@/types/draft";
 import { DraftInviteLinkCard } from "./draft-invite-link-card";
 import { DraftInviteParticipantList } from "./draft-invite-participant-list";
 
 interface DraftInviteScreenProps {
   backHref: string;
-  bootstrapErrorSource: "create_room" | "join_room" | "session" | "stomp" | "start_draft" | null;
-  bootstrapStatus: "idle" | "creating_room" | "joining_room" | "ready" | "bootstrap_error";
   connectionStatus: string;
   errorMessage: string;
   infoMessage: string;
   inviteLink: string;
+  inviteRoomErrorSource: DraftInviteRoomErrorSource;
+  inviteRoomStatus: DraftInviteRoomStatus;
   isHost: boolean;
   isInitializing: boolean;
   isPartyMode: boolean;
@@ -34,6 +39,34 @@ interface DraftInviteScreenProps {
 interface InviteRoleSlot {
   participant: DraftInviteParticipantItem | null;
   teamNumber: number;
+}
+
+interface SummaryCardProps {
+  iconSrc: string;
+  label: string;
+  value: string;
+}
+
+interface InviteInfoBannerProps {
+  connectionStatus: string;
+  errorMessage: string;
+  infoMessage: string;
+  inviteRoomErrorSource: DraftInviteScreenProps["inviteRoomErrorSource"];
+  inviteRoomStatus: DraftInviteScreenProps["inviteRoomStatus"];
+  isInitializing: boolean;
+}
+
+interface InviteRoleSelectionProps {
+  participantRosterCount: number;
+  roleSlots: InviteRoleSlot[];
+  onMoveRoleSlot: (fromIndex: number, toIndex: number) => void;
+}
+
+interface StartSectionProps {
+  isStarting: boolean;
+  primaryActionDisabled: boolean;
+  primaryActionLabel: string;
+  onStartDraft: () => void;
 }
 
 function InviteProgressBar() {
@@ -74,11 +107,7 @@ function SummaryCard({
   iconSrc,
   label,
   value,
-}: {
-  iconSrc: string;
-  label: string;
-  value: string;
-}) {
+}: SummaryCardProps) {
   return (
     <div className="flex items-center gap-4 px-4 py-4">
       <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-violet-50">
@@ -93,40 +122,33 @@ function SummaryCard({
 }
 
 function InviteInfoBanner({
-  bootstrapErrorSource,
-  bootstrapStatus,
   connectionStatus,
   errorMessage,
   infoMessage,
+  inviteRoomErrorSource,
+  inviteRoomStatus,
   isInitializing,
-}: {
-  bootstrapErrorSource: DraftInviteScreenProps["bootstrapErrorSource"];
-  bootstrapStatus: DraftInviteScreenProps["bootstrapStatus"];
-  connectionStatus: string;
-  errorMessage: string;
-  infoMessage: string;
-  isInitializing: boolean;
-}) {
-  const bootstrapStatusMessage = {
-    creating_room: "드래프트 방을 생성하는 중입니다.",
-    joining_room: "초대 링크를 통해 대기실에 입장하는 중입니다.",
+}: InviteInfoBannerProps) {
+  const inviteRoomStatusMessage = {
+    creatingRoom: "드래프트 방을 생성하는 중입니다.",
+    joiningRoom: "초대 링크를 통해 대기실에 입장하는 중입니다.",
     ready: infoMessage || "대기실 연결이 준비되었습니다.",
-    bootstrap_error: errorMessage,
+    failed: errorMessage,
     idle: isInitializing ? "대기실 정보를 준비하는 중입니다." : `현재 연결 상태: ${connectionStatus}`,
-  } satisfies Record<DraftInviteScreenProps["bootstrapStatus"], string>;
+  } satisfies Record<DraftInviteScreenProps["inviteRoomStatus"], string>;
 
   const errorSourceLabel = {
-    create_room: "방 생성 실패",
-    join_room: "방 입장 실패",
+    createRoom: "방 생성 실패",
+    joinRoom: "방 입장 실패",
     session: "세션 준비 실패",
     stomp: "대기실 연결 실패",
-    start_draft: "시작 요청 실패",
-  } satisfies Record<NonNullable<DraftInviteScreenProps["bootstrapErrorSource"]>, string>;
+    startDraft: "시작 요청 실패",
+  } satisfies Record<NonNullable<DraftInviteScreenProps["inviteRoomErrorSource"]>, string>;
 
   const message =
-    errorMessage && bootstrapErrorSource
-      ? `${errorSourceLabel[bootstrapErrorSource]}: ${errorMessage}`
-      : bootstrapStatusMessage[bootstrapStatus];
+    errorMessage && inviteRoomErrorSource
+      ? `${errorSourceLabel[inviteRoomErrorSource]}: ${errorMessage}`
+      : inviteRoomStatusMessage[inviteRoomStatus];
   const isError = Boolean(errorMessage);
 
   return (
@@ -147,11 +169,7 @@ function InviteRoleSelection({
   participantRosterCount,
   roleSlots,
   onMoveRoleSlot,
-}: {
-  participantRosterCount: number;
-  roleSlots: InviteRoleSlot[];
-  onMoveRoleSlot: (fromIndex: number, toIndex: number) => void;
-}) {
+}: InviteRoleSelectionProps) {
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   return (
@@ -256,12 +274,7 @@ function StartSection({
   primaryActionDisabled,
   primaryActionLabel,
   onStartDraft,
-}: {
-  isStarting: boolean;
-  primaryActionDisabled: boolean;
-  primaryActionLabel: string;
-  onStartDraft: () => void;
-}) {
+}: StartSectionProps) {
   return (
     <section className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       <div className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
@@ -300,12 +313,12 @@ function StartSection({
 
 export function DraftInviteScreen({
   backHref,
-  bootstrapErrorSource,
-  bootstrapStatus,
   connectionStatus,
   errorMessage,
   infoMessage,
   inviteLink,
+  inviteRoomErrorSource,
+  inviteRoomStatus,
   isHost,
   isInitializing,
   isPartyMode,
@@ -375,11 +388,11 @@ export function DraftInviteScreen({
         </section>
 
         <InviteInfoBanner
-          bootstrapErrorSource={bootstrapErrorSource}
-          bootstrapStatus={bootstrapStatus}
           connectionStatus={connectionStatus}
           errorMessage={errorMessage}
           infoMessage={infoMessage}
+          inviteRoomErrorSource={inviteRoomErrorSource}
+          inviteRoomStatus={inviteRoomStatus}
           isInitializing={isInitializing}
         />
 

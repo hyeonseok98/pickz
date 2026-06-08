@@ -9,7 +9,7 @@ interface DraftInviteParticipantListProps {
 }
 
 function createRoleLabel(roleSlot: DraftInviteRoleSlot) {
-  return `${roleSlot.teamNumber}팀 감독`;
+  return roleSlot.coachName;
 }
 
 function createStatusLabel(participant: DraftInviteParticipantItem | null) {
@@ -17,11 +17,11 @@ function createStatusLabel(participant: DraftInviteParticipantItem | null) {
     return "대기 중";
   }
 
-  if (participant.status === "선택 완료") {
+  if (participant.isReady || participant.status === "선택 완료") {
     return "선택 완료";
   }
 
-  return participant.isHost ? "선택 완료" : "대기 중";
+  return "대기 중";
 }
 
 export function DraftInviteParticipantList({
@@ -30,6 +30,16 @@ export function DraftInviteParticipantList({
   roleSlots,
 }: DraftInviteParticipantListProps) {
   const rowCount = Math.max(roleSlots.length, participants.length, 1);
+  const participantsWithSelectedRole = participants.filter((participant) =>
+    roleSlots.some(
+      (roleSlot, roleIndex) =>
+        participant.selectedCoachName === roleSlot.coachName ||
+        participant.turnOrder === roleIndex + 1,
+    ),
+  );
+  const participantsWithoutSelectedRole = participants.filter(
+    (participant) => !participantsWithSelectedRole.some((selectedParticipant) => selectedParticipant.id === participant.id),
+  );
 
   return (
     <section id="waiting-room" className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
@@ -46,8 +56,28 @@ export function DraftInviteParticipantList({
         </div>
 
         {Array.from({ length: rowCount }, (_, index) => {
-          const participant = participants[index] ?? null;
-          const roleSlot = roleSlots[index] ?? { id: `empty-${index}`, teamNumber: index + 1 };
+          const roleSlot = roleSlots[index] ?? {
+            coachName: `${index + 1}팀 감독`,
+            id: `empty-${index}`,
+            teamNumber: index + 1,
+          };
+          const participantWithSelectedRole =
+            participants.find((participantItem) => participantItem.selectedCoachName === roleSlot.coachName) ??
+            participants.find((participantItem) => participantItem.turnOrder === index + 1) ??
+            null;
+          const selectedRoleCountBeforeCurrent = roleSlots
+            .slice(0, index)
+            .filter((previousRoleSlot, previousRoleIndex) =>
+              participants.some(
+                (participantItem) =>
+                  participantItem.selectedCoachName === previousRoleSlot.coachName ||
+                  participantItem.turnOrder === previousRoleIndex + 1,
+              ),
+            ).length;
+          const participant =
+            participantWithSelectedRole ??
+            participantsWithoutSelectedRole[index - selectedRoleCountBeforeCurrent] ??
+            null;
           const roleLabel = createRoleLabel(roleSlot);
           const statusLabel = createStatusLabel(participant);
 
@@ -64,7 +94,18 @@ export function DraftInviteParticipantList({
 
               <div className="flex items-center gap-3">
                 <div className="flex size-9 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-muted">
-                  <Image src="/icons/person_outline.svg" alt="" width={18} height={18} aria-hidden className="size-[18px] opacity-70" />
+                  {roleSlot.coachImageUrl ? (
+                    <Image
+                      src={roleSlot.coachImageUrl}
+                      alt=""
+                      width={36}
+                      height={36}
+                      aria-hidden
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <Image src="/icons/person_outline.svg" alt="" width={18} height={18} aria-hidden className="size-[18px] opacity-70" />
+                  )}
                 </div>
                 <p className="text-sm font-bold text-text-primary">{roleLabel}</p>
               </div>

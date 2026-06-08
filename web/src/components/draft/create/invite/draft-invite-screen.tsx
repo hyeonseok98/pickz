@@ -33,12 +33,13 @@ interface DraftInviteScreenProps {
   tournamentLabel: string;
   onCopyInviteLink: () => void;
   onMoveRoleSlot: (fromIndex: number, toIndex: number) => void;
+  onSelectRoleSlot: (roleSlot: DraftInviteRoleSlot, roleIndex: number) => void;
   onStartDraft: () => void;
 }
 
 interface InviteRoleSlot {
   participant: DraftInviteParticipantItem | null;
-  teamNumber: number;
+  roleSlot: DraftInviteRoleSlot;
 }
 
 interface SummaryCardProps {
@@ -60,6 +61,7 @@ interface InviteRoleSelectionProps {
   participantRosterCount: number;
   roleSlots: InviteRoleSlot[];
   onMoveRoleSlot: (fromIndex: number, toIndex: number) => void;
+  onSelectRoleSlot: (roleSlot: DraftInviteRoleSlot, roleIndex: number) => void;
 }
 
 interface StartSectionProps {
@@ -140,6 +142,7 @@ function InviteInfoBanner({
   const errorSourceLabel = {
     createRoom: "방 생성 실패",
     joinRoom: "방 입장 실패",
+    selectCoach: "감독 선택 실패",
     session: "세션 준비 실패",
     stomp: "대기실 연결 실패",
     startDraft: "시작 요청 실패",
@@ -169,6 +172,7 @@ function InviteRoleSelection({
   participantRosterCount,
   roleSlots,
   onMoveRoleSlot,
+  onSelectRoleSlot,
 }: InviteRoleSelectionProps) {
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
@@ -191,7 +195,7 @@ function InviteRoleSelection({
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {roleSlots.map((slot, index) => (
-          <div key={slot.teamNumber} className="relative min-w-0">
+          <div key={slot.roleSlot.id} className="relative min-w-0">
             <article
               draggable
               onDragStart={() => setDraggingIndex(index)}
@@ -224,16 +228,31 @@ function InviteRoleSelection({
                 className="mx-auto size-4 opacity-60 transition-opacity group-hover:opacity-100"
               />
               <div className="mx-auto mt-2 flex size-12 items-center justify-center overflow-hidden rounded-full border border-border bg-surface">
-                {slot.participant ? (
+                {slot.roleSlot.coachImageUrl ? (
+                  <Image
+                    src={slot.roleSlot.coachImageUrl}
+                    alt=""
+                    width={48}
+                    height={48}
+                    aria-hidden
+                    className="size-full object-cover"
+                  />
+                ) : slot.participant ? (
                   <span className="text-[11px] font-bold text-violet-700">{slot.participant.nickname.slice(0, 2)}</span>
                 ) : (
                   <Image src="/icons/person_outline.svg" alt="" width={24} height={24} aria-hidden className="size-6 opacity-70" />
                 )}
               </div>
               <p className="mt-2 text-xs font-semibold text-text-secondary">픽 순서 {index + 1}</p>
-              <p className="mt-1 truncate text-base font-bold tracking-[-0.03em] text-text-primary">{slot.teamNumber}팀 감독</p>
+              <p className="mt-1 truncate text-base font-bold tracking-[-0.03em] text-text-primary">{slot.roleSlot.coachName}</p>
+              {slot.participant ? (
+                <p className="mt-1 truncate text-xs font-semibold text-violet-700">{slot.participant.nickname}</p>
+              ) : null}
               <button
                 type="button"
+                onClick={() => {
+                  onSelectRoleSlot(slot.roleSlot, index);
+                }}
                 className={cn(
                   "mt-3 inline-flex h-8 w-full cursor-pointer items-center justify-center rounded-xl border text-sm font-bold transition-colors",
                   slot.participant
@@ -333,6 +352,7 @@ export function DraftInviteScreen({
   tournamentLabel,
   onCopyInviteLink,
   onMoveRoleSlot,
+  onSelectRoleSlot,
   onStartDraft,
 }: DraftInviteScreenProps) {
   if (!isPartyMode) {
@@ -349,8 +369,11 @@ export function DraftInviteScreen({
   }
 
   const inviteRoleSlots: InviteRoleSlot[] = roleSlots.map((roleSlot, index) => ({
-    participant: participants[index] ?? null,
-    teamNumber: roleSlot.teamNumber,
+    participant:
+      participants.find((participant) => participant.selectedCoachName === roleSlot.coachName) ??
+      participants.find((participant) => participant.turnOrder === index + 1) ??
+      null,
+    roleSlot,
   }));
 
   return (
@@ -406,6 +429,7 @@ export function DraftInviteScreen({
             participantRosterCount={participantRosterCount}
             roleSlots={inviteRoleSlots}
             onMoveRoleSlot={onMoveRoleSlot}
+            onSelectRoleSlot={onSelectRoleSlot}
           />
         </div>
 

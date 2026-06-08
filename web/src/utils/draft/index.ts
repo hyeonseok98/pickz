@@ -30,6 +30,7 @@ export {
   parseDraftStartEvent,
 } from "./draft-invite-room";
 export {
+  createDraftInviteRoleSlotsFromBoard,
   createDraftRoomStreamerTeamSlotsForTest,
   createDraftRoomStreamerTeamSlotsFromBoard,
 } from "./draft-room-streamer-pool";

@@ -2137,11 +2137,11 @@ function resolveStreamerLine(streamerName: string, index: number) {
   return streamerLineOverrides[streamerName] ?? getMockStreamerLine(index);
 }
 
-const fallbackAvatarDataUrl = createAvatarDataUrl("#f0edf5");
+export const defaultStreamerAvatarDataUrl = createAvatarDataUrl("#f0edf5");
 
 export const STREAMER_DIRECTORY = streamerInfoMocks
   .map<StreamerDirectoryItem>((streamerInfo, index) => ({
-    avatarDataUrl: streamerInfo.profileImageUrl ?? fallbackAvatarDataUrl,
+    avatarDataUrl: streamerInfo.profileImageUrl ?? defaultStreamerAvatarDataUrl,
     channelId: streamerInfo.channelId,
     channelName: streamerInfo.channelName,
     id: streamerInfo.id,

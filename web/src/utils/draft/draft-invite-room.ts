@@ -54,6 +54,10 @@ interface MergeDraftInviteParticipantListParams {
   fallbackHostName: string;
 }
 
+function createDraftRoomApiTeamSize(teamSize: string) {
+  return Math.min(Number(teamSize), 5);
+}
+
 /** 초대 코드와 방 설정으로 참가자가 열 수 있는 공유 링크 생성 */
 export function createDraftInviteLink({
   baseUrl,
@@ -96,7 +100,7 @@ export function createDraftRoomCreateRequest({
     participationType: mode === "party" ? "TOGETHER" : "SOLO",
     preset: tournamentId,
     teamCount: Number(teamCount),
-    teamSize: Number(teamSize),
+    teamSize: createDraftRoomApiTeamSize(teamSize),
     title: roomTitle.trim() || "Pickz 드래프트 방",
   };
 }
@@ -153,6 +157,76 @@ function readNewParticipantNickname(eventPayload: Record<string, unknown>) {
   return normalizeParticipantNickname(eventPayload.newParticipant) ?? undefined;
 }
 
+function readParticipantReady(value: Record<string, unknown>) {
+  return typeof value.isReady === "boolean" ? value.isReady : undefined;
+}
+
+function readParticipantTurnOrder(value: Record<string, unknown>) {
+  return typeof value.turnOrder === "number" ? value.turnOrder : undefined;
+}
+
+function readParticipantSelectedCoachName(value: Record<string, unknown>) {
+  return normalizeParticipantNickname(value.selectedCoachName) ?? undefined;
+}
+
+function createFallbackParticipantNickname(
+  value: Record<string, unknown>,
+  participantIndex: number,
+) {
+  const isHost = typeof value.isHost === "boolean" ? value.isHost : participantIndex === 0;
+
+  if (isHost) {
+    return "방장";
+  }
+
+  return `참가자 ${participantIndex}`;
+}
+
+function createParticipantItemFromRecord(
+  value: Record<string, unknown>,
+  participantIndex: number,
+): DraftInviteParticipantItem | null {
+  const participantId =
+    typeof value.participantToken === "string"
+      ? value.participantToken
+      : typeof value.id === "number"
+        ? String(value.id)
+        : null;
+
+  if (!participantId) {
+    return null;
+  }
+
+  const nickname =
+    normalizeParticipantNickname(value.nickname ?? value.nickName) ??
+    createFallbackParticipantNickname(value, participantIndex);
+  const isReady = readParticipantReady(value);
+
+  return {
+    id: participantId,
+    isHost: typeof value.isHost === "boolean" ? value.isHost : participantIndex === 0,
+    isReady,
+    nickname,
+    selectedCoachName: readParticipantSelectedCoachName(value),
+    status: isReady ? "선택 완료" : "입장 완료",
+    turnOrder: readParticipantTurnOrder(value),
+  };
+}
+
+function readParticipantItems(eventPayload: Record<string, unknown>) {
+  if (Array.isArray(eventPayload.participants)) {
+    return eventPayload.participants
+      .map((value, index) =>
+        isRecordValue(value) ? createParticipantItemFromRecord(value, index) : null,
+      )
+      .filter((participant): participant is DraftInviteParticipantItem => Boolean(participant));
+  }
+
+  const participant = createParticipantItemFromRecord(eventPayload, 0);
+
+  return participant ? [participant] : [];
+}
+
 function readParticipantTotalCount(
   eventPayload: Record<string, unknown>,
   fallbackCount: number,
@@ -163,9 +237,10 @@ function readParticipantTotalCount(
 function hasParticipantEventContent({
   newParticipant,
   nicknames,
+  participants,
   totalCount,
 }: DraftParticipantEventPayload) {
-  return nicknames.length > 0 || totalCount > 0 || Boolean(newParticipant);
+  return participants.length > 0 || nicknames.length > 0 || totalCount > 0 || Boolean(newParticipant);
 }
 
 /** sessionStorage의 참가 응답이 현재 참가 API 응답 형식인지 확인 */
@@ -192,11 +267,14 @@ export function parseDraftParticipantEvent(
     }
 
     const eventPayload = readEventPayload(parsedMessage);
+    const participants = readParticipantItems(eventPayload);
     const nicknames = readParticipantNicknames(eventPayload);
+    const fallbackCount = Math.max(nicknames.length, participants.length);
     const event = {
       newParticipant: readNewParticipantNickname(eventPayload),
-      nicknames,
-      totalCount: readParticipantTotalCount(eventPayload, nicknames.length),
+      nicknames: nicknames.length > 0 ? nicknames : participants.map((participant) => participant.nickname),
+      participants,
+      totalCount: readParticipantTotalCount(eventPayload, fallbackCount),
     };
 
     return hasParticipantEventContent(event) ? event : null;
@@ -210,17 +288,13 @@ export function parseDraftStartEvent(messageBody: string): DraftStartRedirectEve
   try {
     const parsedMessage = parseJsonRecord(messageBody);
 
-    if (
-      !parsedMessage ||
-      parsedMessage.code !== "SUCCESS" ||
-      !isRecordValue(parsedMessage.payload)
-    ) {
+    if (!parsedMessage || parsedMessage.code !== "SUCCESS") {
       return null;
     }
 
-    return typeof parsedMessage.payload.redirectUrl === "string"
-      ? { redirectUrl: parsedMessage.payload.redirectUrl }
-      : null;
+    const payload = isRecordValue(parsedMessage.payload) ? parsedMessage.payload : parsedMessage;
+
+    return typeof payload.redirectUrl === "string" ? { redirectUrl: payload.redirectUrl } : null;
   } catch {
     return null;
   }
@@ -230,10 +304,32 @@ function getCurrentParticipantNicknames(participants: DraftInviteParticipantItem
   return participants.map((participant) => participant.nickname);
 }
 
+function mergeParticipantItemsFromEvent(
+  currentParticipants: DraftInviteParticipantItem[],
+  eventParticipants: DraftInviteParticipantItem[],
+) {
+  return eventParticipants.map((eventParticipant) => {
+    const currentParticipant = currentParticipants.find(
+      (participant) => participant.id === eventParticipant.id,
+    );
+
+    return currentParticipant
+      ? {
+          ...currentParticipant,
+          ...eventParticipant,
+        }
+      : eventParticipant;
+  });
+}
+
 function createNicknamesFromParticipantEvent({
   currentParticipants,
   eventPayload,
 }: CreateNicknamesFromParticipantEventParams) {
+  if (eventPayload.participants.length > 0) {
+    return eventPayload.participants.map((participant) => participant.nickname);
+  }
+
   if (eventPayload.nicknames.length > 0) {
     return eventPayload.nicknames;
   }
@@ -283,13 +379,16 @@ function mergeParticipantItem({
   return {
     id: matchedParticipant?.id ?? `${participantIndex}-${nickname}`,
     isHost: matchedParticipant?.isHost ?? participantIndex === 0,
+    isReady: matchedParticipant?.isReady,
     nickname,
+    selectedCoachName: matchedParticipant?.selectedCoachName,
     status: getParticipantStatus({
       fallbackHostName,
       matchedParticipant,
       nickname,
       participantIndex,
     }),
+    turnOrder: matchedParticipant?.turnOrder,
   };
 }
 
@@ -299,6 +398,10 @@ export function mergeDraftInviteParticipantList({
   eventPayload,
   fallbackHostName,
 }: MergeDraftInviteParticipantListParams) {
+  if (eventPayload.participants.length > 0) {
+    return mergeParticipantItemsFromEvent(currentParticipants, eventPayload.participants);
+  }
+
   const eventNicknames = createNicknamesFromParticipantEvent({
     currentParticipants,
     eventPayload,
@@ -311,13 +414,11 @@ export function mergeDraftInviteParticipantList({
   });
 
   return paddedNicknames.map((nickname, participantIndex) => {
-    const matchedParticipant = currentParticipants.find(
-      (participant) => participant.nickname === nickname,
-    );
+    const currentParticipant = currentParticipants.find((participant) => participant.nickname === nickname);
 
     return mergeParticipantItem({
       fallbackHostName,
-      matchedParticipant,
+      matchedParticipant: currentParticipant,
       nickname,
       participantIndex,
     });

@@ -1,6 +1,7 @@
 import { STREAMER_DIRECTORY, STREAMER_DIRECTORY_BY_ID } from "@/constants/draft";
 import type {
   BoardState,
+  DraftInviteRoleSlot,
   DraftRoomApiStreamer,
   DraftRoomStreamerTeamSlotRequest,
   LolLineKey,
@@ -20,6 +21,24 @@ const streamerPoolLineKeyMap = {
   top: "top",
 } satisfies Record<Exclude<keyof DraftRoomStreamerTeamSlotRequest, "teamSlot">, LolLineKey>;
 
+function createApiTeamSlot(boardIndex: number) {
+  return boardIndex + 1;
+}
+
+function createDefaultStreamerImageUrl() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/, "");
+
+  return `${appUrl || "http://localhost:3000"}/icons/person_outline.svg`;
+}
+
+function createDraftRoomStreamerImageUrl(profileImageUrl: string | null | undefined) {
+  if (typeof profileImageUrl === "string" && profileImageUrl.trim().length > 0) {
+    return profileImageUrl.trim();
+  }
+
+  return createDefaultStreamerImageUrl();
+}
+
 function createFallbackStreamerFromBoardId(streamerId: string): DraftRoomApiStreamer | null {
   const fallbackIdMatch = /^pickz-invitational-(headCoach|coach)-(\d+)$/.exec(streamerId);
 
@@ -31,7 +50,12 @@ function createFallbackStreamerFromBoardId(streamerId: string): DraftRoomApiStre
   const fallbackIndex = Number(fallbackIdMatch[2]) - 1;
   const fallbackName = pickzInvitationalFallbackNames[fallbackLine][fallbackIndex];
 
-  return fallbackName ? { imageUrl: "", name: fallbackName } : null;
+  return fallbackName
+    ? {
+        imageUrl: createDefaultStreamerImageUrl(),
+        name: fallbackName,
+      }
+    : null;
 }
 
 function createStreamerFromDirectoryId(streamerId: string | null): DraftRoomApiStreamer | null {
@@ -43,7 +67,7 @@ function createStreamerFromDirectoryId(streamerId: string | null): DraftRoomApiS
 
   if (streamerProfile) {
     return {
-      imageUrl: streamerProfile.profileImageUrl ?? streamerProfile.avatarDataUrl,
+      imageUrl: createDraftRoomStreamerImageUrl(streamerProfile.profileImageUrl),
       name: streamerProfile.name,
     };
   }
@@ -72,15 +96,40 @@ function createWsTestStreamer(lineKey: LolLineKey, teamSlot: number): DraftRoomA
 
   if (!streamerProfile) {
     return {
-      imageUrl: "",
+      imageUrl: createDefaultStreamerImageUrl(),
       name: `${lineKey}-${teamSlot + 1}`,
     };
   }
 
   return {
-    imageUrl: streamerProfile.profileImageUrl ?? streamerProfile.avatarDataUrl,
+    imageUrl: createDraftRoomStreamerImageUrl(streamerProfile.profileImageUrl),
     name: streamerProfile.name,
   };
+}
+
+function createInviteRoleSlotCoach(board: BoardState, teamSlot: number) {
+  return (
+    createStreamerFromDirectoryId(board.headCoach[teamSlot]) ??
+    createStreamerFromDirectoryId(board.coach[teamSlot])
+  );
+}
+
+/** 참가자 초대 화면에서 선택할 감독 역할 목록 생성 */
+export function createDraftInviteRoleSlotsFromBoard(
+  board: BoardState,
+  teamCount: number,
+): DraftInviteRoleSlot[] {
+  return Array.from({ length: teamCount }, (_, teamSlot) => {
+    const coach = createInviteRoleSlotCoach(board, teamSlot);
+    const teamNumber = teamSlot + 1;
+
+    return {
+      coachImageUrl: coach?.imageUrl,
+      coachName: coach?.name ?? `${teamNumber}팀 감독`,
+      id: `team-slot-${teamNumber}`,
+      teamNumber,
+    };
+  });
 }
 
 /** 방 생성 후 저장할 라인별 스트리머 배치 요청 목록 생성 */
@@ -93,11 +142,11 @@ export function createDraftRoomStreamerTeamSlotsFromBoard(
 
     return {
       adc: requireStreamerFromBoardSlot(board.adc[teamSlot], "원딜", teamSlot),
-      coach: requireStreamerFromBoardSlot(coachStreamerId, "감독", teamSlot),
+      coach: createStreamerFromDirectoryId(coachStreamerId),
       jug: requireStreamerFromBoardSlot(board.jungle[teamSlot], "정글", teamSlot),
       mid: requireStreamerFromBoardSlot(board.mid[teamSlot], "미드", teamSlot),
       sup: requireStreamerFromBoardSlot(board.support[teamSlot], "서폿", teamSlot),
-      teamSlot,
+      teamSlot: createApiTeamSlot(teamSlot),
       top: requireStreamerFromBoardSlot(board.top[teamSlot], "탑", teamSlot),
     };
   });
@@ -113,7 +162,7 @@ export function createDraftRoomStreamerTeamSlotsForTest(
     jug: createWsTestStreamer(streamerPoolLineKeyMap.jug, teamSlot),
     mid: createWsTestStreamer(streamerPoolLineKeyMap.mid, teamSlot),
     sup: createWsTestStreamer(streamerPoolLineKeyMap.sup, teamSlot),
-    teamSlot,
+    teamSlot: createApiTeamSlot(teamSlot),
     top: createWsTestStreamer(streamerPoolLineKeyMap.top, teamSlot),
   }));
 }

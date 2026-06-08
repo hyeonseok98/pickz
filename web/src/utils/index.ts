@@ -4,6 +4,7 @@ export {
   compareDraftLineOrder,
   createEmptyDraftBoard,
   createDraftInviteLink,
+  createDraftInviteRoleSlotsFromBoard,
   createDraftRoomCreateRequest,
   createDraftRoomStreamerTeamSlotsForTest,
   createDraftRoomStreamerTeamSlotsFromBoard,

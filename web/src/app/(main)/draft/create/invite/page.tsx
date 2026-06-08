@@ -68,6 +68,7 @@ function DraftInvitePage() {
       tournamentLabel={inviteRoom.tournamentLabel}
       onCopyInviteLink={inviteRoom.handleCopyInviteLink}
       onMoveRoleSlot={inviteRoom.handleMoveRoleSlot}
+      onSelectRoleSlot={inviteRoom.handleSelectRoleSlot}
       onStartDraft={inviteRoom.handleStartDraft}
     />
   );

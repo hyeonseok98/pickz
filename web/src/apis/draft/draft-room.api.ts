@@ -23,7 +23,7 @@ function createApiPath(pathname: string) {
   return `/api/${pathname.replace(/^\/+/, "")}`;
 }
 
-const draftRoomCreateFetchCredentials = "include" satisfies RequestCredentials;
+const draftRoomCreateFetchCredentials = "omit" satisfies RequestCredentials;
 const draftRoomInviteFetchCredentials = "omit" satisfies RequestCredentials;
 const draftRoomParticipantTokenFetchCredentials = "omit" satisfies RequestCredentials;
 
@@ -97,6 +97,20 @@ function readIsHostValue(payload: { isHost?: unknown }, fallbackValue: boolean) 
   return typeof payload.isHost === "boolean" ? payload.isHost : fallbackValue;
 }
 
+function readSelectedCoachNameValue(payload: { selectedCoachName?: unknown }) {
+  return typeof payload.selectedCoachName === "string" && payload.selectedCoachName.trim().length > 0
+    ? payload.selectedCoachName.trim()
+    : undefined;
+}
+
+function readTurnOrderValue(payload: { turnOrder?: unknown }) {
+  return typeof payload.turnOrder === "number" ? payload.turnOrder : undefined;
+}
+
+function readReadyValue(payload: { isReady?: unknown }) {
+  return typeof payload.isReady === "boolean" ? payload.isReady : undefined;
+}
+
 function isCreateDraftRoomResponse(payload: unknown): payload is CreateDraftRoomResponse {
   if (!isRecordValue(payload)) {
     return false;
@@ -148,6 +162,9 @@ function normalizeCreateDraftRoomResponse(payload: CreateDraftRoomResponse) {
     ...payload,
     isHost: readIsHostValue(payload, true),
     nickname: readNicknameFromPayload(payload),
+    selectedCoachName: readSelectedCoachNameValue(payload),
+    turnOrder: readTurnOrderValue(payload),
+    isReady: readReadyValue(payload),
   };
 }
 
@@ -156,6 +173,9 @@ function normalizeJoinDraftRoomResponse(payload: JoinDraftRoomResponse) {
     ...payload,
     isHost: readIsHostValue(payload, false),
     nickname: readNicknameFromPayload(payload),
+    selectedCoachName: readSelectedCoachNameValue(payload),
+    turnOrder: readTurnOrderValue(payload),
+    isReady: readReadyValue(payload),
   };
 }
 

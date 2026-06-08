@@ -2,8 +2,8 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { saveDraftRoomStreamerPool, startDraftRoom } from "@/apis/draft";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { saveDraftRoomStreamerPool, selectDraftRoomCoach, startDraftRoom } from "@/apis/draft";
 import { useDraftRoomSettingsStore, useDraftStreamerSetupStore } from "@/stores/draft";
 import type {
   DraftInviteParticipantItem,
@@ -13,6 +13,7 @@ import type {
 } from "@/types/draft";
 import {
   createDraftRoomWithPendingRequestCache,
+  createDraftInviteRoleSlotsFromBoard,
   createDraftRoomStreamerTeamSlotsFromBoard,
   createDraftRoomCreateRequest,
   getDraftInviteDisplayNickname,
@@ -60,27 +61,54 @@ interface UseDraftInviteRoomResult {
   tournamentLabel: string;
   handleCopyInviteLink: () => Promise<void>;
   handleMoveRoleSlot: (fromIndex: number, toIndex: number) => void;
+  handleSelectRoleSlot: (roleSlot: DraftInviteRoleSlot, roleIndex: number) => void;
   handleStartDraft: () => void;
 }
 
-async function saveDraftRoomStreamerPoolWithoutBlockingInvite({
+/** 게임 시작 전 필요한 참여 인원 수와 감독 선택 완료 여부를 함께 확인 */
+function canStartDraftRoom(
+  participants: DraftInviteParticipantItem[],
+  requiredParticipantCount: number,
+) {
+  if (participants.length !== requiredParticipantCount) {
+    return false;
+  }
+
+  return participants.every((participant) => participant.isReady === true);
+}
+
+async function saveDraftRoomStreamerPoolBeforeInvite({
   participantToken,
   roomId,
   teamStreamerSlots,
 }: Parameters<typeof saveDraftRoomStreamerPool>[0]) {
-  try {
-    await saveDraftRoomStreamerPool({
-      participantToken,
-      roomId,
-      teamStreamerSlots,
-    });
+  await saveDraftRoomStreamerPool({
+    participantToken,
+    roomId,
+    teamStreamerSlots,
+  });
+}
 
-    return "";
-  } catch (error) {
-    return error instanceof Error
-      ? error.message
-      : "스트리머 풀 저장 API 호출에 실패했습니다.";
-  }
+function createParticipantItemFromRoomResponse(
+  response: {
+    isHost: boolean;
+    isReady?: boolean;
+    nickname?: string;
+    participantToken: string;
+    selectedCoachName?: string;
+    turnOrder?: number;
+  },
+  fallbackLabel: string,
+): DraftInviteParticipantItem {
+  return {
+    id: response.participantToken,
+    isHost: response.isHost,
+    isReady: response.isReady,
+    nickname: getDraftInviteDisplayNickname(response.nickname, fallbackLabel),
+    selectedCoachName: response.selectedCoachName,
+    status: response.isReady ? "선택 완료" : "입장 완료",
+    turnOrder: response.turnOrder,
+  };
 }
 
 export function useDraftInviteRoom({
@@ -106,13 +134,16 @@ export function useDraftInviteRoom({
   const [inviteRoomStatus, setInviteRoomStatus] = useState<DraftInviteRoomStatus>("idle");
   const [inviteRoomErrorSource, setInviteRoomErrorSource] =
     useState<DraftInviteRoomErrorSource>(null);
-  const [roleSlots, setRoleSlots] = useState<DraftInviteRoleSlot[]>(() =>
-    Array.from({ length: teamCountValue }, (_, index) => ({
-      id: `team-slot-${index + 1}`,
-      teamNumber: index + 1,
-    })),
+  const initialRoleSlots = useMemo(
+    () => createDraftInviteRoleSlotsFromBoard(board, teamCountValue),
+    [board, teamCountValue],
   );
+  const [roleSlots, setRoleSlots] = useState<DraftInviteRoleSlot[]>(initialRoleSlots);
   const hasInitializedInviteRoomRef = useRef(false);
+
+  useEffect(() => {
+    setRoleSlots(initialRoleSlots);
+  }, [initialRoleSlots]);
 
   const createRoomMutation = useMutation({
     mutationFn: async () => {
@@ -128,16 +159,13 @@ export function useDraftInviteRoom({
       );
       const teamStreamerSlots = createDraftRoomStreamerTeamSlotsFromBoard(board, teamCountValue);
 
-      const streamerPoolSaveErrorMessage = await saveDraftRoomStreamerPoolWithoutBlockingInvite({
+      await saveDraftRoomStreamerPoolBeforeInvite({
         participantToken: createdDraftRoom.participantToken,
         roomId: createdDraftRoom.roomId,
         teamStreamerSlots,
       });
 
-      return {
-        ...createdDraftRoom,
-        streamerPoolSaveErrorMessage,
-      };
+      return createdDraftRoom;
     },
     onMutate: () => {
       setInviteRoomStatus("creatingRoom");
@@ -158,25 +186,20 @@ export function useDraftInviteRoom({
       setParticipantToken(response.participantToken);
       setRoomId(response.roomId);
       setParticipants([
-        {
-          id: response.participantToken,
-          isHost: true,
-          nickname: getDraftInviteDisplayNickname(response.nickname, "방장"),
-          status: "입장 완료",
-        },
+        createParticipantItemFromRoomResponse(response, "방장"),
       ]);
       setInviteRoomStatus("ready");
-      setInfoMessage(
-        response.streamerPoolSaveErrorMessage
-          ? `방은 생성되었습니다. 다만 스트리머 풀 저장은 실패했습니다: ${response.streamerPoolSaveErrorMessage}`
-          : "방이 생성되었습니다. 참가자를 초대한 뒤 시작할 수 있습니다.",
-      );
+      setInfoMessage("방과 스트리머 풀이 준비되었습니다. 참가자를 초대한 뒤 시작할 수 있습니다.");
       setErrorMessage("");
     },
     onError: (error) => {
       setInviteRoomStatus("failed");
       setInviteRoomErrorSource("createRoom");
-      setErrorMessage(error instanceof Error ? error.message : "방 생성에 실패했습니다.");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "방 생성 또는 스트리머 풀 저장에 실패했습니다.",
+      );
     },
   });
 
@@ -200,12 +223,7 @@ export function useDraftInviteRoom({
       setParticipantToken(response.participantToken);
       setRoomId(response.roomId);
       setParticipants([
-        {
-          id: response.participantToken,
-          isHost: false,
-          nickname: getDraftInviteDisplayNickname(response.nickname, "참가자"),
-          status: "입장 완료",
-        },
+        createParticipantItemFromRoomResponse(response, "참가자"),
       ]);
       setInviteRoomStatus("ready");
       setInfoMessage("대기실에 입장했습니다. 방장이 시작할 때까지 기다려 주세요.");
@@ -219,6 +237,58 @@ export function useDraftInviteRoom({
   });
   const { mutate: createRoom } = createRoomMutation;
   const { mutate: joinRoom } = joinRoomMutation;
+
+  const selectCoachMutation = useMutation({
+    mutationFn: async ({
+      roleIndex,
+      roleSlot,
+    }: {
+      roleIndex: number;
+      roleSlot: DraftInviteRoleSlot;
+    }) => {
+      if (roomId === null || participantToken.trim().length === 0) {
+        throw new Error("참가자 정보가 준비되지 않았습니다.");
+      }
+
+      await selectDraftRoomCoach({
+        participantToken,
+        request: {
+          coachName: roleSlot.coachName,
+          targetTurnOrder: roleIndex + 1,
+        },
+        roomId,
+      });
+
+      return {
+        roleIndex,
+        roleSlot,
+      };
+    },
+    onSuccess: ({ roleIndex, roleSlot }) => {
+      setParticipants((currentParticipants) =>
+        currentParticipants.map((participant) => {
+          if (participant.id !== participantToken) {
+            return participant;
+          }
+
+          return {
+            ...participant,
+            isReady: true,
+            selectedCoachName: roleSlot.coachName,
+            status: "선택 완료",
+            turnOrder: roleIndex + 1,
+          };
+        }),
+      );
+      setInviteRoomErrorSource(null);
+      setInfoMessage(`${roleSlot.coachName} 역할을 선택했습니다.`);
+      setErrorMessage("");
+    },
+    onError: (error) => {
+      setInviteRoomErrorSource("selectCoach");
+      setErrorMessage(error instanceof Error ? error.message : "감독 역할 선택에 실패했습니다.");
+    },
+  });
 
   const startDraftMutation = useMutation({
     mutationFn: async () => {
@@ -238,7 +308,17 @@ export function useDraftInviteRoom({
     },
     onError: (error) => {
       setInviteRoomErrorSource("startDraft");
-      setErrorMessage(error instanceof Error ? error.message : "게임 시작 요청에 실패했습니다.");
+      if (!(error instanceof Error)) {
+        setErrorMessage("게임 시작 요청에 실패했습니다.");
+        return;
+      }
+
+      if (error.message.includes("HTTP 401")) {
+        setErrorMessage("모든 참가자가 감독 역할을 선택했는지 확인한 뒤 다시 시작해 주세요. (HTTP 401)");
+        return;
+      }
+
+      setErrorMessage(error.message);
     },
   });
 
@@ -323,8 +403,8 @@ export function useDraftInviteRoom({
   const isStarting = startDraftMutation.isPending;
   const isPartyMode = mode === "party";
   const participantCountLabel = `${participants.length} / ${teamCountFromQuery} 입장`;
-  const primaryActionDisabled =
-    !isHost || isStarting || participants.length < teamCountValue || roomId === null;
+  const isReadyToStart = canStartDraftRoom(participants, teamCountValue);
+  const primaryActionDisabled = !isHost || isStarting || !isReadyToStart || roomId === null;
   const primaryActionLabel = isHost ? "게임 시작하기" : "방장 시작 대기 중";
   const tournamentLabel = tournamentId === "pickz-invitational" ? "2026 자낳대" : "사용자 설정";
   const backSearchParams = new URLSearchParams({
@@ -381,6 +461,12 @@ export function useDraftInviteRoom({
     },
     handleStartDraft: () => {
       startDraftMutation.mutate();
+    },
+    handleSelectRoleSlot: (roleSlot, roleIndex) => {
+      selectCoachMutation.mutate({
+        roleIndex,
+        roleSlot,
+      });
     },
     handleMoveRoleSlot: (fromIndex, toIndex) => {
       if (fromIndex === toIndex) {

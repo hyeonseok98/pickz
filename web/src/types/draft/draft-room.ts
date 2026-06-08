@@ -3,8 +3,8 @@ export type DraftRoomApiParticipationType = "SOLO" | "TOGETHER";
 export type DraftRoomApiStatus = "WAITING" | "PLAYING";
 
 export interface DraftRoomApiStreamer {
-  imageUrl: string;
   name: string;
+  imageUrl: string | null;
 }
 
 export interface CreateDraftRoomRequest {
@@ -22,6 +22,9 @@ export interface CreateDraftRoomResponse {
   inviteCode: string;
   nickname?: string;
   participantToken: string;
+  selectedCoachName?: string;
+  turnOrder?: number;
+  isReady?: boolean;
 }
 
 export interface DraftParticipantSession {
@@ -37,6 +40,9 @@ export interface JoinDraftRoomResponse {
   nickname?: string;
   participantToken: string;
   roomId: number;
+  selectedCoachName?: string;
+  turnOrder?: number;
+  isReady?: boolean;
 }
 
 export interface StartDraftRoomParams {
@@ -54,13 +60,13 @@ export interface DraftRoomStreamerPoolResponse {
 }
 
 export interface DraftRoomStreamerTeamSlotRequest {
-  adc: DraftRoomApiStreamer;
-  coach: DraftRoomApiStreamer;
-  jug: DraftRoomApiStreamer;
-  mid: DraftRoomApiStreamer;
-  sup: DraftRoomApiStreamer;
+  adc: DraftRoomApiStreamer | null;
+  coach: DraftRoomApiStreamer | null;
+  jug: DraftRoomApiStreamer | null;
+  mid: DraftRoomApiStreamer | null;
+  sup: DraftRoomApiStreamer | null;
   teamSlot: number;
-  top: DraftRoomApiStreamer;
+  top: DraftRoomApiStreamer | null;
 }
 
 export interface SaveDraftRoomStreamerPoolParams {

@@ -13,6 +13,7 @@ export {
   teamSizeOptions,
 } from "./draft-options";
 export {
+  defaultStreamerAvatarDataUrl,
   STREAMER_INFO_MOCKS_BY_ID,
   STREAMER_INFO_MOCKS_BY_NAME,
   STREAMER_DIRECTORY,

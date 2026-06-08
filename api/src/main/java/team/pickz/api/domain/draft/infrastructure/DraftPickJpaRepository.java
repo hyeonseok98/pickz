@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface DraftPickJpaRepository extends JpaRepository<DraftPick, Long> {
 
-    Boolean existsByRoomIdAndStreamerId(Long roomId, String streamerId);
+    Boolean existsByRoomIdAndStreamerName(Long roomId, String streamerName);
 
     // 1. 해당 방(roomId)에서 특정 포지션을 낙찰받은 고유한 팀의 '수'를 반환
     @Query("SELECT COUNT(DISTINCT dp.participantId) FROM DraftPick dp WHERE dp.roomId = :roomId AND dp.position = :position")

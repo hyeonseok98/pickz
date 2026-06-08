@@ -55,7 +55,9 @@ public class AuctionPlayService {
             resetBiddingTimer(roomId, state);
 
             String teamName = state.getTeamStates().get(requestor.getId()).getTeamName();
-            String streamerName = state.getMainQueue().peek().getStreamerName();
+            AuctionRoomState.StreamerAuctionItem currentStreamer = state.getMainQueue().peek();
+            if (currentStreamer == null) return;
+            String streamerName = currentStreamer.getStreamerName();
             String chatMessage = String.format("%s - %s - %d포인트", teamName, streamerName, amount);
 
             messagingTemplate.convertAndSend("/topic/drafts/rooms/" + roomId + "/chat", chatMessage);

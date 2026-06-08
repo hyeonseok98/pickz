@@ -16,6 +16,8 @@ public record DraftRoomStreamerRequest(
 
         StreamerInfo sup,
 
+        StreamerInfo headCoach,
+
         StreamerInfo coach
 
 ) {

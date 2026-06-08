@@ -19,6 +19,7 @@ public record DraftConfigResponse(
             List<StreamerInfo> mid,
             List<StreamerInfo> adc,
             List<StreamerInfo> sup,
+            List<StreamerInfo> headCoach,
             List<StreamerInfo> coach
     ) {}
 

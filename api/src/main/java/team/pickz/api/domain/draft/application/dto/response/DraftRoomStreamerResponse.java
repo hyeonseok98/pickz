@@ -16,6 +16,8 @@ public record DraftRoomStreamerResponse(
 
         List<StreamerInfo> sup,
 
+        List<StreamerInfo> headCoach,
+
         List<StreamerInfo> coach
 
 ) {

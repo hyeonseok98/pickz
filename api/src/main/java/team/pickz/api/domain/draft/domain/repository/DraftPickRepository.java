@@ -10,7 +10,7 @@ public interface DraftPickRepository {
 
     void save(DraftPick draftPick);
 
-    Boolean existsByRoomIdAndStreamerId(Long roomId, String streamerId);
+    Boolean existsByRoomIdAndStreamerName(Long roomId, String streamerName);
 
     int countDistinctTeamIdByDraftRoomIdAndPosition(Long roomId, Position position);
 

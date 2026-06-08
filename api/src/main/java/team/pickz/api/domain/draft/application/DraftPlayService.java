@@ -56,7 +56,7 @@ public class DraftPlayService {
             throw new IllegalArgumentException("현재 당신의 픽 차례가 아닙니다.");
         }
 
-        if(draftPickRepository.existsByRoomIdAndStreamerId(roomId, message.streamerId())) {
+        if(draftPickRepository.existsByRoomIdAndStreamerName(roomId, message.streamerName())) {
             throw new IllegalArgumentException("이미 선택된 스트리머입니다.");
         }
 
@@ -67,7 +67,6 @@ public class DraftPlayService {
         DraftPick pick = DraftPick.builder()
                 .roomId(roomId)
                 .participantId(requestor.getId())
-                .streamerId(message.streamerId())
                 .streamerName(message.streamerName())
                 .roundIndex(currentRound)
                 .build();
@@ -89,7 +88,6 @@ public class DraftPlayService {
                 .code("SUCCESS")
                 .roomId(roomId)
                 .pickedNickname(requestor.getNickname())
-                .pickedStreamerId(message.streamerId())
                 .pickedStreamerName(pickedStreamer.getStreamerName())
                 .pickedStreamerImageUrl(pickedStreamer.getImageUrl())
                 .nextTurnNickname(nextTurnNickname)

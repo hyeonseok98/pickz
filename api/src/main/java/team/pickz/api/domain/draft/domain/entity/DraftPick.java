@@ -23,8 +23,6 @@ public class DraftPick {
 
     private Long participantId;
 
-    private String streamerId; // 치지직 채널 ID
-
     private String streamerName;
 
     @Enumerated(EnumType.STRING)
@@ -33,10 +31,9 @@ public class DraftPick {
     private int roundIndex; // 몇 라운드에 뽑았는지
 
     @Builder
-    public DraftPick(Long roomId, Long participantId, String streamerId, String streamerName, Position position, int roundIndex) {
+    public DraftPick(Long roomId, Long participantId, String streamerName, Position position, int roundIndex) {
         this.roomId = roomId;
         this.participantId = participantId;
-        this.streamerId = streamerId;
         this.streamerName = streamerName;
         this.position = position;
         this.roundIndex = roundIndex;

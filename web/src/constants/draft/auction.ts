@@ -1,0 +1,9 @@
+export const auctionInitialTeamPoints = 1000; // 초기 팀당 포인트
+export const auctionInitialStandbySeconds = 10; // 게임 시작 전 대기 시간
+export const auctionAnnounceCountdownSeconds = 3; // 경매 카운트다운 시간
+export const auctionBiddingSeconds = 15; // 경매 진행 시간
+export const auctionRoundResultWaitSeconds = 10; // 다음 경매 대기 시간
+export const auctionBidUnit = 5; // 경매 입찰은 항상 이 단위로만 올릴 수 있음
+export const auctionMinimumBidAmount = 5; // 첫 입찰도 이 금액 이상부터 시작해야 함
+export const auctionBidIncrementOptions = [5, 10, 50, 100] as const; // UI에서 빠르게 금액을 올릴 때 사용하는 고정 증가 버튼 값
+export const auctionMaxReauctionCount = 2; // 일반 경매 이후 유찰 선수는 최대 2번까지 재경매

@@ -1,3 +1,4 @@
+export { AvatarNameCard } from "./avatar-name-card";
 export { Badge } from "./badge";
 export { Button } from "./button";
 export {
@@ -10,4 +11,3 @@ export {
 } from "./data-table";
 export { SectionCard } from "./section-card";
 export { StatusChip } from "./status-chip";
-

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { ArrowBackIcon, GroupOutlineIcon, LinkIcon } from "@/components/common/icons";
+import { AvatarNameCard, Button, SectionCard } from "@/components/common/ui";
 import { cn } from "@/utils";
 import type {
   DraftInviteParticipantItem,
@@ -206,13 +207,9 @@ function InviteRoleSelection({
         <div className="flex flex-col items-end gap-2">
           <p className="text-xs font-semibold text-text-secondary">팀당 1명씩 선택됩니다.</p>
           {isHost && !isRoleOrderLocked ? (
-            <button
-              type="button"
-              onClick={onCompleteRoleOrder}
-              className="inline-flex h-9 cursor-pointer items-center rounded-xl bg-violet-600 px-4 text-xs font-bold text-white"
-            >
+            <Button onClick={onCompleteRoleOrder} size="sm">
               픽 순서 배치 완료
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>
@@ -262,43 +259,31 @@ function InviteRoleSelection({
                 aria-hidden
                 className="mx-auto size-4 opacity-60 transition-opacity group-hover:opacity-100"
               />
-              <div className="mx-auto mt-2 flex size-12 items-center justify-center overflow-hidden rounded-full border border-border bg-surface">
-                {slot.roleSlot.coachImageUrl ? (
-                  <Image
-                    src={slot.roleSlot.coachImageUrl}
-                    alt=""
-                    width={48}
-                    height={48}
-                    aria-hidden
-                    className="size-full object-cover"
-                  />
-                ) : slot.participant ? (
-                  <span className="text-[11px] font-bold text-violet-700">{slot.participant.nickname.slice(0, 2)}</span>
-                ) : (
-                  <Image src="/icons/person_outline.svg" alt="" width={24} height={24} aria-hidden className="size-6 opacity-70" />
-                )}
-              </div>
+              <AvatarNameCard
+                name={slot.roleSlot.coachName}
+                imageUrl={slot.roleSlot.coachImageUrl}
+                className="mx-auto mt-2 max-w-[120px] bg-transparent p-0"
+                nameClassName="hidden"
+                avatarFallback={
+                  slot.participant ? <span className="text-[11px] font-bold text-violet-700">{slot.participant.nickname.slice(0, 2)}</span> : undefined
+                }
+              />
               <p className="mt-2 text-xs font-semibold text-text-secondary">픽 순서 {index + 1}</p>
               <p className="mt-1 truncate text-base font-bold tracking-[-0.03em] text-text-primary">{slot.roleSlot.coachName}</p>
               {slot.participant ? (
                 <p className="mt-1 truncate text-xs font-semibold text-violet-700">{slot.participant.nickname}</p>
               ) : null}
-              <button
-                type="button"
+              <Button
                 onClick={() => {
                   onSelectRoleSlot(slot.roleSlot, index);
                 }}
                 disabled={!isRoleOrderLocked}
-                className={cn(
-                  "mt-3 inline-flex h-8 w-full cursor-pointer items-center justify-center rounded-xl border text-sm font-bold transition-colors",
-                  !isRoleOrderLocked ? "cursor-not-allowed border-border bg-surface-muted text-text-muted" : "",
-                  slot.participant
-                    ? "border-border bg-surface-muted text-text-secondary"
-                    : "border-violet-300 bg-surface text-violet-700",
-                )}
+                size="sm"
+                variant={slot.participant ? "secondary" : "outline"}
+                className="mt-3 w-full"
               >
                 {slot.participant ? "선택됨" : "선택"}
-              </button>
+              </Button>
             </article>
             {index < roleSlots.length - 1 ? (
               <span className="pointer-events-none absolute -right-2 top-1/2 hidden -translate-y-1/2 text-lg font-bold text-text-secondary lg:block">
@@ -313,13 +298,9 @@ function InviteRoleSelection({
         <p className="text-xs text-text-secondary">
           참여자는 선택한 팀의 감독(코치) 역할로 게임에 참여합니다.
         </p>
-        <button
-          type="button"
-          className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-violet-300 bg-surface px-3 text-xs font-bold text-violet-700"
-        >
-          <GroupOutlineIcon className="size-4" />
+        <Button variant="outline" size="sm" leadingIcon={<GroupOutlineIcon className="size-4" />}>
           <span>참여 선수 목록 보기 ({participantRosterCount})</span>
-        </button>
+        </Button>
       </div>
     </section>
   );
@@ -349,20 +330,16 @@ function StartSection({
         </div>
       </div>
 
-      <button
-        type="button"
+      <Button
         onClick={onStartDraft}
         disabled={primaryActionDisabled}
-        className={cn(
-          "inline-flex min-h-20 items-center justify-center gap-3 rounded-3xl px-6 text-xl font-bold tracking-[-0.03em] transition-colors",
-          primaryActionDisabled
-            ? "cursor-not-allowed bg-surface-muted text-text-muted"
-            : "cursor-pointer bg-violet-600 text-white hover:bg-violet-700",
-        )}
-        >
-        <GroupOutlineIcon className="size-6" />
+        variant="primary"
+        className="min-h-20 rounded-3xl px-6 text-xl font-bold tracking-[-0.03em]"
+        fullWidth
+        leadingIcon={<GroupOutlineIcon className="size-6" />}
+      >
         <span>{isStarting ? "시작 요청 중" : primaryActionLabel}</span>
-      </button>
+      </Button>
     </section>
   );
 }
@@ -399,12 +376,12 @@ export function DraftInviteScreen({
   if (!isPartyMode) {
     return (
       <main className="min-h-full bg-background px-4 py-4 sm:px-6 sm:py-6">
-        <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
+        <SectionCard padding="lg">
           <h1 className="text-2xl font-bold text-text-primary">접근할 수 없는 단계입니다.</h1>
           <p className="mt-3 text-sm leading-6 text-text-secondary">
             참가자 초대는 같이하기 모드에서만 사용할 수 있습니다.
           </p>
-        </section>
+        </SectionCard>
       </main>
     );
   }
@@ -420,16 +397,16 @@ export function DraftInviteScreen({
   return (
     <main className="min-h-full bg-background px-4 py-3 sm:px-6 sm:py-4">
       <div className="mx-auto flex max-w-screen-2xl flex-col gap-3">
-        <section className="rounded-3xl border border-border bg-surface px-5 py-4 shadow-sm">
-          <button
-            type="button"
+        <SectionCard padding="md" className="px-5 py-4">
+          <Button
             onClick={onLeaveRoom}
             disabled={isLeaving}
-            className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
+            variant="ghost"
+            leadingIcon={<ArrowBackIcon className="size-4" />}
+            className="rounded-full border border-border px-4 text-sm font-semibold text-text-secondary hover:text-text-primary"
           >
-            <ArrowBackIcon className="size-4" />
             <span>{isLeaving ? "나가는 중" : "방 나가기"}</span>
-          </button>
+          </Button>
 
           <InviteProgressBar />
 
@@ -451,7 +428,7 @@ export function DraftInviteScreen({
               </div>
             </div>
           </div>
-        </section>
+        </SectionCard>
 
         <InviteInfoBanner
           connectionStatus={connectionStatus}

@@ -1,4 +1,5 @@
 import { ChevronRightIcon, LinkIcon } from "@/components/common/icons";
+import { Button, SectionCard } from "@/components/common/ui";
 
 interface DraftInviteLinkCardProps {
   inviteLink: string;
@@ -29,7 +30,7 @@ export function DraftInviteLinkCard({
     : inviteLink || "생성 중";
 
   return (
-    <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+    <SectionCard padding="sm">
       <div className="flex items-start gap-3">
         <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700">
           <LinkIcon className="size-[22px]" />
@@ -44,25 +45,28 @@ export function DraftInviteLinkCard({
         </div>
       </div>
 
-      <button
-        type="button"
+      <Button
         onClick={isHost && !isRoleOrderLocked ? onCompleteRoleOrder : onCopyInviteLink}
         disabled={isHost ? false : !inviteLink}
-        className="mt-5 flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-4 text-left transition-colors hover:border-violet-200 disabled:cursor-not-allowed disabled:bg-surface-muted"
+        variant="secondary"
+        className="mt-5 h-auto justify-between gap-3 px-4 py-4 text-left hover:border-violet-200"
+        fullWidth
+        trailingIcon={
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-violet-300 bg-surface text-violet-700">
+            <ChevronRightIcon className="size-4" />
+          </span>
+        }
       >
         <div className="min-w-0">
           <p className="text-base font-bold text-text-primary">{actionLabel}</p>
           <p className="mt-1 truncate text-xs text-text-secondary">{actionDescription}</p>
         </div>
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-violet-300 bg-surface text-violet-700">
-          <ChevronRightIcon className="size-4" />
-        </span>
-      </button>
+      </Button>
 
       <div className="mt-3 rounded-2xl border border-border bg-surface-muted px-4 py-3">
         <p className="text-xs font-semibold text-text-secondary">현재 참여자</p>
         <p className="mt-1 text-sm font-bold text-text-primary">{nicknameLabel}</p>
       </div>
-    </section>
+    </SectionCard>
   );
 }

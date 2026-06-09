@@ -54,7 +54,6 @@ function DraftInvitePage() {
 
   return (
     <DraftInviteScreen
-      backHref={inviteRoom.backHref}
       connectionStatus={inviteRoom.connectionStatus}
       errorMessage={inviteRoom.errorMessage}
       infoMessage={inviteRoom.infoMessage}
@@ -63,6 +62,7 @@ function DraftInvitePage() {
       inviteRoomStatus={inviteRoom.inviteRoomStatus}
       isHost={inviteRoom.isHost}
       isInitializing={inviteRoom.isInitializing}
+      isLeaving={inviteRoom.isLeaving}
       isPartyMode={inviteRoom.isPartyMode}
       isRoleOrderLocked={inviteRoom.isRoleOrderLocked}
       isStarting={inviteRoom.isStarting}
@@ -77,6 +77,7 @@ function DraftInvitePage() {
       tournamentLabel={inviteRoom.tournamentLabel}
       onCompleteRoleOrder={inviteRoom.handleCompleteRoleOrder}
       onCopyInviteLink={inviteRoom.handleCopyInviteLink}
+      onLeaveRoom={inviteRoom.handleLeaveRoom}
       onMoveRoleSlot={inviteRoom.handleMoveRoleSlot}
       onSelectRoleSlot={inviteRoom.handleSelectRoleSlot}
       onStartDraft={inviteRoom.handleStartDraft}

@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { saveDraftRoomStreamerPool, selectDraftRoomCoach, startDraftRoom } from "@/apis/draft";
+import { leaveDraftRoom, saveDraftRoomStreamerPool, selectDraftRoomCoach, startDraftRoom } from "@/apis/draft";
 import { useDraftRoomSettingsStore, useDraftStreamerSetupStore } from "@/stores/draft";
 import type {
   DraftInviteParticipantItem,
@@ -23,6 +23,7 @@ import {
   mergeDraftInviteParticipantList,
   parseDraftParticipantEvent,
   parseDraftStartEvent,
+  removeDraftParticipantSession,
   saveDraftParticipantSession,
 } from "@/utils";
 import { useDraftInviteLink } from "./invite/use-draft-invite-link";
@@ -40,7 +41,6 @@ interface UseDraftInviteRoomParams {
 }
 
 interface UseDraftInviteRoomResult {
-  backHref: string;
   connectionStatus: "idle" | "connecting" | "connected" | "disconnected" | "error";
   errorMessage: string;
   infoMessage: string;
@@ -50,6 +50,7 @@ interface UseDraftInviteRoomResult {
   inviteRoomStatus: DraftInviteRoomStatus;
   isHost: boolean;
   isInitializing: boolean;
+  isLeaving: boolean;
   isPartyMode: boolean;
   isRoleOrderLocked: boolean;
   isStarting: boolean;
@@ -65,6 +66,7 @@ interface UseDraftInviteRoomResult {
   tournamentLabel: string;
   handleCompleteRoleOrder: () => void;
   handleCopyInviteLink: () => Promise<void>;
+  handleLeaveRoom: () => void;
   handleMoveRoleSlot: (fromIndex: number, toIndex: number) => void;
   handleSelectRoleSlot: (roleSlot: DraftInviteRoleSlot, roleIndex: number) => void;
   handleStartDraft: () => void;
@@ -346,9 +348,17 @@ export function useDraftInviteRoom({
   }, [createRoom, initialInviteCode, joinRoom, mode]);
 
   const handleParticipantRoomMessage = (messageBody: string) => {
+    console.log("[draft invite] participants message received", {
+      messageBody,
+      roomId,
+    });
     const participantEvent = parseDraftParticipantEvent(messageBody);
 
     if (!participantEvent) {
+      console.warn("[draft invite] participants message ignored", {
+        messageBody,
+        roomId,
+      });
       return;
     }
 
@@ -358,16 +368,26 @@ export function useDraftInviteRoom({
         ? getDraftInviteDisplayNickname(session.nickname, "방장")
         : "방장";
 
-      return mergeDraftInviteParticipantList({
+      const nextParticipants = mergeDraftInviteParticipantList({
         currentParticipants,
         eventPayload: participantEvent,
         fallbackHostName,
       });
+
+      console.log("[draft invite] participants state updated", {
+        currentCount: currentParticipants.length,
+        eventPayload: participantEvent,
+        nextCount: nextParticipants.length,
+        nextParticipants,
+        roomId,
+      });
+
+      return nextParticipants;
     });
     setInfoMessage(`현재 ${participantEvent.totalCount}명이 대기실에 입장했습니다.`);
   };
 
-  const { connectionStatus } = useDraftRoomStomp({
+  const { connectionStatus, disconnect } = useDraftRoomStomp({
     roomId: roomId ?? 0,
     participantToken,
     onConnectionError: (message) => {
@@ -392,10 +412,38 @@ export function useDraftInviteRoom({
     },
     onParticipantsMessage: handleParticipantRoomMessage,
     onRoomDeletedMessage: () => {
+      if (roomId) {
+        removeDraftParticipantSession(roomId);
+      }
       setInviteRoomStatus("failed");
       setInviteRoomErrorSource("session");
       setErrorMessage("방이 종료되었습니다. 드래프트 화면으로 다시 이동해 주세요.");
       setInfoMessage("");
+      router.push("/");
+    },
+  });
+
+  const leaveRoomMutation = useMutation({
+    mutationFn: async () => {
+      if (roomId === null || participantToken.trim().length === 0) {
+        throw new Error("방 정보가 준비되지 않았습니다.");
+      }
+
+      await leaveDraftRoom({
+        participantToken,
+        roomId,
+      });
+
+      return roomId;
+    },
+    onSuccess: (leftRoomId) => {
+      disconnect();
+      removeDraftParticipantSession(leftRoomId);
+      router.push("/");
+    },
+    onError: (error) => {
+      setInviteRoomErrorSource("leaveRoom");
+      setErrorMessage(error instanceof Error ? error.message : "방 나가기에 실패했습니다.");
     },
   });
   const inviteLink = useDraftInviteLink({
@@ -409,6 +457,7 @@ export function useDraftInviteRoom({
   });
 
   const isInitializing = createRoomMutation.isPending || joinRoomMutation.isPending;
+  const isLeaving = leaveRoomMutation.isPending;
   const isStarting = startDraftMutation.isPending;
   const isPartyMode = mode === "party";
   const participantCountLabel = `${participants.length} / ${teamCountFromQuery} 입장`;
@@ -419,25 +468,7 @@ export function useDraftInviteRoom({
   const currentParticipant =
     participants.find((participant) => participant.id === participantToken) ?? null;
   const nicknameLabel = currentParticipant?.nickname ?? (isHost ? "방장" : "참가자");
-  const backSearchParams = new URLSearchParams({
-    draftType,
-    mode: "party",
-    teamCount: teamCountFromQuery,
-    teamSize: teamSizeFromQuery,
-  });
-
-  if (headCoachEnabled) {
-    backSearchParams.set("headCoachEnabled", "true");
-  }
-
-  if (coachEnabled) {
-    backSearchParams.set("coachEnabled", "true");
-  }
-
-  const backHref = `/draft/create/streamers?${backSearchParams.toString()}`;
-
   return {
-    backHref,
     connectionStatus: roomId === null || participantToken.trim().length === 0 ? "idle" : connectionStatus,
     errorMessage,
     infoMessage,
@@ -447,6 +478,7 @@ export function useDraftInviteRoom({
     inviteRoomStatus,
     isHost,
     isInitializing,
+    isLeaving,
     isPartyMode,
     isRoleOrderLocked,
     isStarting,
@@ -484,6 +516,9 @@ export function useDraftInviteRoom({
       } catch {
         setErrorMessage("초대 링크 복사에 실패했습니다.");
       }
+    },
+    handleLeaveRoom: () => {
+      leaveRoomMutation.mutate();
     },
     handleStartDraft: () => {
       startDraftMutation.mutate();

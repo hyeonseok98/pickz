@@ -9,6 +9,7 @@ import type {
   SelectDraftRoomCoachParams,
   StartDraftRoomParams,
 } from "@/types/draft";
+import { createDraftParticipantTokenHeader } from "@/lib";
 
 const defaultCreateDraftRoomRequest: CreateDraftRoomRequest = {
   draftMode: "SNAKE",
@@ -240,7 +241,7 @@ export async function startDraftRoom({
     credentials: draftRoomParticipantTokenFetchCredentials,
     headers: {
       Accept: "text/plain",
-      "X-Participant-Token": participantToken,
+      ...createDraftParticipantTokenHeader({ participantToken }),
     },
   });
   const payload = await readResponsePayload(response);
@@ -284,7 +285,7 @@ export async function saveDraftRoomStreamerPool({
     headers: {
       Accept: "text/plain",
       "Content-Type": "application/json",
-      "X-Participant-Token": participantToken,
+      ...createDraftParticipantTokenHeader({ participantToken }),
     },
     body: JSON.stringify(teamStreamerSlots),
   });
@@ -307,7 +308,7 @@ export async function selectDraftRoomCoach({
     headers: {
       Accept: "text/plain",
       "Content-Type": "application/json",
-      "X-Participant-Token": participantToken,
+      ...createDraftParticipantTokenHeader({ participantToken }),
     },
     body: JSON.stringify(request),
   });
@@ -350,7 +351,7 @@ export async function deleteDraftRoom({
     credentials: draftRoomParticipantTokenFetchCredentials,
     headers: {
       Accept: "text/plain",
-      "X-Participant-Token": participantToken,
+      ...createDraftParticipantTokenHeader({ participantToken }),
     },
   });
   const payload = await readResponsePayload(response);
@@ -370,7 +371,7 @@ export async function leaveDraftRoom({
     credentials: draftRoomParticipantTokenFetchCredentials,
     headers: {
       Accept: "text/plain",
-      "X-Participant-Token": participantToken,
+      ...createDraftParticipantTokenHeader({ participantToken }),
     },
   });
   const payload = await readResponsePayload(response);

@@ -18,6 +18,7 @@ export interface DraftInviteRoleSlot {
 export type DraftInviteRoomErrorSource =
   | "createRoom"
   | "joinRoom"
+  | "leaveRoom"
   | "selectCoach"
   | "session"
   | "stomp"

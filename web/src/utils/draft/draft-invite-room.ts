@@ -157,6 +157,10 @@ function isRecordValue(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object";
 }
 
+function parseJsonValue(messageBody: string) {
+  return JSON.parse(messageBody) as unknown;
+}
+
 function parseJsonRecord(messageBody: string) {
   const parsedValue = JSON.parse(messageBody) as unknown;
 
@@ -164,7 +168,7 @@ function parseJsonRecord(messageBody: string) {
 }
 
 function readEventPayload(parsedMessage: Record<string, unknown>) {
-  return isRecordValue(parsedMessage.payload) ? parsedMessage.payload : parsedMessage;
+  return typeof parsedMessage.payload === "undefined" ? parsedMessage : parsedMessage.payload;
 }
 
 function normalizeParticipantNickname(value: unknown) {
@@ -261,6 +265,26 @@ function readParticipantItems(eventPayload: Record<string, unknown>) {
   return participant ? [participant] : [];
 }
 
+function readParticipantItemsFromArray(eventPayload: unknown[]) {
+  return eventPayload
+    .map((value, index) =>
+      isRecordValue(value) ? createParticipantItemFromRecord(value, index) : null,
+    )
+    .filter((participant): participant is DraftInviteParticipantItem => Boolean(participant));
+}
+
+function createParticipantEventFromArray(eventPayload: unknown[]) {
+  const participants = readParticipantItemsFromArray(eventPayload);
+  const event = {
+    newParticipant: undefined,
+    nicknames: participants.map((participant) => participant.nickname),
+    participants,
+    totalCount: participants.length,
+  };
+
+  return hasParticipantEventContent(event) ? event : null;
+}
+
 function readParticipantTotalCount(
   eventPayload: Record<string, unknown>,
   fallbackCount: number,
@@ -294,13 +318,26 @@ export function parseDraftParticipantEvent(
   messageBody: string,
 ): DraftParticipantEventPayload | null {
   try {
-    const parsedMessage = parseJsonRecord(messageBody);
+    const parsedMessage = parseJsonValue(messageBody);
 
-    if (!parsedMessage) {
+    if (Array.isArray(parsedMessage)) {
+      return createParticipantEventFromArray(parsedMessage);
+    }
+
+    if (!isRecordValue(parsedMessage)) {
       return null;
     }
 
     const eventPayload = readEventPayload(parsedMessage);
+
+    if (Array.isArray(eventPayload)) {
+      return createParticipantEventFromArray(eventPayload);
+    }
+
+    if (!isRecordValue(eventPayload)) {
+      return null;
+    }
+
     const participants = readParticipantItems(eventPayload);
     const nicknames = readParticipantNicknames(eventPayload);
     const fallbackCount = Math.max(nicknames.length, participants.length);

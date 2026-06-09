@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createDraftStompClient } from "@/lib/stomp";
+import { createDraftRoomStompConnectHeaders, createDraftStompClient } from "@/lib";
 import type { Client, IMessage, StompSubscription } from "@stomp/stompjs";
 
 type DraftRoomStompConnectionStatus =
@@ -24,8 +24,30 @@ interface UseDraftRoomStompParams {
 
 interface UseDraftRoomStompReturn {
   connectionStatus: DraftRoomStompConnectionStatus;
+  disconnect: () => void;
   publishChat: (content: string) => void;
   publishPick: (streamerId: string) => void;
+}
+
+function parseStompMessageBody(messageBody: string) {
+  try {
+    return JSON.parse(messageBody) as unknown;
+  } catch {
+    return messageBody;
+  }
+}
+
+function logDraftStompEvent(
+  eventName: string,
+  payload: Record<string, unknown>,
+  logType: "log" | "warn" = "log",
+) {
+  const logger = logType === "warn" ? console.warn : console.log;
+
+  logger(`[draft stomp] ${eventName}`, {
+    occurredAt: new Date().toISOString(),
+    ...payload,
+  });
 }
 
 export function useDraftRoomStomp({
@@ -88,47 +110,106 @@ export function useDraftRoomStomp({
       subscriptionsRef.current = [];
     };
 
+    const disconnectClient = () => {
+      logDraftStompEvent("disconnect requested", {
+        roomId,
+      });
+      unsubscribeAll();
+
+      const currentClient = clientRef.current;
+      clientRef.current = null;
+
+      if (currentClient) {
+        void currentClient.deactivate();
+      }
+    };
+
     try {
+      const connectHeaders = createDraftRoomStompConnectHeaders({
+        participantToken,
+        roomId,
+      });
       const client = createDraftStompClient({
-        onConnect: () => {
+        connectHeaders,
+        onConnect: (frame) => {
           if (isCleanedUp) {
             return;
           }
 
+          logDraftStompEvent("connected", {
+            connectHeaders,
+            frameHeaders: frame.headers,
+            roomId,
+          });
           unsubscribeAll();
 
           const roomSubscription = client.subscribe(
             `/topic/drafts/rooms/${roomId}`,
             (message: IMessage) => {
-              console.log("[draft room message]", message.body);
+              logDraftStompEvent("message received", {
+                body: parseStompMessageBody(message.body),
+                destination: `/topic/drafts/rooms/${roomId}`,
+                headers: message.headers,
+                rawBody: message.body,
+                roomId,
+              });
               onRoomMessageRef.current?.(message.body);
             },
           );
           const participantsSubscription = client.subscribe(
             `/topic/drafts/rooms/${roomId}/participants`,
             (message: IMessage) => {
-              console.log("[draft room participants]", message.body);
+              logDraftStompEvent("message received", {
+                body: parseStompMessageBody(message.body),
+                destination: `/topic/drafts/rooms/${roomId}/participants`,
+                headers: message.headers,
+                rawBody: message.body,
+                roomId,
+              });
               onParticipantsMessageRef.current?.(message.body);
             },
           );
           const deletedSubscription = client.subscribe(
             `/topic/drafts/rooms/${roomId}/deleted`,
             (message: IMessage) => {
-              console.log("[draft room deleted]", message.body);
+              logDraftStompEvent("message received", {
+                body: parseStompMessageBody(message.body),
+                destination: `/topic/drafts/rooms/${roomId}/deleted`,
+                headers: message.headers,
+                rawBody: message.body,
+                roomId,
+              });
               onRoomDeletedMessageRef.current?.(message.body);
+              disconnectClient();
             },
           );
           const errorSubscription = client.subscribe(
             "/user/queue/errors",
             (message: IMessage) => {
-              console.warn("[draft room error]", message.body);
+              logDraftStompEvent(
+                "message received",
+                {
+                  body: parseStompMessageBody(message.body),
+                  destination: "/user/queue/errors",
+                  headers: message.headers,
+                  rawBody: message.body,
+                  roomId,
+                },
+                "warn",
+              );
               onErrorMessageRef.current?.(message.body);
             },
           );
           const chatSubscription = client.subscribe(
             `/topic/drafts/rooms/${roomId}/chat`,
             (message: IMessage) => {
-              console.log("[draft room chat]", message.body);
+              logDraftStompEvent("message received", {
+                body: parseStompMessageBody(message.body),
+                destination: `/topic/drafts/rooms/${roomId}/chat`,
+                headers: message.headers,
+                rawBody: message.body,
+                roomId,
+              });
               onChatMessageRef.current?.(message.body);
             },
           );
@@ -140,16 +221,39 @@ export function useDraftRoomStomp({
             errorSubscription,
             chatSubscription,
           ];
+          logDraftStompEvent("subscriptions ready", {
+            destinations: [
+              `/topic/drafts/rooms/${roomId}`,
+              `/topic/drafts/rooms/${roomId}/participants`,
+              `/topic/drafts/rooms/${roomId}/deleted`,
+              "/user/queue/errors",
+              `/topic/drafts/rooms/${roomId}/chat`,
+            ],
+            roomId,
+          });
           setConnectionStatus("connected");
         },
-        onDisconnect: () => {
+        onDisconnect: (frame) => {
+          logDraftStompEvent("disconnected", {
+            frameHeaders: frame.headers,
+            roomId,
+          });
           if (!isCleanedUp) {
             setConnectionStatus("disconnected");
           }
         },
         onStompError: (frame) => {
           const errorMessage = frame.body || frame.headers.message || "STOMP error";
-          console.warn("[draft stomp error]", errorMessage);
+          logDraftStompEvent(
+            "stomp error",
+            {
+              body: frame.body,
+              frameHeaders: frame.headers,
+              message: errorMessage,
+              roomId,
+            },
+            "warn",
+          );
 
           if (!isCleanedUp) {
             setConnectionStatus("error");
@@ -157,7 +261,14 @@ export function useDraftRoomStomp({
           }
         },
         onWebSocketError: (event) => {
-          console.warn("[draft websocket error]", event);
+          logDraftStompEvent(
+            "websocket error",
+            {
+              event,
+              roomId,
+            },
+            "warn",
+          );
 
           if (!isCleanedUp) {
             setConnectionStatus("error");
@@ -171,13 +282,24 @@ export function useDraftRoomStomp({
       clientRef.current = client;
       queueMicrotask(() => {
         if (!isCleanedUp) {
+          logDraftStompEvent("connecting", {
+            connectHeaders,
+            roomId,
+          });
           setConnectionStatus("connecting");
         }
       });
       client.activate();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "STOMP setup error";
-      console.warn("[draft stomp setup error]", errorMessage);
+      logDraftStompEvent(
+        "setup error",
+        {
+          message: errorMessage,
+          roomId,
+        },
+        "warn",
+      );
       queueMicrotask(() => {
         if (!isCleanedUp) {
           setConnectionStatus("error");
@@ -188,16 +310,26 @@ export function useDraftRoomStomp({
 
     return () => {
       isCleanedUp = true;
-      unsubscribeAll();
-
-      const currentClient = clientRef.current;
-      clientRef.current = null;
-
-      if (currentClient) {
-        void currentClient.deactivate();
-      }
+      disconnectClient();
     };
   }, [participantToken, roomId]);
+
+  const disconnect = useCallback(() => {
+    logDraftStompEvent("manual disconnect", {
+      roomId,
+    });
+    subscriptionsRef.current.forEach((subscription) => {
+      subscription.unsubscribe();
+    });
+    subscriptionsRef.current = [];
+
+    const currentClient = clientRef.current;
+    clientRef.current = null;
+
+    if (currentClient) {
+      void currentClient.deactivate();
+    }
+  }, [roomId]);
 
   const publishPick = useCallback(
     (streamerId: string) => {
@@ -214,6 +346,14 @@ export function useDraftRoomStomp({
           participantToken,
           streamerId: normalizedStreamerId,
         }),
+      });
+      logDraftStompEvent("publish", {
+        body: {
+          participantToken,
+          streamerId: normalizedStreamerId,
+        },
+        destination: `/app/drafts/rooms/${roomId}`,
+        roomId,
       });
     },
     [participantToken, roomId],
@@ -235,12 +375,21 @@ export function useDraftRoomStomp({
           content: normalizedContent,
         }),
       });
+      logDraftStompEvent("publish", {
+        body: {
+          participantToken,
+          content: normalizedContent,
+        },
+        destination: `/app/drafts/rooms/${roomId}/chat`,
+        roomId,
+      });
     },
     [participantToken, roomId],
   );
 
   return {
     connectionStatus,
+    disconnect,
     publishChat,
     publishPick,
   };

@@ -1,6 +1,7 @@
 import { Client, type IFrame } from "@stomp/stompjs";
 
 interface CreateDraftStompClientParams {
+  connectHeaders?: Record<string, string>;
   onConnect?: (frame: IFrame) => void;
   onDisconnect?: (frame: IFrame) => void;
   onStompError?: (frame: IFrame) => void;
@@ -40,6 +41,7 @@ function getDraftStompBrokerUrl() {
 }
 
 export function createDraftStompClient({
+  connectHeaders,
   onConnect,
   onDisconnect,
   onStompError,
@@ -50,7 +52,7 @@ export function createDraftStompClient({
     heartbeatIncoming: 10000,
     heartbeatOutgoing: 10000,
     reconnectDelay: 5000,
-    // 현재 STOMP 연결 테스트는 인증 헤더 없이 진행함.
+    connectHeaders,
     onConnect,
     onDisconnect,
     onStompError,

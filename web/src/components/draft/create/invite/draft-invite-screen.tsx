@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/utils";
 import type {
@@ -12,7 +11,6 @@ import { DraftInviteLinkCard } from "./draft-invite-link-card";
 import { DraftInviteParticipantList } from "./draft-invite-participant-list";
 
 interface DraftInviteScreenProps {
-  backHref: string;
   connectionStatus: string;
   errorMessage: string;
   infoMessage: string;
@@ -21,6 +19,7 @@ interface DraftInviteScreenProps {
   inviteRoomStatus: DraftInviteRoomStatus;
   isHost: boolean;
   isInitializing: boolean;
+  isLeaving: boolean;
   isPartyMode: boolean;
   isRoleOrderLocked: boolean;
   isStarting: boolean;
@@ -35,6 +34,7 @@ interface DraftInviteScreenProps {
   tournamentLabel: string;
   onCompleteRoleOrder: () => void;
   onCopyInviteLink: () => void;
+  onLeaveRoom: () => void;
   onMoveRoleSlot: (fromIndex: number, toIndex: number) => void;
   onSelectRoleSlot: (roleSlot: DraftInviteRoleSlot, roleIndex: number) => void;
   onStartDraft: () => void;
@@ -148,6 +148,7 @@ function InviteInfoBanner({
   const errorSourceLabel = {
     createRoom: "방 생성 실패",
     joinRoom: "방 입장 실패",
+    leaveRoom: "방 나가기 실패",
     selectCoach: "감독 선택 실패",
     session: "세션 준비 실패",
     stomp: "대기실 연결 실패",
@@ -366,7 +367,6 @@ function StartSection({
 }
 
 export function DraftInviteScreen({
-  backHref,
   connectionStatus,
   errorMessage,
   infoMessage,
@@ -375,6 +375,7 @@ export function DraftInviteScreen({
   inviteRoomStatus,
   isHost,
   isInitializing,
+  isLeaving,
   isPartyMode,
   isRoleOrderLocked,
   isStarting,
@@ -389,6 +390,7 @@ export function DraftInviteScreen({
   tournamentLabel,
   onCompleteRoleOrder,
   onCopyInviteLink,
+  onLeaveRoom,
   onMoveRoleSlot,
   onSelectRoleSlot,
   onStartDraft,
@@ -418,13 +420,15 @@ export function DraftInviteScreen({
     <main className="min-h-full bg-background px-4 py-3 sm:px-6 sm:py-4">
       <div className="mx-auto flex max-w-screen-2xl flex-col gap-3">
         <section className="rounded-3xl border border-border bg-surface px-5 py-4 shadow-sm">
-          <Link
-            href={backHref}
-            className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary"
+          <button
+            type="button"
+            onClick={onLeaveRoom}
+            disabled={isLeaving}
+            className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
           >
             <Image src="/icons/arrow_back.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
-            <span>방 설정</span>
-          </Link>
+            <span>{isLeaving ? "나가는 중" : "방 나가기"}</span>
+          </button>
 
           <InviteProgressBar />
 

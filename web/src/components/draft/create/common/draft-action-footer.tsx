@@ -1,5 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
+import { ArrowBackIcon, ArrowForwardIcon } from "@/components/common/icons";
+import { Button } from "@/components/common/ui";
 import { cn } from "@/utils";
 import type { ReactNode } from "react";
 
@@ -46,39 +47,20 @@ export function DraftActionFooter({
             href={secondaryHref}
             className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-5 text-sm font-bold text-text-primary"
           >
-            <Image
-              src="/icons/arrow_back.svg"
-              alt=""
-              width={16}
-              height={16}
-              aria-hidden
-              className="size-4"
-            />
+            <ArrowBackIcon className="size-4" />
             <span>{secondaryLabel}</span>
           </Link>
         ) : null}
 
-        <button
-          type="button"
+        <Button
           onClick={onPrimaryClick}
           disabled={primaryDisabled}
-          className={cn(
-            "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-2xl px-5 text-sm font-bold transition-colors lg:min-w-[220px]",
-            primaryDisabled
-              ? "cursor-not-allowed bg-surface-muted text-text-muted"
-              : "cursor-pointer bg-violet-600 text-text-inverse hover:bg-violet-700",
-          )}
+          variant="primary"
+          className="lg:min-w-[220px]"
+          trailingIcon={<ArrowForwardIcon className="size-4" />}
         >
           <span>{primaryLabel}</span>
-          <Image
-            src="/icons/arrow_forward.svg"
-            alt=""
-            width={16}
-            height={16}
-            aria-hidden
-            className="size-4"
-          />
-        </button>
+        </Button>
       </div>
     </div>
   );

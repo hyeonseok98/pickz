@@ -35,7 +35,7 @@ public class DraftEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleParticipantUpdated(ParticipantUpdateEvent event) {
         messagingTemplate.convertAndSend(
-                "/topic/drafts/rooms/" + event.roomId(), event.participants()
+                "/topic/drafts/rooms/" + event.roomId() + "/participants", event
         );
     }
 

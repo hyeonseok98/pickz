@@ -33,12 +33,14 @@ function MainLayoutFrame({ children, defaultCollapsed }: MainLayoutFrameProps) {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname();
-  const isSnakeDraftPage = pathname.startsWith("/draft/snake");
+  const isDraftGameRoomPage =
+    pathname.startsWith("/draft/snake") ||
+    (pathname.startsWith("/drafts/") && pathname.endsWith("/play"));
 
   return (
     <MainLayoutFrame
-      key={isSnakeDraftPage ? "snake-draft-layout" : "default-main-layout"}
-      defaultCollapsed={isSnakeDraftPage}
+      key={isDraftGameRoomPage ? "draft-game-room-layout" : "default-main-layout"}
+      defaultCollapsed={isDraftGameRoomPage}
     >
       {children}
     </MainLayoutFrame>

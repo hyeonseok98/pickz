@@ -9,10 +9,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { createDraftRoom, joinDraftRoomByInviteCode, startDraftRoom } from "@/apis/drafts";
-import { useDraftRoomStomp } from "@/hooks/drafts";
-import type { DraftParticipantSession, JoinDraftRoomResponse } from "@/types";
+import { createDraftRoom, joinDraftRoomByInviteCode, saveDraftRoomStreamerPool, startDraftRoom } from "@/apis/draft";
+import { useDraftRoomStomp } from "@/hooks/draft";
+import type { DraftParticipantSession, JoinDraftRoomResponse } from "@/types/draft";
 import {
+  createDraftRoomStreamerTeamSlotsForTest,
   cn,
   getDraftParticipantSession,
   removeDraftParticipantSession,
@@ -685,6 +686,7 @@ export default function DraftWebSocketTestPage() {
           const participantNumber = nextSessions.length + 1;
 
           nextSessions.push({
+            isHost: response.isHost,
             roomId: hostSession.roomId,
             inviteCode: hostSession.inviteCode,
             nickname: getDisplayNickname(response.nickname, `참가자 ${participantNumber}`),
@@ -762,9 +764,24 @@ export default function DraftWebSocketTestPage() {
 
   const createRoomMutation = useMutation({
     mutationKey: ["draft-room-create"],
-    mutationFn: () => createDraftRoom(),
+    mutationFn: async () => {
+      const createdDraftRoom = await createDraftRoom();
+
+      try {
+        await saveDraftRoomStreamerPool({
+          participantToken: createdDraftRoom.participantToken,
+          roomId: createdDraftRoom.roomId,
+          teamStreamerSlots: createDraftRoomStreamerTeamSlotsForTest(fixedTeamCount),
+        });
+      } catch (error) {
+        console.warn("[draft ws-test] streamer pool save failed", error);
+      }
+
+      return createdDraftRoom;
+    },
     onSuccess: (response) => {
       const nextSession: TestParticipantSession = {
+        isHost: response.isHost,
         roomId: response.roomId,
         inviteCode: response.inviteCode,
         nickname: getDisplayNickname(response.nickname, "방장"),
@@ -788,7 +805,7 @@ export default function DraftWebSocketTestPage() {
   const joinRoomMutation = useMutation({
     mutationKey: ["draft-room-join", hostSession?.inviteCode],
     mutationFn: async () => {
-      if (!hostSession) {
+      if (!hostSession || !hostSession.inviteCode) {
         throw new Error("먼저 방을 생성하세요.");
       }
 
@@ -801,7 +818,7 @@ export default function DraftWebSocketTestPage() {
   const joinRemainingParticipantsMutation = useMutation({
     mutationKey: ["draft-room-join-remaining", hostSession?.inviteCode, remainingGuestCount],
     mutationFn: async () => {
-      if (!hostSession) {
+      if (!hostSession || !hostSession.inviteCode) {
         throw new Error("먼저 방을 생성하세요.");
       }
 
@@ -833,15 +850,11 @@ export default function DraftWebSocketTestPage() {
       return startDraftRoom({
         roomId: hostSession.roomId,
         participantToken: hostSession.participantToken,
-        request: {
-          teamCount: fixedTeamCount,
-          teamSize: fixedTeamSize,
-        },
       });
     },
   });
 
-  const inviteLink = hostSession ? createInviteLink(hostSession.inviteCode) : "";
+  const inviteLink = hostSession?.inviteCode ? createInviteLink(hostSession.inviteCode) : "";
   const handleCopyInviteLink = async () => {
     if (!inviteLink) {
       return;
@@ -970,7 +983,7 @@ export default function DraftWebSocketTestPage() {
 
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                 <DetailRow label="roomId" value={String(hostSession.roomId)} />
-                <DetailRow label="inviteCode" value={hostSession.inviteCode} />
+                <DetailRow label="inviteCode" value={hostSession.inviteCode ?? ""} />
                 <DetailRow label="host participantToken" value={hostSession.participantToken} />
                 <DetailRow
                   label="sessionStorage 저장"
@@ -1051,7 +1064,7 @@ export default function DraftWebSocketTestPage() {
 
         <SectionCard
           title="게임 시작"
-          description="5팀 5인 고정값으로 PATCH /settings를 호출하고 WebSocket 게임 시작 이벤트를 확인합니다."
+          description="방장 토큰으로 POST /start를 호출하고 WebSocket 게임 시작 이벤트를 확인합니다."
         >
           <div className="grid gap-4 xl:grid-cols-[auto_auto_auto_minmax(0,1fr)]">
             <CompactMetric label="teamCount" value={String(fixedTeamCount)} />
@@ -1071,12 +1084,12 @@ export default function DraftWebSocketTestPage() {
               <pre className="mt-1 text-xs leading-5 text-text-primary">
                 {JSON.stringify(
                   {
-                    method: "PATCH",
-                    path: hostSession ? `/api/drafts/rooms/${hostSession.roomId}/settings` : "",
+                    method: "POST",
+                    path: hostSession ? `/api/drafts/rooms/${hostSession.roomId}/start` : "",
                     headers: {
                       "X-Participant-Token": hostSession?.participantToken ?? "",
                     },
-                    body: { teamCount: fixedTeamCount, teamSize: fixedTeamSize },
+                    body: null,
                     required: `방장 포함 ${fixedTeamCount}명 필요`,
                     currentParticipants: totalParticipantCount,
                   },

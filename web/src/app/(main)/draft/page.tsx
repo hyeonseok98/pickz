@@ -1,516 +1,319 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { cn } from "@/utils";
-import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
+import { useDraftRoomSettingsStore, useDraftStreamerSetupStore } from "@/stores/draft";
+import type { DraftType, ParticipationMode } from "@/types/draft";
+import { cn } from "@/utils";
 
-type DraftType = "snake" | "auction";
-type ParticipationMode = "solo" | "party";
-
-interface OptionCardProps {
-  description: string;
-  helperLabel: string;
-  icon: ReactNode;
-  isSelected: boolean;
-  onClick: () => void;
-  points: string[];
+interface DraftRoomListItem {
+  currentCount: number;
+  id: string;
+  mode: DraftType;
   title: string;
+  totalCount: number;
 }
 
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
-      <path
-        d="M5 10.5 8.25 13.5 15 6.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+interface LineupGroup {
+  id: string;
+  line: string;
+  names: string[];
 }
 
-function ArrowRightIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
-      <path d="M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path
-        d="m10.5 5 5 5-5 5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+const roomList: DraftRoomListItem[] = [
+  { currentCount: 6, id: "1", mode: "snake", title: "자낳대 시즌2 후보 드래프트", totalCount: 10 },
+  { currentCount: 8, id: "2", mode: "auction", title: "Pickz 경매 연습방", totalCount: 12 },
+  { currentCount: 7, id: "3", mode: "snake", title: "자낳대 팀전 드래프트 연습", totalCount: 10 },
+  { currentCount: 6, id: "4", mode: "auction", title: "Pickz 올스타 드래프트", totalCount: 10 },
+  { currentCount: 5, id: "5", mode: "snake", title: "자낳대 결승 예측 드래프트", totalCount: 8 },
+];
+
+const lineupGroups: LineupGroup[] = [
+  { id: "top", line: "탑", names: ["러너", "룩삼", "강소연", "샘웨"] },
+  { id: "jungle", line: "정글", names: ["갱맘", "소우릎", "뱅", "운타라"] },
+  { id: "mid", line: "미드", names: ["플레임", "앰비션", "헤징", "네클릿"] },
+  { id: "adc", line: "원딜", names: ["고수달", "크캣", "캬하하", "순당무"] },
+  { id: "support", line: "서폿", names: ["던", "푸린", "윤가놈", "침착맨"] },
+  { id: "headCoach", line: "감독", names: ["마린", "베릴", "인간젤리", "큐베"] },
+  { id: "coach", line: "코치", names: ["엄티", "로컨", "노페", "플라이"] },
+];
+
+function ArrowForwardIcon() {
+  return <Image src="/icons/arrow_forward.svg" alt="" width={16} height={16} aria-hidden className="size-4" />;
 }
 
-function SnakeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-6" aria-hidden="true">
-      <path
-        d="M14.5 5.5c-2.6 0-4.5 1.5-4.5 3.7 0 1.8 1.3 3 3.4 3.8l1.5.6c1.7.6 2.6 1.3 2.6 2.5 0 1.5-1.4 2.5-3.4 2.5-2.1 0-3.6-1-3.9-2.8"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <circle cx="15.8" cy="6.2" r="1" fill="currentColor" />
-      <path
-        d="M9.2 8.4c-.8-.4-1.6-.6-2.4-.6-1.7 0-2.8.8-2.8 2.2 0 1.2.9 1.9 2.3 2.3l1.4.4"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function GavelIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-6" aria-hidden="true">
-      <path d="m9 7 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="m7 9 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path
-        d="m13 4 3 3-3 3-3-3 3-3Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path d="m6 11-3 3 4 4 3-3" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M14 17h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function UserIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-6" aria-hidden="true">
-      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" strokeWidth="2" />
-      <path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function UsersIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-6" aria-hidden="true">
-      <path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" strokeWidth="2" />
-      <path d="M17 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" strokeWidth="2" />
-      <path
-        d="M3.5 20a5.5 5.5 0 0 1 11 0"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M14 20a4.5 4.5 0 0 1 6.5-4"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function PlayIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-4" aria-hidden="true">
-      <path d="m9 7 8 5-8 5V7Z" fill="currentColor" />
-    </svg>
-  );
-}
-
-function LinkIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-4" aria-hidden="true">
-      <path d="M10 13.5 14 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path
-        d="M7.5 15.5 6 17a3.5 3.5 0 1 0 5 5l1.5-1.5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M16.5 8.5 18 7a3.5 3.5 0 1 0-5-5L11.5 3.5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function HammerIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-4" aria-hidden="true">
-      <path d="m9 7 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="m7 9 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path
-        d="m13 4 3 3-3 3-3-3 3-3Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function StepChip({ isActive, label }: { isActive?: boolean; label: string }) {
-  return (
-    <div
-      className={cn(
-        "flex h-8 items-center rounded-full border px-3 text-[11px] font-semibold",
-        isActive
-          ? "border-violet-300 bg-violet-100 text-violet-800"
-          : "border-slate-200 bg-white text-slate-500",
-      )}
-    >
-      {label}
-    </div>
-  );
-}
-
-function SectionHeader({
+function ModeCard({
   description,
-  step,
+  iconSrc,
+  isSelected,
   title,
+  onClick,
 }: {
   description: string;
-  step: string;
+  iconSrc: string;
+  isSelected: boolean;
   title: string;
+  onClick: () => void;
 }) {
-  return (
-    <div className="mb-5">
-      <p className="text-xs font-bold tracking-[0.18em] text-violet-600 uppercase">{step}</p>
-      <h2 className="mt-1 text-2xl font-bold tracking-[-0.03em] text-slate-950">{title}</h2>
-      <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
-    </div>
-  );
-}
-
-function OptionCard({
-  description,
-  helperLabel,
-  icon,
-  isSelected,
-  onClick,
-  points,
-  title,
-}: OptionCardProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "h-full w-full cursor-pointer rounded-3xl border p-4 text-left transition-all",
+        "flex min-h-24 w-full cursor-pointer items-center justify-between gap-3 rounded-3xl border px-5 py-4 text-left transition-colors",
         isSelected
-          ? "border-violet-300 bg-violet-50 shadow-[0_8px_20px_rgba(124,58,237,0.08)]"
-          : "border-slate-200 bg-white hover:border-violet-200 hover:bg-slate-50",
+          ? "border-violet-300 bg-violet-50 shadow-[0_12px_30px_rgba(124,58,237,0.08)]"
+          : "border-border bg-surface hover:border-violet-200",
       )}
     >
-      <div className="flex h-full items-start gap-3">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-950">
-          {icon}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-lg font-bold text-slate-950">{title}</h3>
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
-                  {helperLabel}
-                </span>
-              </div>
-
-              <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
-            </div>
-
-            <div
-              className={cn(
-                "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border",
-                isSelected
-                  ? "border-violet-500 bg-violet-500 text-white"
-                  : "border-slate-300 bg-white text-transparent",
-              )}
-            >
-              <CheckIcon />
-            </div>
-          </div>
-
-          <div className="mt-3 border-t border-slate-200 pt-3">
-            <ul className="space-y-2">
-              {points.map((point) => (
-                <li
-                  key={point}
-                  className="flex items-center gap-2 text-sm font-medium text-slate-700"
-                >
-                  <span className="size-2 rounded-full bg-violet-500" />
-                  <span>{point}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+      <div className="flex items-center gap-3">
+        <span className="flex size-12 items-center justify-center rounded-full bg-white shadow-sm">
+          <Image src={iconSrc} alt="" width={24} height={24} aria-hidden className="size-6" />
+        </span>
+        <div className="min-w-0">
+          <p className={cn("text-lg font-bold", isSelected ? "text-violet-700" : "text-text-primary")}>{title}</p>
+          <p className="mt-1 text-sm leading-5 text-text-secondary">{description}</p>
         </div>
       </div>
+
+      <span
+        className={cn(
+          "flex size-9 items-center justify-center rounded-full border",
+          isSelected ? "border-violet-300 bg-white text-violet-700" : "border-border bg-surface text-text-secondary",
+        )}
+      >
+        <ArrowForwardIcon />
+      </span>
     </button>
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
+function GuideCard() {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3">
-      <span className="text-sm font-medium text-slate-500">{label}</span>
-      <span className="text-base font-bold text-slate-950">{value}</span>
-    </div>
-  );
-}
-
-function SummaryFeature({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-      <div className="flex size-8 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-        {icon}
+    <button
+      type="button"
+      className="flex min-h-20 w-full cursor-pointer items-center justify-between gap-3 rounded-3xl border border-orange-100 bg-orange-50/40 px-5 py-4 text-left transition-colors hover:border-orange-200"
+    >
+      <div className="flex items-center gap-3">
+        <span className="flex size-12 items-center justify-center rounded-full bg-white shadow-sm">
+          <Image src="/icons/trophy_fill.svg" alt="" width={24} height={24} aria-hidden className="size-6" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-lg font-bold text-orange-600">가이드 보기</p>
+          <p className="mt-1 text-sm text-text-secondary">드래프트가 처음이라면 여기서 시작하세요.</p>
+        </div>
       </div>
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-    </div>
+      <span className="flex size-9 items-center justify-center rounded-full border border-orange-200 bg-white text-orange-500">
+        <ArrowForwardIcon />
+      </span>
+    </button>
   );
 }
 
-const draftTypeOptions: Record<
-  DraftType,
-  {
-    description: string;
-    helperLabel: string;
-    points: string[];
-    title: string;
-  }
-> = {
-  snake: {
-    description: "정해진 순서대로 돌아가며 선수를 선택합니다.",
-    helperLabel: "기본 진행",
-    points: ["차례 기반 밸런스"],
-    title: "스네이크 드래프트",
-  },
-  auction: {
-    description: "예산을 사용해 원하는 선수를 입찰로 영입합니다.",
-    helperLabel: "전략 중심",
-    points: ["실시간 입찰"],
-    title: "경매",
-  },
-};
+function RoomModeBadge({ mode }: { mode: DraftType }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full border px-3 text-xs font-bold",
+        mode === "snake"
+          ? "border-violet-200 bg-white text-violet-700"
+          : "border-emerald-200 bg-white text-emerald-700",
+      )}
+    >
+      {mode === "snake" ? "스네이크" : "경매"}
+    </span>
+  );
+}
 
-const participationModeOptions: Record<
-  ParticipationMode,
-  {
-    description: string;
-    helperLabel: string;
-    points: string[];
-    title: string;
-  }
-> = {
-  solo: {
-    description: "다른 사람 없이 혼자 바로 진행할 수 있어요.",
-    helperLabel: "빠른 시작",
-    points: ["혼자 진행 가능", "빠른 게임 진행"],
-    title: "혼자하기",
-  },
-  party: {
-    description: "다른 사람들과 함께 같은 방에서 진행해요.",
-    helperLabel: "함께 진행",
-    points: ["같은 방 참여", "초대 링크 공유"],
-    title: "같이하기",
-  },
-};
-
-export default function Page() {
+export default function DraftPage() {
   const router = useRouter();
-  const [selectedDraftType, setSelectedDraftType] = useState<DraftType>("snake");
+  const resetRoomSettings = useDraftRoomSettingsStore((state) => state.resetRoomSettings);
+  const resetStreamerSetup = useDraftStreamerSetupStore((state) => state.resetStreamerSetup);
+  const [selectedDraftType] = useState<DraftType>("snake");
   const [selectedParticipationMode, setSelectedParticipationMode] =
     useState<ParticipationMode>("solo");
 
-  const summaryFeatures = useMemo(() => {
-    if (selectedDraftType === "snake" && selectedParticipationMode === "party") {
-      return [
-        { id: "snake", icon: <PlayIcon />, label: "순서대로 진행" },
-        { id: "party", icon: <PlayIcon />, label: "같은 방 참여" },
-        { id: "link", icon: <LinkIcon />, label: "초대 링크 공유" },
-      ];
-    }
+  const nextCreateHref = useMemo(() => {
+    const params = new URLSearchParams({
+      draftType: selectedDraftType,
+      mode: selectedParticipationMode,
+    });
 
-    if (selectedDraftType === "snake" && selectedParticipationMode === "solo") {
-      return [
-        { id: "snake", icon: <PlayIcon />, label: "순서대로 진행" },
-        { id: "solo", icon: <PlayIcon />, label: "혼자 바로 시작" },
-        { id: "test", icon: <PlayIcon />, label: "빠른 게임 진행" },
-      ];
-    }
-
-    if (selectedDraftType === "auction" && selectedParticipationMode === "party") {
-      return [
-        { id: "auction", icon: <HammerIcon />, label: "실시간 입찰" },
-        { id: "party", icon: <PlayIcon />, label: "같은 방 참여" },
-        { id: "link", icon: <LinkIcon />, label: "초대 링크 공유" },
-      ];
-    }
-
-    return [
-      { id: "auction", icon: <HammerIcon />, label: "실시간 입찰" },
-      { id: "solo", icon: <PlayIcon />, label: "혼자 바로 시작" },
-      { id: "test", icon: <PlayIcon />, label: "빠른 게임 진행" },
-    ];
+    return `/draft/create?${params.toString()}`;
   }, [selectedDraftType, selectedParticipationMode]);
 
+  const startCreateFlow = () => {
+    resetRoomSettings();
+    resetStreamerSetup();
+    router.push(nextCreateHref);
+  };
+
+  const startModeCreateFlow = (participationMode: ParticipationMode) => {
+    resetRoomSettings();
+    resetStreamerSetup();
+    const params = new URLSearchParams({
+      draftType: selectedDraftType,
+      mode: participationMode,
+    });
+
+    router.push(`/draft/create?${params.toString()}`);
+  };
+
   return (
-    <main className="h-[calc(100dvh-var(--header-height))] overflow-hidden bg-slate-50 px-6 py-6 xl:px-8">
-      <div className="h-full w-full">
-        <div className="grid h-full items-stretch gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
-          <section className="flex h-full flex-col rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap items-center gap-3">
-              <StepChip isActive label="1. 방식 선택" />
-              <span className="text-xl text-slate-300">›</span>
-              <StepChip label="2. 참여 모드" />
-              <span className="text-xl text-slate-300">›</span>
-              <StepChip label="3. 생성 완료" />
-            </div>
-
-            <div className="mt-4">
-              <h1 className="text-3xl font-bold tracking-[-0.03em] text-slate-950">게임 생성</h1>
-              <p className="mt-1.5 text-sm leading-6 text-slate-600">
-                방식과 참여 모드를 선택한 뒤 바로 게임을 만들 수 있어요.
-              </p>
-            </div>
-
-            <div className="mt-4 grid min-h-0 flex-1 grid-rows-2 gap-4">
-              <section className="flex min-h-0 flex-col rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <SectionHeader
-                  step="STEP 1"
-                  title="게임 방식 선택"
-                  description="어떤 방식으로 진행할지 먼저 선택해주세요."
-                />
-
-                <div className="grid flex-1 gap-4 lg:grid-cols-2">
-                  <OptionCard
-                    description={draftTypeOptions.snake.description}
-                    helperLabel={draftTypeOptions.snake.helperLabel}
-                    icon={<SnakeIcon />}
-                    isSelected={selectedDraftType === "snake"}
-                    onClick={() => {
-                      setSelectedDraftType("snake");
-                    }}
-                    points={draftTypeOptions.snake.points}
-                    title={draftTypeOptions.snake.title}
-                  />
-
-                  <OptionCard
-                    description={draftTypeOptions.auction.description}
-                    helperLabel={draftTypeOptions.auction.helperLabel}
-                    icon={<GavelIcon />}
-                    isSelected={selectedDraftType === "auction"}
-                    onClick={() => {
-                      setSelectedDraftType("auction");
-                    }}
-                    points={draftTypeOptions.auction.points}
-                    title={draftTypeOptions.auction.title}
-                  />
+    <main className="min-h-full bg-background px-4 py-3 sm:px-6 sm:py-5">
+      <div className="mx-auto max-w-screen-2xl rounded-3xl border border-border bg-surface px-4 py-4 shadow-sm sm:px-5 sm:py-5">
+        <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-4">
+            <section className="overflow-hidden rounded-[28px] border border-border bg-[linear-gradient(135deg,#ffffff_0%,#f7f2ff_52%,#efe5ff_100%)] px-5 py-4 sm:px-6 sm:py-5 xl:px-6 xl:py-5">
+              <div className="grid items-center gap-4 lg:grid-cols-[minmax(0,1fr)_220px] xl:grid-cols-[minmax(0,1fr)_248px]">
+                <div className="min-w-0">
+                  <h1 className="text-[2rem] font-bold leading-[1.28] tracking-[-0.04em] text-text-primary sm:text-[2.2rem] xl:text-[2.45rem]">
+                    전략이 모이면
+                    <br />
+                    완벽한 드래프트가 된다
+                    <br />
+                    <span className="text-violet-700">Pickz</span>에서 시작하세요
+                  </h1>
+                  <p className="mt-2 max-w-xl text-sm leading-5 text-text-secondary">
+                    다양한 방식과 프리셋으로 나만의 드래프트를 설계하고, 최고의 선택을 경험하세요.
+                  </p>
                 </div>
-              </section>
 
-              <section className="flex min-h-0 flex-col rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <SectionHeader
-                  step="STEP 2"
-                  title="참여 모드 선택"
-                  description="혼자 진행할지, 함께 진행할지 선택해주세요."
-                />
-
-                <div className="grid flex-1 gap-4 lg:grid-cols-2">
-                  <OptionCard
-                    description={participationModeOptions.solo.description}
-                    helperLabel={participationModeOptions.solo.helperLabel}
-                    icon={<UserIcon />}
-                    isSelected={selectedParticipationMode === "solo"}
-                    onClick={() => {
-                      setSelectedParticipationMode("solo");
-                    }}
-                    points={participationModeOptions.solo.points}
-                    title={participationModeOptions.solo.title}
-                  />
-
-                  <OptionCard
-                    description={participationModeOptions.party.description}
-                    helperLabel={participationModeOptions.party.helperLabel}
-                    icon={<UsersIcon />}
-                    isSelected={selectedParticipationMode === "party"}
-                    onClick={() => {
-                      setSelectedParticipationMode("party");
-                    }}
-                    points={participationModeOptions.party.points}
-                    title={participationModeOptions.party.title}
-                  />
+                <div className="hidden lg:flex justify-center">
+                  <div className="flex h-44 w-full max-w-[220px] items-center justify-center rounded-[28px] border border-violet-200/70 bg-white/55 shadow-[0_18px_40px_rgba(124,58,237,0.14)] xl:h-48 xl:max-w-[248px]">
+                    <Image
+                      src="/icons/trophy_fill.svg"
+                      alt=""
+                      width={104}
+                      height={104}
+                      aria-hidden
+                      className="size-20 opacity-90 xl:size-24"
+                    />
+                  </div>
                 </div>
-              </section>
-            </div>
-          </section>
+              </div>
+            </section>
 
-          <aside className="flex h-full flex-col rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-bold tracking-[0.16em] text-slate-400 uppercase">Summary</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-slate-950">
-              현재 선택 방식
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              선택한 내용을 확인한 뒤 바로 게임을 만들 수 있어요.
-            </p>
-
-            <div className="mt-5 space-y-2">
-              <SummaryRow label="게임 방식" value={draftTypeOptions[selectedDraftType].title} />
-              <SummaryRow
-                label="참여 모드"
-                value={participationModeOptions[selectedParticipationMode].title}
+            <section className="grid gap-4 lg:grid-cols-2">
+              <ModeCard
+                description="나만의 전략으로 드래프트를 시작하기"
+                iconSrc="/icons/person_fill.svg"
+                isSelected={selectedParticipationMode === "solo"}
+                title="혼자하기"
+                onClick={() => {
+                  setSelectedParticipationMode("solo");
+                  startModeCreateFlow("solo");
+                }}
               />
-            </div>
+              <ModeCard
+                description="친구와 함께 드래프트 즐기기"
+                iconSrc="/icons/group_fill.svg"
+                isSelected={selectedParticipationMode === "party"}
+                title="같이하기"
+                onClick={() => {
+                  setSelectedParticipationMode("party");
+                  startModeCreateFlow("party");
+                }}
+              />
+            </section>
 
-            <div className="mt-4 space-y-2.5">
-              {summaryFeatures.map((feature) => (
-                <SummaryFeature key={feature.id} icon={feature.icon} label={feature.label} />
-              ))}
-            </div>
+            <GuideCard />
+
+            <section className="rounded-3xl border border-border bg-surface px-4 py-4 shadow-sm sm:px-5 sm:py-4">
+              <h2 className="text-xl font-bold tracking-[-0.03em] text-text-primary">참여 가능한 방 목록</h2>
+
+              <div className="mt-3 overflow-hidden rounded-3xl border border-border">
+                <div className="grid grid-cols-[minmax(0,1.6fr)_88px_88px_104px] bg-surface-muted px-4 py-2.5 text-xs font-semibold text-text-secondary">
+                  <span>방 제목</span>
+                  <span>방식</span>
+                  <span>인원수</span>
+                  <span className="text-right">입장</span>
+                </div>
+                <div className="divide-y divide-border">
+                  {roomList.map((room) => (
+                    <div key={room.id} className="grid grid-cols-[minmax(0,1.6fr)_88px_88px_104px] items-center px-4 py-3">
+                      <span className="truncate text-sm font-semibold text-text-primary">{room.title}</span>
+                      <RoomModeBadge mode={room.mode} />
+                      <span className="text-sm font-semibold text-text-secondary">
+                        {room.currentCount} / {room.totalCount}
+                      </span>
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedParticipationMode("party");
+                            resetRoomSettings();
+                            resetStreamerSetup();
+                            router.push("/draft/create/invite?draftType=snake&mode=party&inviteCode=94be2958&teamCount=5&teamSize=5");
+                          }}
+                          className="inline-flex h-9 cursor-pointer items-center justify-center rounded-2xl border border-violet-200 bg-white px-4 text-sm font-bold text-violet-700"
+                        >
+                          참여하기
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside className="space-y-4 2xl:sticky 2xl:top-5">
+            <section className="rounded-[28px] border border-border bg-surface px-4 py-4 shadow-sm sm:px-5 sm:py-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold tracking-[-0.03em] text-text-primary">자낳대 일정</h2>
+                <Image src="/icons/calendar_outline.svg" alt="" width={18} height={18} aria-hidden className="size-4.5" />
+              </div>
+
+              <div className="mt-3 rounded-3xl bg-[linear-gradient(135deg,#faf7ff_0%,#f0e7ff_100%)] px-4 py-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-lg font-bold text-text-primary">자낳대 시즌2</p>
+                    <p className="mt-1 text-sm text-text-secondary">7월 ~ 8월 진행 예정</p>
+                  </div>
+                  <Image src="/icons/trophy_fill.svg" alt="" width={40} height={40} aria-hidden className="size-10" />
+                </div>
+
+                <div className="mt-4 grid grid-cols-4 gap-2">
+                  {["16강", "8강", "4강", "결승"].map((label) => (
+                    <div key={label} className="rounded-2xl border border-white/80 bg-white/80 px-2 py-2.5 text-center">
+                      <p className="text-sm font-bold text-violet-700">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-[28px] border border-border bg-surface px-4 py-4 shadow-sm sm:px-5 sm:py-4">
+              <h3 className="text-lg font-bold tracking-[-0.03em] text-text-primary">자낳대 라인별 참여 스트리머</h3>
+              <div className="mt-3 space-y-3">
+                {lineupGroups.map((group) => (
+                  <div key={group.id} className="rounded-2xl border border-border bg-surface-muted px-3.5 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-text-primary">{group.line}</span>
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap gap-2">
+                      {group.names.map((name) => (
+                        <span
+                          key={name}
+                          className="inline-flex h-7 items-center rounded-full border border-border bg-surface px-2.5 text-[11px] font-semibold text-text-secondary"
+                        >
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
 
             <button
               type="button"
-              onClick={() => {
-                const params = new URLSearchParams({
-                  mode: selectedParticipationMode,
-                  type: selectedDraftType,
-                });
-
-                router.push(`/draft/create?${params.toString()}`);
-              }}
-              className="mt-auto flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-950 text-sm font-bold text-white"
+              onClick={startCreateFlow}
+              className="inline-flex h-14 w-full cursor-pointer items-center justify-center rounded-[24px] bg-violet-600 px-5 text-base font-bold text-white shadow-[0_16px_32px_rgba(124,58,237,0.22)]"
             >
-              <span>방 생성하기</span>
-              <ArrowRightIcon />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                router.push("/draft/api-test");
-              }}
-              className="mt-3 flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700"
-            >
-              API 연동 테스트
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                router.push("/drafts/ws-test");
-              }}
-              className="mt-2 flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-slate-200 bg-white text-sm font-semibold text-slate-700"
-            >
-              웹 소켓 연동 테스트
+              방 만들기
             </button>
           </aside>
         </div>

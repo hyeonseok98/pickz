@@ -1,4 +1,4 @@
-import type { MenuSidebarItem } from "@/types";
+import type { MenuSidebarItem } from "@/types/sidebar";
 import type { SVGProps } from "react";
 
 function HomeIcon(props: SVGProps<SVGSVGElement>) {

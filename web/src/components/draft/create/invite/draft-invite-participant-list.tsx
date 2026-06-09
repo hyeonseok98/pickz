@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { cn } from "@/utils";
+import { AvatarNameCard, Badge, DataTable, DataTableBodyRow, DataTableCell, DataTableHeaderCell, DataTableHeaderRow, SectionCard, StatusChip } from "@/components/common/ui";
 import type { DraftInviteParticipantItem, DraftInviteRoleSlot } from "@/types/draft";
 
 interface DraftInviteParticipantListProps {
@@ -42,20 +42,18 @@ export function DraftInviteParticipantList({
   );
 
   return (
-    <section id="waiting-room" className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-bold tracking-[-0.03em] text-text-primary">대기실 ({participantCountLabel})</h2>
-      </div>
-
-      <div className="mt-3 overflow-hidden rounded-2xl border border-border">
-        <div className="grid grid-cols-[80px_200px_minmax(0,1fr)_140px] bg-violet-50 px-4 py-2.5 text-xs font-bold text-text-secondary">
-          <p className="text-center">픽 순서</p>
-          <p>감독(팀)</p>
-          <p>참여자</p>
-          <p className="text-center">상태</p>
-        </div>
-
-        {Array.from({ length: rowCount }, (_, index) => {
+    <SectionCard id="waiting-room" title={`대기실 (${participantCountLabel})`} padding="sm">
+      <DataTable layout="fixed" className="mt-3">
+        <thead>
+          <DataTableHeaderRow>
+            <DataTableHeaderCell className="w-20">픽 순서</DataTableHeaderCell>
+            <DataTableHeaderCell className="w-52 text-left">감독(팀)</DataTableHeaderCell>
+            <DataTableHeaderCell className="text-left">참여자</DataTableHeaderCell>
+            <DataTableHeaderCell className="w-36">상태</DataTableHeaderCell>
+          </DataTableHeaderRow>
+        </thead>
+        <tbody>
+          {Array.from({ length: rowCount }, (_, index) => {
           const roleSlot = roleSlots[index] ?? {
             coachName: `${index + 1}팀 감독`,
             id: `empty-${index}`,
@@ -82,62 +80,45 @@ export function DraftInviteParticipantList({
           const statusLabel = createStatusLabel(participant);
 
           return (
-            <div
+            <DataTableBodyRow
               key={`waiting-room-row-${roleSlot.id}-${index}`}
-              className="grid grid-cols-[80px_200px_minmax(0,1fr)_140px] items-center border-t border-border px-4 py-2.5"
             >
-              <div className="flex justify-center">
+              <DataTableCell>
                 <span className="inline-flex min-w-9 items-center justify-center rounded-lg border border-border bg-surface-muted px-2 py-1 text-xs font-bold text-text-secondary">
                   {index + 1}
                 </span>
-              </div>
+              </DataTableCell>
 
-              <div className="flex items-center gap-3">
-                <div className="flex size-9 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-muted">
-                  {roleSlot.coachImageUrl ? (
-                    <Image
-                      src={roleSlot.coachImageUrl}
-                      alt=""
-                      width={36}
-                      height={36}
-                      aria-hidden
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    <Image src="/icons/person_outline.svg" alt="" width={18} height={18} aria-hidden className="size-[18px] opacity-70" />
-                  )}
+              <DataTableCell className="text-left">
+                <div className="flex items-center gap-3">
+                  <AvatarNameCard
+                    name={roleLabel}
+                    imageUrl={roleSlot.coachImageUrl}
+                    avatarSize="sm"
+                    className="min-w-0 bg-transparent p-0"
+                    nameClassName="text-left font-bold"
+                  />
                 </div>
-                <p className="text-sm font-bold text-text-primary">{roleLabel}</p>
-              </div>
+              </DataTableCell>
 
-              <div className="flex min-w-0 items-center gap-3">
-                <Image src="/icons/person_outline.svg" alt="" width={16} height={16} aria-hidden className="size-4 opacity-70" />
-                <p className="truncate text-sm font-semibold text-text-primary">
-                  {participant?.nickname ?? "대기 중"}
-                </p>
-                {participant?.isHost ? (
-                  <span className="inline-flex h-6 items-center rounded-full bg-violet-100 px-2.5 text-[11px] font-bold text-violet-700">
-                    방장
-                  </span>
-                ) : null}
-              </div>
+              <DataTableCell className="text-left">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Image src="/icons/person_outline.svg" alt="" width={16} height={16} aria-hidden className="size-4 opacity-70" />
+                  <p className="truncate text-sm font-semibold text-text-primary">
+                    {participant?.nickname ?? "대기 중"}
+                  </p>
+                  {participant?.isHost ? <Badge tone="brand" variant="soft">방장</Badge> : null}
+                </div>
+              </DataTableCell>
 
-              <div className="flex justify-center">
-                <span
-                  className={cn(
-                    "inline-flex h-7 items-center rounded-full px-3 text-xs font-bold",
-                    statusLabel === "선택 완료"
-                      ? "bg-violet-100 text-violet-700"
-                      : "bg-surface-muted text-text-secondary",
-                  )}
-                >
-                  {statusLabel}
-                </span>
-              </div>
-            </div>
+              <DataTableCell>
+                <StatusChip tone={statusLabel === "선택 완료" ? "active" : "muted"}>{statusLabel}</StatusChip>
+              </DataTableCell>
+            </DataTableBodyRow>
           );
         })}
-      </div>
-    </section>
+        </tbody>
+      </DataTable>
+    </SectionCard>
   );
 }

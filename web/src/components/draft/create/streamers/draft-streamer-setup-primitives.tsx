@@ -1,4 +1,5 @@
 import { DraftStreamerCard } from "@/components/draft/streamer-card";
+import { SectionCard as CommonSectionCard, StatusChip as CommonStatusChip } from "@/components/common/ui";
 import type { LolLineKey } from "@/types/draft";
 import { cn } from "@/utils";
 import type { DragEvent, ReactNode } from "react";
@@ -19,18 +20,9 @@ export function SectionCard({
   title: string;
 }) {
   return (
-    <section
-      className={cn(
-        "rounded-3xl border border-border bg-surface p-4 shadow-sm sm:p-4.5",
-        className,
-      )}
-    >
-      <div>
-        <h2 className="text-base font-bold tracking-[-0.03em] text-text-primary">{title}</h2>
-        <p className="mt-1 text-sm leading-5 text-text-secondary">{description}</p>
-      </div>
-      <div className="mt-3">{children}</div>
-    </section>
+    <CommonSectionCard title={title} description={description} className={className} contentClassName="mt-3">
+      {children}
+    </CommonSectionCard>
   );
 }
 
@@ -46,19 +38,12 @@ export function StatusChip({
   tone?: "default" | "muted";
 }) {
   return (
-    <span
-      className={cn(
-        "inline-flex h-8 items-center rounded-full border px-3 text-xs font-semibold",
-        active
-          ? "border-violet-300 bg-violet-100 text-violet-700"
-          : tone === "muted"
-            ? "border-border bg-surface-muted text-text-secondary"
-            : "border-border bg-surface text-text-secondary",
-        className,
-      )}
+    <CommonStatusChip
+      tone={active ? "active" : tone === "muted" ? "muted" : "neutral"}
+      className={className}
     >
       {children}
-    </span>
+    </CommonStatusChip>
   );
 }
 

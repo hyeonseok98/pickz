@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { ArrowForwardIcon } from "@/components/common/icons";
+import { Button } from "@/components/common/ui";
 import { useDraftRoomSettingsStore, useDraftStreamerSetupStore } from "@/stores/draft";
 import type { DraftType, ParticipationMode } from "@/types/draft";
 import { cn } from "@/utils";
@@ -38,10 +40,6 @@ const lineupGroups: LineupGroup[] = [
   { id: "headCoach", line: "감독", names: ["마린", "베릴", "인간젤리", "큐베"] },
   { id: "coach", line: "코치", names: ["엄티", "로컨", "노페", "플라이"] },
 ];
-
-function ArrowForwardIcon() {
-  return <Image src="/icons/arrow_forward.svg" alt="" width={16} height={16} aria-hidden className="size-4" />;
-}
 
 function ModeCard({
   description,
@@ -239,18 +237,18 @@ export default function DraftPage() {
                         {room.currentCount} / {room.totalCount}
                       </span>
                       <div className="flex justify-end">
-                        <button
-                          type="button"
+                        <Button
                           onClick={() => {
                             setSelectedParticipationMode("party");
                             resetRoomSettings();
                             resetStreamerSetup();
                             router.push("/draft/create/invite?draftType=snake&mode=party&inviteCode=94be2958&teamCount=5&teamSize=5");
                           }}
-                          className="inline-flex h-9 cursor-pointer items-center justify-center rounded-2xl border border-violet-200 bg-white px-4 text-sm font-bold text-violet-700"
+                          variant="outline"
+                          size="sm"
                         >
                           참여하기
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -308,13 +306,14 @@ export default function DraftPage() {
               </div>
             </section>
 
-            <button
-              type="button"
+            <Button
               onClick={startCreateFlow}
-              className="inline-flex h-14 w-full cursor-pointer items-center justify-center rounded-[24px] bg-violet-600 px-5 text-base font-bold text-white shadow-[0_16px_32px_rgba(124,58,237,0.22)]"
+              variant="primary"
+              size="lg"
+              className="h-14 w-full rounded-[24px] text-base font-bold"
             >
               방 만들기
-            </button>
+            </Button>
           </aside>
         </div>
       </div>

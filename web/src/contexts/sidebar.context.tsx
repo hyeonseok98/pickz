@@ -1,6 +1,6 @@
 "use client";
 
-import type { SidebarContextValue } from "@/types";
+import type { SidebarContextValue } from "@/types/sidebar";
 import { createContext, useContext, type ReactNode } from "react";
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);

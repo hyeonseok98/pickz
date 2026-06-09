@@ -1,6 +1,6 @@
 "use client";
 
-import type { MenuSidebarItem } from "@/types";
+import type { MenuSidebarItem } from "@/types/sidebar";
 import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "./sidebar-nav-item";
 

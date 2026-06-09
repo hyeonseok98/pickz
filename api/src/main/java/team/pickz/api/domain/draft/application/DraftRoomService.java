@@ -10,6 +10,8 @@ import team.pickz.api.domain.draft.application.event.DraftRoomStartedEvent;
 import team.pickz.api.domain.draft.application.event.ParticipantUpdateEvent;
 import team.pickz.api.domain.draft.application.event.RoomDeletedEvent;
 import team.pickz.api.domain.draft.application.event.RoomStatusEvent;
+import team.pickz.api.domain.draft.application.util.RandomNicknameGenerator;
+import team.pickz.api.domain.draft.application.util.RoomSequenceManager;
 import team.pickz.api.domain.draft.domain.type.DraftMode;
 import team.pickz.api.domain.draft.domain.type.ParticipationType;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
@@ -30,6 +32,7 @@ public class DraftRoomService {
     private final DraftParticipantRepository draftParticipantRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final AuctionRoomService auctionRoomService;
+    private final RoomSequenceManager roomSequenceManager;
 
     @Transactional
     public RoomInitResponse initRoom(/**Long hostMemberId,**/RoomInitRequest request) {
@@ -53,10 +56,13 @@ public class DraftRoomService {
                 .build();
         draftRoomRepository.save(room);
 
+        int sequence = roomSequenceManager.getNextSequence(room.getId());
+        String hostNickname = RandomNicknameGenerator.generate(sequence);
+
         DraftParticipant host = DraftParticipant.builder()
                 .roomId(room.getId())
                 //.memberId(member.getId())
-                //.nickname(member.getNickname())
+                .nickname(hostNickname)
                 .isHost(true)
                 .build();
         draftParticipantRepository.save(host);
@@ -65,6 +71,7 @@ public class DraftRoomService {
                 .roomId(room.getId())
                 .inviteCode(room.getInviteCode())
                 .participantToken(host.getParticipantToken())
+                .nickname(host.getNickname())
                 .isHost(true)
                 .build();
     }

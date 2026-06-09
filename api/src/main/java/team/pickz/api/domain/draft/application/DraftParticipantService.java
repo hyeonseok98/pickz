@@ -78,9 +78,12 @@ public class DraftParticipantService {
         );
 
         return ParticipantResponse.builder()
+                .id(participant.getId())
                 .roomId(room.getId())
                 .participantToken(participant.getParticipantToken())
+                .nickname(participant.getNickname())
                 .isHost(participant.isHost())
+                .isReady(participant.isReady())
                 .build();
     }
 

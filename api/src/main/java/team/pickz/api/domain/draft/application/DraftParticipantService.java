@@ -2,6 +2,7 @@ package team.pickz.api.domain.draft.application;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.draft.application.dto.response.JoinRoomResponse;
@@ -109,7 +110,11 @@ public class DraftParticipantService {
             participant.selectCoach(coachName, targetTurnOrder);
         }
 
-        draftParticipantRepository.flush();
+        try {
+            draftParticipantRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalStateException("이미 다른 참가자가 선택한 감독입니다.");
+        }
 
         List<DraftParticipant> allParticipants = draftParticipantRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);
 

@@ -1,32 +1,5 @@
+import { ArrowForwardIcon, PlusIcon } from "@/components/common/icons";
 import { Badge, Button, DataTable, DataTableBodyRow, DataTableCell, DataTableHeaderCell, DataTableHeaderRow, SectionCard, StatusChip } from "@/components/common/ui";
-
-function SparkleIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="size-full">
-      <path
-        d="M10 2.5 11.9 7l4.6 1.9-4.6 1.9L10 15.5l-1.9-4.7L3.5 8.9 8.1 7 10 2.5Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ArrowRightIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="size-full">
-      <path
-        d="M4 10h11m0 0-4-4m4 4-4 4"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 export default function DraftUiTestPage() {
   return (
@@ -40,14 +13,14 @@ export default function DraftUiTestPage() {
           <SectionCard title="Button" description="variant와 size 조합 확인용" padding="sm">
             <div className="flex flex-wrap gap-3">
               <Button variant="primary" size="sm">Primary</Button>
-              <Button variant="primary" size="md" leadingIcon={<SparkleIcon />}>방 만들기</Button>
-              <Button variant="primary" size="lg" trailingIcon={<ArrowRightIcon />}>다음 단계</Button>
+              <Button variant="primary" size="md" leadingIcon={<PlusIcon />}>방 만들기</Button>
+              <Button variant="primary" size="lg" trailingIcon={<ArrowForwardIcon />}>다음 단계</Button>
               <Button variant="secondary" size="md">Secondary</Button>
-              <Button variant="outline" size="md" leadingIcon={<SparkleIcon />}>링크 복사</Button>
+              <Button variant="outline" size="md" leadingIcon={<PlusIcon />}>링크 복사</Button>
               <Button variant="ghost" size="md">뒤로가기</Button>
               <Button variant="danger" size="md">방 나가기</Button>
               <Button variant="primary" size="iconMd" aria-label="아이콘 버튼">
-                <SparkleIcon />
+                <PlusIcon />
               </Button>
               <Button variant="primary" size="md" isLoading>저장</Button>
             </div>

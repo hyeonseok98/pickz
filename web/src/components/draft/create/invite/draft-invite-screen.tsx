@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { useState } from "react";
+import { ArrowBackIcon, GroupOutlineIcon, LinkIcon } from "@/components/common/icons";
 import { cn } from "@/utils";
 import type {
   DraftInviteParticipantItem,
@@ -316,7 +317,7 @@ function InviteRoleSelection({
           type="button"
           className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-violet-300 bg-surface px-3 text-xs font-bold text-violet-700"
         >
-          <Image src="/icons/group_outline.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
+          <GroupOutlineIcon className="size-4" />
           <span>참여 선수 목록 보기 ({participantRosterCount})</span>
         </button>
       </div>
@@ -358,8 +359,8 @@ function StartSection({
             ? "cursor-not-allowed bg-surface-muted text-text-muted"
             : "cursor-pointer bg-violet-600 text-white hover:bg-violet-700",
         )}
-      >
-        <Image src="/icons/group_outline.svg" alt="" width={24} height={24} aria-hidden className="size-6" />
+        >
+        <GroupOutlineIcon className="size-6" />
         <span>{isStarting ? "시작 요청 중" : primaryActionLabel}</span>
       </button>
     </section>
@@ -426,7 +427,7 @@ export function DraftInviteScreen({
             disabled={isLeaving}
             className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
           >
-            <Image src="/icons/arrow_back.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
+            <ArrowBackIcon className="size-4" />
             <span>{isLeaving ? "나가는 중" : "방 나가기"}</span>
           </button>
 
@@ -442,8 +443,8 @@ export function DraftInviteScreen({
             <SummaryCard iconSrc="/icons/setting_outline.svg" label="카테고리" value="롤 (League of Legends)" />
             <SummaryCard iconSrc="/icons/group_outline.svg" label="팀 개수" value={`${teamCountValue}팀`} />
             <div className="hidden items-center justify-center rounded-3xl bg-violet-50/70 lg:flex">
-              <div className="relative flex size-28 items-center justify-center rounded-[28px] bg-gradient-to-br from-violet-100 to-white shadow-inner">
-                <Image src="/icons/link.svg" alt="" width={38} height={38} aria-hidden className="size-[38px]" />
+              <div className="relative flex size-28 items-center justify-center rounded-[28px] bg-gradient-to-br from-violet-100 to-white text-violet-700 shadow-inner">
+                <LinkIcon className="size-[38px]" />
                 <span className="absolute left-5 top-5 size-2 rounded-full bg-violet-300" />
                 <span className="absolute bottom-6 right-6 size-2 rounded-full bg-sky-300" />
                 <span className="absolute right-4 top-10 size-1.5 rounded-full bg-emerald-300" />

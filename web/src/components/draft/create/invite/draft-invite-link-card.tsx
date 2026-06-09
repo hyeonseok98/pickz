@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ChevronRightIcon, LinkIcon } from "@/components/common/icons";
 
 interface DraftInviteLinkCardProps {
   inviteLink: string;
@@ -31,8 +31,8 @@ export function DraftInviteLinkCard({
   return (
     <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
       <div className="flex items-start gap-3">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-50">
-          <Image src="/icons/link.svg" alt="" width={22} height={22} aria-hidden className="size-[22px]" />
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+          <LinkIcon className="size-[22px]" />
         </div>
         <div className="min-w-0">
           <h2 className="text-xl font-bold tracking-[-0.03em] text-text-primary">링크 복사</h2>
@@ -55,7 +55,7 @@ export function DraftInviteLinkCard({
           <p className="mt-1 truncate text-xs text-text-secondary">{actionDescription}</p>
         </div>
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-violet-300 bg-surface text-violet-700">
-          <Image src="/icons/chevron_right.svg" alt="" width={16} height={16} aria-hidden className="size-4" />
+          <ChevronRightIcon className="size-4" />
         </span>
       </button>
 

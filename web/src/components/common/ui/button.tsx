@@ -18,9 +18,9 @@ const buttonVariants = cva(
           "bg-danger-500 text-text-inverse shadow-action-danger hover:bg-danger-600 active:bg-danger-700",
       },
       size: {
-        sm: "h-8 gap-1.5 rounded-xl px-3 text-[13px]",
-        md: "h-10 gap-2 rounded-2xl px-4 text-sm",
-        lg: "h-12 gap-2 rounded-2xl px-5 text-[15px]",
+        sm: "h-8 gap-1 rounded-xl px-3 text-[13px]",
+        md: "h-10 gap-1 rounded-2xl px-4 text-sm",
+        lg: "h-12 gap-1 rounded-2xl px-5 text-[15px]",
         iconSm: "size-8 rounded-xl",
         iconMd: "size-10 rounded-2xl",
         iconLg: "size-12 rounded-2xl",
@@ -41,9 +41,9 @@ const buttonVariants = cva(
 const buttonIconVariants = cva("shrink-0", {
   variants: {
     size: {
-      sm: "size-4",
-      md: "size-[18px]",
-      lg: "size-5",
+      sm: "size-3.5",
+      md: "size-4",
+      lg: "size-[18px]",
       iconSm: "size-4",
       iconMd: "size-[18px]",
       iconLg: "size-5",

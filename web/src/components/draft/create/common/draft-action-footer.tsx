@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { ArrowBackIcon, ArrowForwardIcon } from "@/components/common/icons";
 import { cn } from "@/utils";
 import type { ReactNode } from "react";
 
@@ -46,14 +46,7 @@ export function DraftActionFooter({
             href={secondaryHref}
             className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-5 text-sm font-bold text-text-primary"
           >
-            <Image
-              src="/icons/arrow_back.svg"
-              alt=""
-              width={16}
-              height={16}
-              aria-hidden
-              className="size-4"
-            />
+            <ArrowBackIcon className="size-4" />
             <span>{secondaryLabel}</span>
           </Link>
         ) : null}
@@ -70,14 +63,7 @@ export function DraftActionFooter({
           )}
         >
           <span>{primaryLabel}</span>
-          <Image
-            src="/icons/arrow_forward.svg"
-            alt=""
-            width={16}
-            height={16}
-            aria-hidden
-            className="size-4"
-          />
+          <ArrowForwardIcon className="size-4" />
         </button>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { ArrowForwardIcon } from "@/components/common/icons";
 import { useDraftRoomSettingsStore, useDraftStreamerSetupStore } from "@/stores/draft";
 import type { DraftType, ParticipationMode } from "@/types/draft";
 import { cn } from "@/utils";
@@ -38,10 +39,6 @@ const lineupGroups: LineupGroup[] = [
   { id: "headCoach", line: "감독", names: ["마린", "베릴", "인간젤리", "큐베"] },
   { id: "coach", line: "코치", names: ["엄티", "로컨", "노페", "플라이"] },
 ];
-
-function ArrowForwardIcon() {
-  return <Image src="/icons/arrow_forward.svg" alt="" width={16} height={16} aria-hidden className="size-4" />;
-}
 
 function ModeCard({
   description,

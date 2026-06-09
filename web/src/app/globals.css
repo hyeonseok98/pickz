@@ -112,6 +112,11 @@
   --color-text-muted: var(--semantic-text-muted);
   --color-text-inverse: var(--semantic-text-inverse);
   --color-disabled: var(--semantic-disabled);
+
+  --shadow-surface-sm: var(--semantic-shadow-surface-sm);
+  --shadow-surface-lg: var(--semantic-shadow-surface-lg);
+  --shadow-action-primary: var(--semantic-shadow-action-primary);
+  --shadow-action-danger: var(--semantic-shadow-action-danger);
 }
 
 :root {
@@ -242,6 +247,10 @@
   --raw-text-muted-light: var(--raw-gray-500);
   --raw-text-inverse-light: var(--raw-white);
   --raw-disabled-light: var(--raw-gray-300);
+  --raw-shadow-surface-sm-light: 0 1px 2px rgba(30, 27, 36, 0.06);
+  --raw-shadow-surface-lg-light: 0 16px 32px rgba(30, 27, 36, 0.06);
+  --raw-shadow-action-primary-light: 0 12px 24px rgba(98, 0, 238, 0.18);
+  --raw-shadow-action-danger-light: 0 12px 24px rgba(224, 49, 79, 0.16);
 
   --raw-background-dark: var(--raw-gray-900);
   --raw-foreground-dark: var(--raw-gray-50);
@@ -259,6 +268,10 @@
   --raw-text-muted-dark: var(--raw-gray-400);
   --raw-text-inverse-dark: var(--raw-gray-900);
   --raw-disabled-dark: var(--raw-gray-700);
+  --raw-shadow-surface-sm-dark: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --raw-shadow-surface-lg-dark: 0 16px 32px rgba(0, 0, 0, 0.32);
+  --raw-shadow-action-primary-dark: 0 12px 24px rgba(150, 84, 244, 0.2);
+  --raw-shadow-action-danger-dark: 0 12px 24px rgba(224, 49, 79, 0.22);
 
   --semantic-background: var(--raw-background-light);
   --semantic-foreground: var(--raw-foreground-light);
@@ -276,6 +289,10 @@
   --semantic-text-muted: var(--raw-text-muted-light);
   --semantic-text-inverse: var(--raw-text-inverse-light);
   --semantic-disabled: var(--raw-disabled-light);
+  --semantic-shadow-surface-sm: var(--raw-shadow-surface-sm-light);
+  --semantic-shadow-surface-lg: var(--raw-shadow-surface-lg-light);
+  --semantic-shadow-action-primary: var(--raw-shadow-action-primary-light);
+  --semantic-shadow-action-danger: var(--raw-shadow-action-danger-light);
 }
 
 [data-theme="dark"] {
@@ -297,6 +314,10 @@
   --semantic-text-muted: var(--raw-text-muted-dark);
   --semantic-text-inverse: var(--raw-text-inverse-dark);
   --semantic-disabled: var(--raw-disabled-dark);
+  --semantic-shadow-surface-sm: var(--raw-shadow-surface-sm-dark);
+  --semantic-shadow-surface-lg: var(--raw-shadow-surface-lg-dark);
+  --semantic-shadow-action-primary: var(--raw-shadow-action-primary-dark);
+  --semantic-shadow-action-danger: var(--raw-shadow-action-danger-dark);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -319,7 +340,27 @@
     --semantic-text-muted: var(--raw-text-muted-dark);
     --semantic-text-inverse: var(--raw-text-inverse-dark);
     --semantic-disabled: var(--raw-disabled-dark);
+    --semantic-shadow-surface-sm: var(--raw-shadow-surface-sm-dark);
+    --semantic-shadow-surface-lg: var(--raw-shadow-surface-lg-dark);
+    --semantic-shadow-action-primary: var(--raw-shadow-action-primary-dark);
+    --semantic-shadow-action-danger: var(--raw-shadow-action-danger-dark);
   }
+}
+
+@utility shadow-surface-sm {
+  box-shadow: var(--semantic-shadow-surface-sm);
+}
+
+@utility shadow-surface-lg {
+  box-shadow: var(--semantic-shadow-surface-lg);
+}
+
+@utility shadow-action-primary {
+  box-shadow: var(--semantic-shadow-action-primary);
+}
+
+@utility shadow-action-danger {
+  box-shadow: var(--semantic-shadow-action-danger);
 }
 
 html,

@@ -100,19 +100,21 @@ public class DraftParticipantService {
             throw new IllegalArgumentException("참여자가 해당 방에 속하지 않습니다.");
         }
 
-        // 동시성 처리 고려: 이미 누군가 해당 감독/순서를 골랐는지 검증
-        boolean isAlreadySelected = draftParticipantRepository.existsByRoomIdAndSelectedCoachName(roomId, coachName);
-        if (isAlreadySelected) {
-            throw new IllegalStateException("이미 다른 참가자가 선택한 감독입니다.");
+        if (coachName.equals(participant.getSelectedCoachName())) {
+        } else {
+            boolean isAlreadySelected = draftParticipantRepository.existsByRoomIdAndSelectedCoachName(roomId, coachName);
+            if (isAlreadySelected) {
+                throw new IllegalStateException("이미 다른 참가자가 선택한 감독입니다.");
+            }
+            participant.selectCoach(coachName, targetTurnOrder);
         }
 
-        participant.selectCoach(coachName, targetTurnOrder);
         draftParticipantRepository.flush();
 
         List<DraftParticipant> allParticipants = draftParticipantRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);
 
         List<ParticipantResponse> updatedParticipants = allParticipants.stream()
-                .map(this::mapToParticipantResponse) // 위에서 만든 헬퍼 메서드 사용
+                .map(this::mapToParticipantResponse)
                 .toList();
 
         applicationEventPublisher.publishEvent(

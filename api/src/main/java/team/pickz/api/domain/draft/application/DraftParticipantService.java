@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import team.pickz.api.domain.draft.application.dto.response.JoinRoomResponse;
 import team.pickz.api.domain.draft.application.dto.response.ParticipantResponse;
 import team.pickz.api.domain.draft.application.event.ParticipantJoinedEvent;
 import team.pickz.api.domain.draft.application.event.ParticipantUpdateEvent;
@@ -27,7 +28,7 @@ public class DraftParticipantService {
     private final DraftParticipantRepository draftParticipantRepository;
 
     @Transactional
-    public ParticipantResponse joinRoom(String inviteCode) {
+    public JoinRoomResponse joinRoom(String inviteCode) {
         DraftRoom room = draftRoomRepository.findByInviteCodeWithLock(inviteCode)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
 
@@ -77,13 +78,16 @@ public class DraftParticipantService {
                         .build()
         );
 
-        return ParticipantResponse.builder()
-                .id(participant.getId())
+        return JoinRoomResponse.builder()
                 .roomId(room.getId())
+                .title(room.getTitle())
+                .draftMode(room.getDraftMode())
+                .participationType(room.getParticipationType())
+                .teamCount(room.getTeamCount())
                 .participantToken(participant.getParticipantToken())
                 .nickname(participant.getNickname())
                 .isHost(participant.isHost())
-                .isReady(participant.isReady())
+                .participants(participantResponses)
                 .build();
     }
 

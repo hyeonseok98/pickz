@@ -2,8 +2,10 @@ package team.pickz.api.domain.draft.application;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import team.pickz.api.domain.draft.application.dto.response.JoinRoomResponse;
 import team.pickz.api.domain.draft.application.dto.response.ParticipantResponse;
 import team.pickz.api.domain.draft.application.event.ParticipantJoinedEvent;
 import team.pickz.api.domain.draft.application.event.ParticipantUpdateEvent;
@@ -27,7 +29,7 @@ public class DraftParticipantService {
     private final DraftParticipantRepository draftParticipantRepository;
 
     @Transactional
-    public ParticipantResponse joinRoom(String inviteCode) {
+    public JoinRoomResponse joinRoom(String inviteCode) {
         DraftRoom room = draftRoomRepository.findByInviteCodeWithLock(inviteCode)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
 
@@ -77,10 +79,16 @@ public class DraftParticipantService {
                         .build()
         );
 
-        return ParticipantResponse.builder()
+        return JoinRoomResponse.builder()
                 .roomId(room.getId())
+                .title(room.getTitle())
+                .draftMode(room.getDraftMode())
+                .participationType(room.getParticipationType())
+                .teamCount(room.getTeamCount())
                 .participantToken(participant.getParticipantToken())
+                .nickname(participant.getNickname())
                 .isHost(participant.isHost())
+                .participants(participantResponses)
                 .build();
     }
 
@@ -93,19 +101,25 @@ public class DraftParticipantService {
             throw new IllegalArgumentException("참여자가 해당 방에 속하지 않습니다.");
         }
 
-        // 동시성 처리 고려: 이미 누군가 해당 감독/순서를 골랐는지 검증
-        boolean isAlreadySelected = draftParticipantRepository.existsByRoomIdAndSelectedCoachName(roomId, coachName);
-        if (isAlreadySelected) {
-            throw new IllegalStateException("이미 다른 참가자가 선택한 감독입니다.");
+        if (coachName.equals(participant.getSelectedCoachName())) {
+        } else {
+            boolean isAlreadySelected = draftParticipantRepository.existsByRoomIdAndSelectedCoachName(roomId, coachName);
+            if (isAlreadySelected) {
+                throw new IllegalStateException("이미 다른 참가자가 선택한 감독입니다.");
+            }
+            participant.selectCoach(coachName, targetTurnOrder);
         }
 
-        participant.selectCoach(coachName, targetTurnOrder);
-        draftParticipantRepository.flush();
+        try {
+            draftParticipantRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalStateException("이미 다른 참가자가 선택한 감독입니다.");
+        }
 
         List<DraftParticipant> allParticipants = draftParticipantRepository.findAllByRoomIdOrderByTurnOrderAsc(roomId);
 
         List<ParticipantResponse> updatedParticipants = allParticipants.stream()
-                .map(this::mapToParticipantResponse) // 위에서 만든 헬퍼 메서드 사용
+                .map(this::mapToParticipantResponse)
                 .toList();
 
         applicationEventPublisher.publishEvent(

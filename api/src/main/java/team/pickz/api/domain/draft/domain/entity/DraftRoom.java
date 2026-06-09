@@ -5,7 +5,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import team.pickz.api.domain.draft.domain.RoomStatus;
+import team.pickz.api.domain.draft.domain.type.DraftMode;
+import team.pickz.api.domain.draft.domain.type.ParticipationType;
+import team.pickz.api.domain.draft.domain.type.RoomStatus;
 
 import java.util.UUID;
 
@@ -18,15 +20,23 @@ public class DraftRoom {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String title;
+
     @Column(nullable = false, unique = true)
     private String inviteCode;
 
     @Enumerated(EnumType.STRING)
     private RoomStatus status;
 
-    private String draftMode;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DraftMode draftMode;
 
-    private String draftRuleType;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ParticipationType participationType;
+
+    private String preset;
 
     private int teamCount;
 
@@ -35,11 +45,16 @@ public class DraftRoom {
     private int currentPickCount;
 
     @Builder
-    public DraftRoom(String draftMode, String draftRuleType, int teamCount, int teamSize) {
+    public DraftRoom(String title, DraftMode draftMode, ParticipationType participationType, String preset, int teamCount, int teamSize) {
+        if (participationType == ParticipationType.TOGETHER && (title == null || title.isBlank())) {
+            throw new IllegalArgumentException("같이하기 모드에서는 방 제목이 필수입니다.");
+        }
+        this.title = title;
         this.inviteCode = UUID.randomUUID().toString().substring(0, 8);
         this.status = RoomStatus.WAITING;
         this.draftMode = draftMode;
-        this.draftRuleType = draftRuleType;
+        this.participationType = participationType;
+        this.preset = preset;
         this.teamCount = teamCount;
         this.teamSize = teamSize;
         this.currentPickCount = 0;
@@ -52,16 +67,37 @@ public class DraftRoom {
         this.status = RoomStatus.IN_PROGRESS;
     }
 
+    public void verifyPickable() {
+        if(this.status == RoomStatus.DONE) {
+            throw new IllegalArgumentException("드래프트가 이미 종료되었습니다.");
+        }
+        if(this.status == RoomStatus.WAITING) {
+            throw new IllegalArgumentException("드래프트가 아직 시작되지 않았습니다.");
+        }
+    }
+
+    public boolean isDraftDone() {
+        return this.status == RoomStatus.DONE;
+    }
+
+    public void validateTeamSlot(int teamSlot) {
+        if(teamSlot < 1 || teamSlot > this.teamCount) {
+            throw new IllegalArgumentException(
+                    String.format("유효하지 않은 팀 슬롯입니다. (입력: %d, 허용 범위: 1 ~ %d)",
+                            teamSlot, this.teamCount)
+            );
+        }
+    }
+
     public void incrementPickCount() {
         this.currentPickCount++;
-        if (this.currentPickCount >= (this.teamCount * this.teamSize)) {
+        if(this.currentPickCount >= (this.teamCount * this.teamSize)) {
             this.status = RoomStatus.DONE;
         }
     }
 
-    public void updateSettings(int teamCount, int teamSize) {
-        this.teamCount = teamCount;
-        this.teamSize = teamSize;
+    public void delete() {
+        this.status = RoomStatus.DELETED;
     }
 
 }

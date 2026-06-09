@@ -15,7 +15,7 @@ import team.pickz.api.domain.draft.application.dto.response.WebSocketErrorRespon
 @Slf4j
 @RequiredArgsConstructor
 @Controller
-public class DraftMessageController implements DraftMessageDocsController {
+public class DraftMessageController {
 
     private final DraftPlayService draftPlayService;
     private final SimpMessagingTemplate messagingTemplate;
@@ -25,7 +25,7 @@ public class DraftMessageController implements DraftMessageDocsController {
             @DestinationVariable Long roomId,
             @Valid @Payload PickMessageRequest message
     ) {
-        draftPlayService.processPick(roomId, message.participantToken(), message.streamerId());
+        draftPlayService.processPick(roomId, message);
     }
 
     @MessageExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})

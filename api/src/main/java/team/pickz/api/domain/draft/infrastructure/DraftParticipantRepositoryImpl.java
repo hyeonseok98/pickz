@@ -8,8 +8,8 @@ import team.pickz.api.domain.draft.domain.repository.DraftParticipantRepository;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
 @RequiredArgsConstructor
+@Repository
 public class DraftParticipantRepositoryImpl implements DraftParticipantRepository {
 
     private final DraftParticipantJpaRepository draftParticipantJpaRepository;
@@ -30,6 +30,26 @@ public class DraftParticipantRepositoryImpl implements DraftParticipantRepositor
     }
 
     @Override
+    public boolean existsByRoomIdAndSelectedCoachName(Long roomId, String coachName) {
+        return draftParticipantJpaRepository.existsByRoomIdAndSelectedCoachName(roomId, coachName);
+    }
+
+    @Override
+    public void flush() {
+        draftParticipantJpaRepository.flush();
+    }
+
+    @Override
+    public int countByRoomId(Long roomId) {
+        return draftParticipantJpaRepository.countByRoomId(roomId);
+    }
+
+    @Override
+    public void delete(DraftParticipant participant) {
+        draftParticipantJpaRepository.delete(participant);
+    }
+
+    @Override
     public List<DraftParticipant> findAllByRoomId(Long roomId) {
         return draftParticipantJpaRepository.findAllByRoomId(roomId);
     }
@@ -37,6 +57,11 @@ public class DraftParticipantRepositoryImpl implements DraftParticipantRepositor
     @Override
     public Optional<DraftParticipant> findByRoomIdAndParticipantToken(Long roomId, String participantToken) {
         return draftParticipantJpaRepository.findByRoomIdAndParticipantToken(roomId, participantToken);
+    }
+
+    @Override
+    public List<Long> findParticipantIdsByDraftRoomId(Long roomId) {
+        return draftParticipantJpaRepository.findParticipantIdsByDraftRoomId(roomId);
     }
 
 }

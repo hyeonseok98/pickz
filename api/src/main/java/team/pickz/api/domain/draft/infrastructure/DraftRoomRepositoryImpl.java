@@ -7,8 +7,8 @@ import team.pickz.api.domain.draft.domain.repository.DraftRoomRepository;
 
 import java.util.Optional;
 
-@Repository
 @RequiredArgsConstructor
+@Repository
 public class DraftRoomRepositoryImpl implements DraftRoomRepository {
 
     private final DraftRoomJpaRepository draftRoomJpaRepository;
@@ -16,6 +16,11 @@ public class DraftRoomRepositoryImpl implements DraftRoomRepository {
     @Override
     public DraftRoom save(DraftRoom draftRoom) {
         return draftRoomJpaRepository.save(draftRoom);
+    }
+
+    @Override
+    public void delete(DraftRoom draftRoom) {
+        draftRoomJpaRepository.delete(draftRoom);
     }
 
     @Override
@@ -31,6 +36,11 @@ public class DraftRoomRepositoryImpl implements DraftRoomRepository {
     @Override
     public Optional<DraftRoom> findByInviteCode(String inviteCode) {
         return draftRoomJpaRepository.findByInviteCode(inviteCode);
+    }
+
+    @Override
+    public Optional<DraftRoom> findByInviteCodeWithLock(String inviteCode) {
+        return draftRoomJpaRepository.findByInviteCodeWithLock(inviteCode);
     }
 
 }

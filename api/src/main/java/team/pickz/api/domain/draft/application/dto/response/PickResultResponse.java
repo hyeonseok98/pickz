@@ -11,7 +11,9 @@ public record PickResultResponse(
 
         String pickedNickname,
 
-        String pickedStreamerId,
+        String pickedStreamerName,
+
+        String pickedStreamerImageUrl,
 
         String nextTurnNickname,
 

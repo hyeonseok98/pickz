@@ -21,7 +21,17 @@ const defaultCreateDraftRoomRequest: CreateDraftRoomRequest = {
 };
 
 function createApiPath(pathname: string) {
-  return `/api/${pathname.replace(/^\/+/, "")}`;
+  const normalizedPathname = pathname.replace(/^\/+/, "");
+
+  if (typeof window === "undefined") {
+    const apiUrl = process.env.API_URL?.trim().replace(/\/+$/, "");
+
+    if (apiUrl) {
+      return `${apiUrl}/api/${normalizedPathname}`;
+    }
+  }
+
+  return `/api/${normalizedPathname}`;
 }
 
 const draftRoomCreateFetchCredentials = "omit" satisfies RequestCredentials;

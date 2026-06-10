@@ -34,6 +34,7 @@ function MainLayoutFrame({ children, defaultCollapsed }: MainLayoutFrameProps) {
 export function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname();
   const isDraftGameRoomPage =
+    pathname.startsWith("/draft/auction") ||
     pathname.startsWith("/draft/snake") ||
     (pathname.startsWith("/drafts/") && pathname.endsWith("/play"));
 

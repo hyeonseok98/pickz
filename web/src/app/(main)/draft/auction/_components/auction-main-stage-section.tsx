@@ -7,7 +7,7 @@ interface AuctionMainStageSectionProps {
   currentHighestBidAmount: number;
   currentHighestBidTeamName: string | null;
   currentPhase: AuctionPhase;
-  currentStreamer: AuctionStreamer;
+  currentStreamer: AuctionStreamer | null;
   remainSeconds: number;
 }
 
@@ -30,7 +30,9 @@ export function AuctionMainStageSection({
   currentPhase,
   currentStreamer,
 }: AuctionMainStageSectionProps) {
-  const currentStreamerImageUrl = currentStreamer.profileImageUrl ?? "/streamer_profile/hejin.webp";
+  const currentStreamerImageUrl = currentStreamer?.profileImageUrl ?? "/streamer_profile/hejin.webp";
+  const currentStreamerLineLabel = currentStreamer ? getAuctionLineLabel(currentStreamer.line) : "대기";
+  const currentStreamerName = currentStreamer?.name ?? "대기 중";
 
   return (
     <SectionCard
@@ -43,7 +45,7 @@ export function AuctionMainStageSection({
         <div className="mx-auto aspect-square w-45 self-center overflow-hidden rounded-3xl bg-violet-100/70 shadow-surface-sm sm:mx-0 sm:w-44 xl:w-48">
           <Image
             src={currentStreamerImageUrl}
-            alt={currentStreamer.name}
+            alt={currentStreamerName}
             width={192}
             height={192}
             className="size-full object-cover object-center"
@@ -55,11 +57,9 @@ export function AuctionMainStageSection({
           <StatusChip tone="active" className="mb-3 h-7 px-3">
             {getAuctionPhaseLabel(currentPhase)}
           </StatusChip>
-          <p className="text-sm font-bold text-violet-500">
-            {getAuctionLineLabel(currentStreamer.line)}
-          </p>
+          <p className="text-sm font-bold text-violet-500">{currentStreamerLineLabel}</p>
           <h2 className="mt-1 truncate text-2xl font-black tracking-[-0.03em] text-text-primary">
-            {currentStreamer.name}
+            {currentStreamerName}
           </h2>
           <div className="mt-4">
             <div className="min-h-24 rounded-2xl border border-violet-100 bg-white/82 px-4 py-4">

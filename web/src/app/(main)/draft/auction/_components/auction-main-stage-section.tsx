@@ -30,9 +30,9 @@ export function AuctionMainStageSection({
   currentPhase,
   currentStreamer,
 }: AuctionMainStageSectionProps) {
-  const currentStreamerImageUrl = currentStreamer?.profileImageUrl ?? "/streamer_profile/hejin.webp";
+  const currentStreamerImageUrl = currentStreamer?.profileImageUrl ?? null;
   const currentStreamerLineLabel = currentStreamer ? getAuctionLineLabel(currentStreamer.line) : "대기";
-  const currentStreamerName = currentStreamer?.name ?? "대기 중";
+  const currentStreamerName = currentStreamer?.name ?? "경매 준비중...";
 
   return (
     <SectionCard
@@ -43,14 +43,16 @@ export function AuctionMainStageSection({
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(124,58,237,0.18),transparent_36%),radial-gradient(circle_at_85%_12%,rgba(59,130,246,0.14),transparent_30%)]" />
       <div className="relative grid h-full min-h-0 grid-cols-1 items-center gap-5 p-1 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-5 xl:grid-cols-[12rem_minmax(0,1fr)]">
         <div className="mx-auto aspect-square w-45 self-center overflow-hidden rounded-3xl bg-violet-100/70 shadow-surface-sm sm:mx-0 sm:w-44 xl:w-48">
-          <Image
-            src={currentStreamerImageUrl}
-            alt={currentStreamerName}
-            width={192}
-            height={192}
-            className="size-full object-cover object-center"
-            priority
-          />
+          {currentStreamerImageUrl ? (
+            <Image
+              src={currentStreamerImageUrl}
+              alt={currentStreamerName}
+              width={192}
+              height={192}
+              className="size-full object-cover object-center"
+              priority
+            />
+          ) : null}
         </div>
 
         <div className="min-w-0 self-center">

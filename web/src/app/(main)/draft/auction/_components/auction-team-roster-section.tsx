@@ -47,6 +47,9 @@ export function AuctionTeamRosterSection({
                     <PersonOutlineIcon className="size-4" />
                   </span>
                   <p className="truncate font-bold text-violet-700">{teamState.teamName}</p>
+                  <span className="rounded-full bg-violet-50 px-2 py-1 text-xs font-black whitespace-nowrap text-violet-600">
+                    {teamIndex + 1}픽
+                  </span>
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-bold text-violet-300">잔여 포인트</p>

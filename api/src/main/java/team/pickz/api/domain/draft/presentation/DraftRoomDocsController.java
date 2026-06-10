@@ -16,10 +16,7 @@ import team.pickz.api.domain.draft.application.dto.request.CoachSelectionRequest
 import team.pickz.api.domain.draft.application.dto.request.DraftRoomStreamerRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomInitRequest;
-import team.pickz.api.domain.draft.application.dto.response.DraftPlayStateResponse;
-import team.pickz.api.domain.draft.application.dto.response.DraftRoomStreamerResponse;
-import team.pickz.api.domain.draft.application.dto.response.ParticipantResponse;
-import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
+import team.pickz.api.domain.draft.application.dto.response.*;
 import team.pickz.api.global.annotation.MemberId;
 
 import java.util.List;
@@ -72,7 +69,7 @@ public interface DraftRoomDocsController {
     })
     @SecurityRequirements(value = {})
     @PostMapping("invites/{inviteCode}/participants")
-    ResponseEntity<ParticipantResponse> joinRoom(
+    ResponseEntity<JoinRoomResponse> joinRoom(
             @Parameter(description = "초대 코드", example = "X7a9P2K")
             @PathVariable("inviteCode") String inviteCode
     );

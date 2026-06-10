@@ -6,10 +6,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import team.pickz.api.domain.draft.application.event.DraftPickedEvent;
-import team.pickz.api.domain.draft.application.event.DraftRoomStartedEvent;
-import team.pickz.api.domain.draft.application.event.ParticipantJoinedEvent;
-import team.pickz.api.domain.draft.application.event.RoomDeletedEvent;
+import team.pickz.api.domain.draft.application.event.*;
 
 @RequiredArgsConstructor
 @Component
@@ -33,6 +30,13 @@ public class DraftEventListener {
     public void handleRoomStarted(DraftRoomStartedEvent event) {
         messagingTemplate.convertAndSend(
                 "/topic/drafts/rooms/" + event.roomId(), event.payload());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleParticipantUpdated(ParticipantUpdateEvent event) {
+        messagingTemplate.convertAndSend(
+                "/topic/drafts/rooms/" + event.roomId() + "/participants", event
+        );
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

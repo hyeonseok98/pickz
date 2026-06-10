@@ -11,6 +11,8 @@ public record RoomInitResponse(
 
         String participantToken,
 
+        String nickname,
+
         boolean isHost
 
 ) {

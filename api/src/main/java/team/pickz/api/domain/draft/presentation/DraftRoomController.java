@@ -13,10 +13,7 @@ import team.pickz.api.domain.draft.application.dto.request.CoachSelectionRequest
 import team.pickz.api.domain.draft.application.dto.request.DraftRoomStreamerRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomConfigureRequest;
 import team.pickz.api.domain.draft.application.dto.request.RoomInitRequest;
-import team.pickz.api.domain.draft.application.dto.response.DraftPlayStateResponse;
-import team.pickz.api.domain.draft.application.dto.response.DraftRoomStreamerResponse;
-import team.pickz.api.domain.draft.application.dto.response.ParticipantResponse;
-import team.pickz.api.domain.draft.application.dto.response.RoomInitResponse;
+import team.pickz.api.domain.draft.application.dto.response.*;
 import team.pickz.api.global.annotation.MemberId;
 
 import java.net.URI;
@@ -67,10 +64,10 @@ public class DraftRoomController implements DraftRoomDocsController {
     }
 
     @PostMapping("invites/{inviteCode}/participants")
-    public ResponseEntity<ParticipantResponse> joinRoom(
+    public ResponseEntity<JoinRoomResponse> joinRoom(
             @PathVariable("inviteCode") String inviteCode
     ) {
-        ParticipantResponse response = draftParticipantService.joinRoom(inviteCode);
+        JoinRoomResponse response = draftParticipantService.joinRoom(inviteCode);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

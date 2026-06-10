@@ -180,7 +180,7 @@ function createInitialAuctionLogs(): AuctionPageState["logs"] {
   return [
     {
       id: "auction-ready-log",
-      message: "게임 입장 10초 뒤 경매가 시작됩니다",
+      message: "게임 시작 버튼 클릭 후 경매가 시작됩니다.",
       sentAt: "20:31",
       type: "system",
     },
@@ -191,6 +191,7 @@ function createAuctionPageStateBase(
   roomTitle: string,
   auctionOrder: AuctionStreamer[],
   teamStates: AuctionTeamState[],
+  isSoloMode: boolean,
 ): AuctionPageState {
   const shuffledAuctionOrder = shuffleAuctionStreamers(auctionOrder);
 
@@ -200,6 +201,7 @@ function createAuctionPageStateBase(
     currentPhase: "STANDBY",
     currentStreamer: null,
     initialTeamPoints: auctionInitialTeamPoints,
+    isSoloMode,
     logs: createInitialAuctionLogs(),
     remainSeconds: 10,
     roomTitle,
@@ -219,6 +221,7 @@ export function createAuctionPageStateFromSnapshot(snapshot: DraftRoomSnapshot):
     `${snapshot.tournamentName} 경매 드래프트`,
     createAuctionOrderFromSnapshot(snapshot),
     teamStates,
+    snapshot.participationMode === "solo",
   );
 }
 
@@ -242,5 +245,6 @@ export function createAuctionPageStateFromStreamerPool({
     roomTitle,
     createAuctionOrderFromStreamerPool(streamerPool),
     teamStates,
+    false,
   );
 }

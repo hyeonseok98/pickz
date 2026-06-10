@@ -32,7 +32,7 @@ export function isAuctionReauctionLimitReached(reauctionCount: number) {
 
 /** 경매 차례가 시작될 때 로그에 표시할 문구 생성 */
 export function createAuctionTurnAnnouncement(streamer: AuctionStreamer) {
-  return `${draftLineLabelMap[streamer.line]} ${streamer.name} 경매 차례입니다`;
+  return `${draftLineLabelMap[streamer.line]}-${streamer.name} 경매 차례입니다.`;
 }
 
 /** 경매 화면에서 사용할 포지션 한글 라벨 반환 */

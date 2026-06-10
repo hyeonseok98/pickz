@@ -10,6 +10,11 @@ export {
   auctionRoundResultWaitSeconds,
 } from "./auction";
 export {
+  auctionTeamColorClassNames,
+  getAuctionTeamColorClassNames,
+  type AuctionTeamColorClassNames,
+} from "./auction-team-colors";
+export {
   draftLineLabelMap,
   draftLineOrder,
   draftLineOrderMap,

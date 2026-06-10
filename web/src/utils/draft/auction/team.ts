@@ -9,7 +9,9 @@ import type {
 
 export function createAuctionTeamName(staff: AuctionTeamStaff) {
   if (staff.headCoach) {
-    return `${staff.headCoach.name} 팀`;
+    const coachLabel = staff.coach ? `(코치: ${staff.coach.name})` : "";
+
+    return `${staff.headCoach.name} 팀${coachLabel}`;
   }
 
   if (staff.coach) {

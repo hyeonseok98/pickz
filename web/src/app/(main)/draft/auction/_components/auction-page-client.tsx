@@ -6,23 +6,28 @@ import {
   auctionBiddingSeconds,
   auctionInitialStandbySeconds,
   auctionMaxReauctionCount,
-  auctionRoundResultWaitSeconds,
+  getAuctionTeamColorClassNames,
 } from "@/constants/draft";
 import type {
   AuctionChatMessage,
+  AuctionChatMessageSegment,
   AuctionPageState,
   AuctionPhase,
   AuctionStreamer,
   AuctionTeamState,
 } from "@/types/draft";
 import {
+  applyAuctionAutoAssignedResult,
   applyAuctionSoldResult,
   createAuctionLogTime,
+  createAuctionTeamName,
   createAuctionTurnAnnouncement,
+  getRandomAuctionAssignableTeam,
   resetAuctionTeamStates,
   shuffleAuctionStreamers,
   validateAuctionBidAmount,
 } from "@/utils/draft/auction";
+import { cn } from "@/utils";
 import { useCallback, useEffect, useState } from "react";
 import { AuctionBidControlPanel } from "./auction-bid-control-panel";
 import { AuctionBidLogSection } from "./auction-bid-log-section";
@@ -35,77 +40,236 @@ interface AuctionPageClientProps {
   initialAuctionPageState: AuctionPageState;
 }
 
+interface AuctionGameSettings {
+  biddingSeconds: number;
+  isUntimedAuction: boolean;
+  standbySeconds: number;
+}
+
 interface CurrentHighestBid {
   amount: number;
   teamId: number;
   teamName: string;
 }
 
-function moveTeamOrder(
-  teamStates: AuctionTeamState[],
-  teamIndex: number,
-  direction: "down" | "up",
-) {
-  const targetIndex = direction === "up" ? teamIndex - 1 : teamIndex + 1;
-
-  if (targetIndex < 0 || targetIndex >= teamStates.length) {
-    return teamStates;
-  }
-
-  const nextTeamStates = [...teamStates];
-  [nextTeamStates[teamIndex], nextTeamStates[targetIndex]] = [
-    nextTeamStates[targetIndex],
-    nextTeamStates[teamIndex],
-  ];
-
-  return nextTeamStates;
+interface AuctionLogPayload {
+  message: string;
+  segments?: AuctionChatMessageSegment[];
+  type?: AuctionChatMessage["type"];
 }
 
-function moveDraggedTeamOrder(
-  teamStates: AuctionTeamState[],
-  draggedTeamId: number,
-  targetTeamId: number,
-) {
-  const draggedTeamIndex = teamStates.findIndex((teamState) => teamState.teamId === draggedTeamId);
-  const targetTeamIndex = teamStates.findIndex((teamState) => teamState.teamId === targetTeamId);
+const auctionPhaseBeforeFinish = new Set<AuctionPhase>([
+  "STANDBY",
+  "COUNTDOWN",
+  "BIDDING",
+  "ROUND_RESULT",
+]);
 
-  if (draggedTeamIndex < 0 || targetTeamIndex < 0 || draggedTeamIndex === targetTeamIndex) {
-    return teamStates;
-  }
+const auctionLineLogLabelMap: Record<AuctionStreamer["line"], string> = {
+  adc: "원딜",
+  jungle: "정글",
+  mid: "미드",
+  support: "서폿",
+  top: "탑",
+};
 
-  const nextTeamStates = [...teamStates];
-  const [draggedTeamState] = nextTeamStates.splice(draggedTeamIndex, 1);
-
-  if (!draggedTeamState) {
-    return teamStates;
-  }
-
-  nextTeamStates.splice(targetTeamIndex, 0, draggedTeamState);
-
-  return nextTeamStates;
+function normalizeAuctionTeamStates(teamStates: AuctionTeamState[]) {
+  return teamStates.map((teamState) => ({
+    ...teamState,
+    teamName: createAuctionTeamName(teamState.staff),
+  }));
 }
 
-function getTeamStaffDescription(teamState: AuctionTeamState) {
-  const headCoachName = teamState.staff.headCoach?.name;
-  const coachName = teamState.staff.coach?.name;
-
-  if (headCoachName && coachName) {
-    return `${headCoachName} / 코치 ${coachName}`;
-  }
-
-  return headCoachName ?? coachName ?? `${teamState.teamId}팀`;
-}
-
-function createAuctionLog(message: string, type: AuctionChatMessage["type"] = "system") {
+function createAuctionLogEntry({
+  message,
+  segments,
+  type = "system",
+}: AuctionLogPayload): AuctionChatMessage {
   return {
     id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
     message,
+    segments,
     sentAt: createAuctionLogTime(),
     type,
   };
 }
 
+function getLineTone(line: AuctionStreamer["line"]): AuctionChatMessageSegment["tone"] {
+  switch (line) {
+    case "top":
+      return "lineTop";
+    case "jungle":
+      return "lineJungle";
+    case "mid":
+      return "lineMid";
+    case "adc":
+      return "lineAdc";
+    case "support":
+      return "lineSupport";
+  }
+}
+
+function getTeamTone(teamId: number): AuctionChatMessageSegment["tone"] {
+  switch (teamId) {
+    case 1:
+      return "teamOne";
+    case 2:
+      return "teamTwo";
+    case 3:
+      return "teamThree";
+    case 4:
+      return "teamFour";
+    default:
+      return "teamFive";
+  }
+}
+
+function createTurnAnnouncementLog(streamer: AuctionStreamer) {
+  return createAuctionLogEntry({
+    message: createAuctionTurnAnnouncement(streamer),
+    segments: [
+      { text: auctionLineLogLabelMap[streamer.line], tone: getLineTone(streamer.line) },
+      { text: "-" },
+      { text: streamer.name, tone: "primary" },
+      { text: " 경매 차례입니다." },
+    ],
+  });
+}
+
+function createCountdownLog(seconds: number) {
+  return createAuctionLogEntry({
+    message: `${seconds}, ${seconds - 1}, ${seconds - 2}`,
+    segments: [{ text: `${seconds}`, tone: "warning" }, { text: "초 카운트다운" }],
+  });
+}
+
+function createBidStartLog() {
+  return createAuctionLogEntry({
+    message: "입찰 시작",
+    segments: [{ text: "입찰", tone: "primary" }, { text: "이 시작되었습니다." }],
+  });
+}
+
+function createBidPlacedLog(teamId: number, teamName: string, streamerName: string, bidAmount: number) {
+  return createAuctionLogEntry({
+    message: `${teamName}-${streamerName}-${bidAmount}포인트`,
+    segments: [
+      { text: teamName, tone: getTeamTone(teamId) },
+      { text: "-" },
+      { text: streamerName },
+      { text: "-" },
+      { text: `${bidAmount}포인트`, tone: "warning" },
+    ],
+    type: "bid",
+  });
+}
+
+function createSoldLog(teamId: number, teamName: string, streamerName: string, bidAmount: number) {
+  return createAuctionLogEntry({
+    message: `${teamName}-${streamerName}-${bidAmount}포인트-낙찰`,
+    segments: [
+      { text: teamName, tone: getTeamTone(teamId) },
+      { text: "-" },
+      { text: streamerName },
+      { text: "-" },
+      { text: `${bidAmount}포인트`, tone: "warning" },
+      { text: "-" },
+      { text: "낙찰", tone: "success" },
+    ],
+    type: "bid",
+  });
+}
+
+function createAutoAssignedLog(teamId: number, teamName: string, streamerName: string) {
+  return createAuctionLogEntry({
+    message: `${teamName} ${streamerName} 자동 배정`,
+    segments: [
+      { text: "재경매", tone: "warning" },
+      { text: " 한도 종료로 " },
+      { text: streamerName, tone: "primary" },
+      { text: " 선수가 " },
+      { text: teamName, tone: getTeamTone(teamId) },
+      { text: " 팀에 " },
+      { text: "자동 배정", tone: "success" },
+      { text: "되었습니다." },
+    ],
+  });
+}
+
+function createAutoAssignFailedLog(streamerName: string) {
+  return createAuctionLogEntry({
+    message: `${streamerName} 자동 배정 실패`,
+    segments: [
+      { text: streamerName, tone: "primary" },
+      { text: " 선수를 배정할 빈 라인 슬롯이 없습니다.", tone: "danger" },
+    ],
+  });
+}
+
+function createUnbidLog(streamer: AuctionStreamer) {
+  return createAuctionLogEntry({
+    message: `${streamer.name} 유찰`,
+    segments: [
+      { text: streamer.name, tone: "primary" },
+      { text: " 선수가 " },
+      { text: "유찰", tone: "danger" },
+      { text: "되었습니다." },
+    ],
+  });
+}
+
+function createReauctionLog(round: number, streamer: AuctionStreamer) {
+  return createAuctionLogEntry({
+    message: `${round}차 재경매 ${streamer.name}`,
+    segments: [
+      { text: `재경매 ${round}회차`, tone: "warning" },
+      { text: ": " },
+      { text: createTurnAnnouncementLog(streamer).message, tone: "muted" },
+    ],
+  });
+}
+
+function createRoundWaitLog(waitSeconds: number) {
+  return createAuctionLogEntry({
+    message: `${waitSeconds}초 대기`,
+    segments: [
+      { text: "다음 경매까지 ", tone: "muted" },
+      { text: `${waitSeconds}초`, tone: "warning" },
+      { text: " 대기합니다.", tone: "muted" },
+    ],
+  });
+}
+
+function createUntimedStartLog() {
+  return createAuctionLogEntry({
+    message: "시간 제한 없는 경매 시작",
+    segments: [
+      { text: "시간 제한 없는 경매", tone: "primary" },
+      { text: "를 시작합니다." },
+    ],
+  });
+}
+
+function createTimedStartLog(waitSeconds: number) {
+  return createAuctionLogEntry({
+    message: `${waitSeconds}초 뒤 시작`,
+    segments: [
+      { text: "게임 시작 전 ", tone: "muted" },
+      { text: `${waitSeconds}초`, tone: "warning" },
+      { text: " 대기합니다.", tone: "muted" },
+    ],
+  });
+}
+
+function createResetLog() {
+  return createAuctionLogEntry({
+    message: "경매 대기중 상태로 돌아갔습니다",
+    segments: [{ text: "경매 대기중 상태", tone: "primary" }, { text: "로 돌아갔습니다." }],
+  });
+}
+
 export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClientProps) {
+  const initialTeamStates = normalizeAuctionTeamStates(initialAuctionPageState.teamStates);
   const [auctionOrder, setAuctionOrder] = useState(initialAuctionPageState.upcomingStreamers);
   const [remainingAuctionQueue, setRemainingAuctionQueue] = useState(
     initialAuctionPageState.upcomingStreamers,
@@ -115,113 +279,243 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
   const [remainSeconds, setRemainSeconds] = useState(auctionInitialStandbySeconds);
   const [currentHighestBid, setCurrentHighestBid] = useState<CurrentHighestBid | null>(null);
   const [unbidStreamers, setUnbidStreamers] = useState(initialAuctionPageState.unbidStreamers);
-  const [teamStates, setTeamStates] = useState(initialAuctionPageState.teamStates);
+  const [teamStates, setTeamStates] = useState(initialTeamStates);
   const [auctionLogs, setAuctionLogs] = useState(initialAuctionPageState.logs);
-  const [isCoachOrderPanelOpen, setIsCoachOrderPanelOpen] = useState(false);
+  const [isGameSettingsPanelOpen, setIsGameSettingsPanelOpen] = useState(false);
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [reauctionCount, setReauctionCount] = useState(0);
-  const [draggingTeamId, setDraggingTeamId] = useState<number | null>(null);
-  const hostTeam = teamStates[0];
+  const [selectedBidTeamId, setSelectedBidTeamId] = useState<number | null>(
+    initialTeamStates[0]?.teamId ?? null,
+  );
+  const [auctionSettings, setAuctionSettings] = useState<AuctionGameSettings>({
+    biddingSeconds: auctionBiddingSeconds,
+    isUntimedAuction: false,
+    standbySeconds: auctionInitialStandbySeconds,
+  });
+  const [settingsStandbySeconds, setSettingsStandbySeconds] = useState(
+    String(auctionInitialStandbySeconds),
+  );
+  const [settingsBiddingSeconds, setSettingsBiddingSeconds] = useState(String(auctionBiddingSeconds));
+  const [isUntimedAuctionChecked, setIsUntimedAuctionChecked] = useState(false);
+
+  const selectedBidTeam =
+    teamStates.find((teamState) => teamState.teamId === selectedBidTeamId) ?? null;
+  const selectedBidTeamColorClassNames = selectedBidTeam
+    ? getAuctionTeamColorClassNames(selectedBidTeam.staff.teamSlot)
+    : null;
+  const isConsecutiveBidBlocked = Boolean(
+    currentHighestBid && selectedBidTeam && currentHighestBid.teamId === selectedBidTeam.teamId,
+  );
+  const isSelectedTeamLineAlreadyFilled = Boolean(
+    currentStreamer && selectedBidTeam?.roster[currentStreamer.line],
+  );
   const queueStreamers = isGameStarted ? remainingAuctionQueue : auctionOrder;
 
-  const appendAuctionLog = useCallback((message: string, type?: AuctionChatMessage["type"]) => {
-    setAuctionLogs((currentLogs) => [...currentLogs, createAuctionLog(message, type)]);
+  const appendAuctionLog = useCallback((payload: AuctionLogPayload) => {
+    setAuctionLogs((currentLogs) => [...currentLogs, createAuctionLogEntry(payload)]);
   }, []);
 
-  const startNextAuctionRound = useCallback(() => {
-    const nextStreamer = remainingAuctionQueue[0];
+  const openNextAuctionRound = useCallback((
+    nextQueue: AuctionStreamer[],
+    nextUnbidStreamers: AuctionStreamer[],
+    nextReauctionCount: number,
+  ) => {
+    const nextStreamer = nextQueue[0];
 
     if (nextStreamer) {
       setCurrentStreamer(nextStreamer);
-      setRemainingAuctionQueue(remainingAuctionQueue.slice(1));
+      setRemainingAuctionQueue(nextQueue.slice(1));
       setCurrentHighestBid(null);
-      setCurrentPhase("COUNTDOWN");
-      setRemainSeconds(auctionAnnounceCountdownSeconds);
-      appendAuctionLog(createAuctionTurnAnnouncement(nextStreamer));
+      appendAuctionLog(createTurnAnnouncementLog(nextStreamer));
+
+      if (auctionSettings.isUntimedAuction) {
+        setCurrentPhase("BIDDING");
+        setRemainSeconds(0);
+      } else {
+        setCurrentPhase("COUNTDOWN");
+        setRemainSeconds(auctionAnnounceCountdownSeconds);
+        appendAuctionLog(createCountdownLog(auctionAnnounceCountdownSeconds));
+      }
+
       return;
     }
 
-    if (unbidStreamers.length > 0 && reauctionCount < auctionMaxReauctionCount) {
-      const nextReauctionStreamer = unbidStreamers[0];
+    if (nextUnbidStreamers.length > 0 && nextReauctionCount < auctionMaxReauctionCount) {
+      const [reauctionStreamer, ...restUnbidStreamers] = nextUnbidStreamers;
 
-      if (!nextReauctionStreamer) {
+      if (!reauctionStreamer) {
         return;
       }
 
-      setCurrentStreamer(nextReauctionStreamer);
-      setRemainingAuctionQueue(unbidStreamers.slice(1));
+      setCurrentStreamer(reauctionStreamer);
+      setRemainingAuctionQueue(restUnbidStreamers);
       setUnbidStreamers([]);
       setCurrentHighestBid(null);
-      setReauctionCount((currentCount) => currentCount + 1);
-      setCurrentPhase("COUNTDOWN");
-      setRemainSeconds(auctionAnnounceCountdownSeconds);
-      appendAuctionLog(`재경매 ${reauctionCount + 1}회차: ${createAuctionTurnAnnouncement(nextReauctionStreamer)}`);
+      setReauctionCount(nextReauctionCount + 1);
+      appendAuctionLog(createReauctionLog(nextReauctionCount + 1, reauctionStreamer));
+
+      if (auctionSettings.isUntimedAuction) {
+        setCurrentPhase("BIDDING");
+        setRemainSeconds(0);
+      } else {
+        setCurrentPhase("COUNTDOWN");
+        setRemainSeconds(auctionAnnounceCountdownSeconds);
+        appendAuctionLog(createCountdownLog(auctionAnnounceCountdownSeconds));
+      }
+
       return;
+    }
+
+    if (nextUnbidStreamers.length > 0 && nextReauctionCount >= auctionMaxReauctionCount) {
+      let nextTeamStates = teamStates;
+      const autoAssignmentLogs: AuctionChatMessage[] = [];
+
+      nextUnbidStreamers.forEach((streamer) => {
+        const assignableTeam = getRandomAuctionAssignableTeam(nextTeamStates, streamer);
+
+        if (!assignableTeam) {
+          autoAssignmentLogs.push(createAutoAssignFailedLog(streamer.name));
+          return;
+        }
+
+        nextTeamStates = applyAuctionAutoAssignedResult({
+          streamer,
+          teamId: assignableTeam.teamId,
+          teamStates: nextTeamStates,
+        });
+        autoAssignmentLogs.push(
+          createAutoAssignedLog(assignableTeam.teamId, assignableTeam.teamName, streamer.name),
+        );
+      });
+
+      setTeamStates(nextTeamStates);
+      setUnbidStreamers([]);
+      setRemainingAuctionQueue([]);
+      setAuctionLogs((currentLogs) => [...currentLogs, ...autoAssignmentLogs]);
     }
 
     setCurrentStreamer(null);
+    setCurrentHighestBid(null);
     setCurrentPhase("FINISHED");
     setRemainSeconds(0);
     setIsGameStarted(false);
-    appendAuctionLog("경매가 종료되었습니다");
-  }, [appendAuctionLog, reauctionCount, remainingAuctionQueue, unbidStreamers]);
+    appendAuctionLog({
+      message: "경매가 종료되었습니다",
+      segments: [{ text: "경매", tone: "primary" }, { text: "가 종료되었습니다." }],
+    });
+  }, [appendAuctionLog, auctionSettings.isUntimedAuction, teamStates]);
 
-  const finishCurrentBiddingRound = useCallback(() => {
+  const finalizeAuctionRound = useCallback((shouldMarkUnbid: boolean) => {
     if (!currentStreamer) {
-      startNextAuctionRound();
       return;
     }
 
-    if (currentHighestBid) {
-      setTeamStates((currentTeamStates) =>
-        applyAuctionSoldResult({
-          bidAmount: currentHighestBid.amount,
-          streamer: currentStreamer,
-          teamId: currentHighestBid.teamId,
-          teamStates: currentTeamStates,
-        }),
-      );
-      appendAuctionLog(
-        `${currentHighestBid.teamName} - ${currentStreamer.name} - ${currentHighestBid.amount}포인트 낙찰`,
-        "bid",
-      );
-    } else {
-      setUnbidStreamers((currentStreamers) => [...currentStreamers, currentStreamer]);
-      appendAuctionLog(`${currentStreamer.name} 유찰`);
+    if (shouldMarkUnbid || !currentHighestBid) {
+      const nextUnbidStreamers = [...unbidStreamers, currentStreamer];
+
+      setUnbidStreamers(nextUnbidStreamers);
+      appendAuctionLog(createUnbidLog(currentStreamer));
+
+      if (auctionSettings.isUntimedAuction) {
+        openNextAuctionRound(remainingAuctionQueue, nextUnbidStreamers, reauctionCount);
+        return;
+      }
+
+      setCurrentPhase("ROUND_RESULT");
+      setRemainSeconds(auctionSettings.standbySeconds);
+      appendAuctionLog(createRoundWaitLog(auctionSettings.standbySeconds));
+      return;
+    }
+
+    setTeamStates((currentTeamStates) =>
+      applyAuctionSoldResult({
+        bidAmount: currentHighestBid.amount,
+        streamer: currentStreamer,
+        teamId: currentHighestBid.teamId,
+        teamStates: currentTeamStates,
+      }),
+    );
+    appendAuctionLog(
+      createSoldLog(
+        currentHighestBid.teamId,
+        currentHighestBid.teamName,
+        currentStreamer.name,
+        currentHighestBid.amount,
+      ),
+    );
+
+    if (auctionSettings.isUntimedAuction) {
+      openNextAuctionRound(remainingAuctionQueue, unbidStreamers, reauctionCount);
+      return;
     }
 
     setCurrentPhase("ROUND_RESULT");
-    setRemainSeconds(auctionRoundResultWaitSeconds);
-  }, [appendAuctionLog, currentHighestBid, currentStreamer, startNextAuctionRound]);
+    setRemainSeconds(auctionSettings.standbySeconds);
+    appendAuctionLog(createRoundWaitLog(auctionSettings.standbySeconds));
+  }, [
+    appendAuctionLog,
+    auctionSettings.isUntimedAuction,
+    auctionSettings.standbySeconds,
+    currentHighestBid,
+    currentStreamer,
+    openNextAuctionRound,
+    reauctionCount,
+    remainingAuctionQueue,
+    unbidStreamers,
+  ]);
 
   useEffect(() => {
-    if (!isGameStarted || currentPhase === "FINISHED") {
+    if (!isGameStarted || auctionSettings.isUntimedAuction || currentPhase === "FINISHED") {
+      return;
+    }
+
+    if (!auctionPhaseBeforeFinish.has(currentPhase)) {
       return;
     }
 
     const timerId = window.setTimeout(() => {
-      if (remainSeconds > 0) {
-        setRemainSeconds((currentSeconds) => Math.max(0, currentSeconds - 1));
+      if (currentPhase === "STANDBY") {
+        if (remainSeconds <= 1) {
+          openNextAuctionRound(auctionOrder, unbidStreamers, reauctionCount);
+          return;
+        }
+
+        setRemainSeconds((currentSeconds) => currentSeconds - 1);
         return;
       }
 
-      switch (currentPhase) {
-        case "STANDBY":
-          startNextAuctionRound();
-          return;
-        case "COUNTDOWN":
+      if (currentPhase === "COUNTDOWN") {
+        if (remainSeconds <= 1) {
           setCurrentPhase("BIDDING");
-          setRemainSeconds(auctionBiddingSeconds);
-          appendAuctionLog("입찰이 시작되었습니다");
+          setRemainSeconds(auctionSettings.biddingSeconds);
+          appendAuctionLog(createBidStartLog());
           return;
-        case "BIDDING":
-          finishCurrentBiddingRound();
+        }
+
+        const nextSeconds = remainSeconds - 1;
+
+        setRemainSeconds(nextSeconds);
+        appendAuctionLog(createCountdownLog(nextSeconds));
+        return;
+      }
+
+      if (currentPhase === "BIDDING") {
+        if (remainSeconds <= 1) {
+          finalizeAuctionRound(false);
           return;
-        case "ROUND_RESULT":
-          startNextAuctionRound();
+        }
+
+        setRemainSeconds((currentSeconds) => currentSeconds - 1);
+        return;
+      }
+
+      if (currentPhase === "ROUND_RESULT") {
+        if (remainSeconds <= 1) {
+          openNextAuctionRound(remainingAuctionQueue, unbidStreamers, reauctionCount);
           return;
-        case "EVALUATING":
-          return;
+        }
+
+        setRemainSeconds((currentSeconds) => currentSeconds - 1);
       }
     }, 1000);
 
@@ -230,11 +524,17 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
     };
   }, [
     appendAuctionLog,
+    auctionOrder,
+    auctionSettings.biddingSeconds,
+    auctionSettings.isUntimedAuction,
     currentPhase,
-    finishCurrentBiddingRound,
+    finalizeAuctionRound,
     isGameStarted,
+    openNextAuctionRound,
+    reauctionCount,
     remainSeconds,
-    startNextAuctionRound,
+    remainingAuctionQueue,
+    unbidStreamers,
   ]);
 
   const shuffleAuctionQueue = () => {
@@ -244,41 +544,35 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
 
     setAuctionOrder((currentOrder) => {
       const nextOrder = shuffleAuctionStreamers(currentOrder);
+
       setRemainingAuctionQueue(nextOrder);
       return nextOrder;
     });
-  };
-
-  const moveCoachOrder = (teamIndex: number, direction: "down" | "up") => {
-    if (isGameStarted) {
-      return;
-    }
-
-    setTeamStates((currentTeamStates) => moveTeamOrder(currentTeamStates, teamIndex, direction));
-  };
-
-  const moveCoachOrderByDrag = (targetTeamId: number) => {
-    if (isGameStarted || draggingTeamId === null) {
-      return;
-    }
-
-    setTeamStates((currentTeamStates) =>
-      moveDraggedTeamOrder(currentTeamStates, draggingTeamId, targetTeamId),
-    );
-    setDraggingTeamId(null);
   };
 
   const startAuctionGame = () => {
     setCurrentStreamer(null);
     setCurrentHighestBid(null);
     setUnbidStreamers([]);
+    setTeamStates(resetAuctionTeamStates(teamStates).map((teamState) => ({
+      ...teamState,
+      teamName: createAuctionTeamName(teamState.staff),
+    })));
     setRemainingAuctionQueue(auctionOrder);
-    setCurrentPhase("STANDBY");
-    setRemainSeconds(auctionInitialStandbySeconds);
     setReauctionCount(0);
     setIsGameStarted(true);
-    setIsCoachOrderPanelOpen(false);
-    appendAuctionLog("게임 시작 대기 중입니다");
+    setIsGameSettingsPanelOpen(false);
+    setAuctionLogs([]);
+
+    if (auctionSettings.isUntimedAuction) {
+      appendAuctionLog(createUntimedStartLog());
+      openNextAuctionRound(auctionOrder, [], 0);
+      return;
+    }
+
+    setCurrentPhase("STANDBY");
+    setRemainSeconds(auctionSettings.standbySeconds);
+    appendAuctionLog(createTimedStartLog(auctionSettings.standbySeconds));
   };
 
   const resetAuctionGame = () => {
@@ -286,24 +580,35 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
     setCurrentHighestBid(null);
     setUnbidStreamers([]);
     setRemainingAuctionQueue(auctionOrder);
-    setTeamStates((currentTeamStates) => resetAuctionTeamStates(currentTeamStates));
+    setTeamStates(resetAuctionTeamStates(teamStates).map((teamState) => ({
+      ...teamState,
+      teamName: createAuctionTeamName(teamState.staff),
+    })));
     setCurrentPhase("STANDBY");
-    setRemainSeconds(auctionInitialStandbySeconds);
+    setRemainSeconds(auctionSettings.standbySeconds);
     setReauctionCount(0);
     setIsGameStarted(false);
-    setIsCoachOrderPanelOpen(false);
-    appendAuctionLog("경매 대기중 상태로 돌아갔습니다");
+    setIsGameSettingsPanelOpen(false);
+    setAuctionLogs([createResetLog()]);
   };
 
   const submitBid = (bidAmount: number) => {
-    if (currentPhase !== "BIDDING" || !hostTeam || !currentStreamer) {
+    if (currentPhase !== "BIDDING" || !currentStreamer || !selectedBidTeam) {
+      return;
+    }
+
+    if (currentHighestBid?.teamId === selectedBidTeam.teamId) {
+      return;
+    }
+
+    if (selectedBidTeam.roster[currentStreamer.line]) {
       return;
     }
 
     const validation = validateAuctionBidAmount({
       amount: bidAmount,
       currentHighestBidAmount: currentHighestBid?.amount ?? 0,
-      remainingPoints: hostTeam.remainingPoints,
+      remainingPoints: selectedBidTeam.remainingPoints,
     });
 
     if (!validation.isValid) {
@@ -312,11 +617,34 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
 
     setCurrentHighestBid({
       amount: bidAmount,
-      teamId: hostTeam.teamId,
-      teamName: hostTeam.teamName,
+      teamId: selectedBidTeam.teamId,
+      teamName: selectedBidTeam.teamName,
     });
-    setRemainSeconds(auctionBiddingSeconds);
-    appendAuctionLog(`${hostTeam.teamName} - ${currentStreamer.name} - ${bidAmount}포인트 입찰`, "bid");
+
+    if (!auctionSettings.isUntimedAuction) {
+      setRemainSeconds(auctionSettings.biddingSeconds);
+    }
+
+    appendAuctionLog(
+      createBidPlacedLog(
+        selectedBidTeam.teamId,
+        selectedBidTeam.teamName,
+        currentStreamer.name,
+        bidAmount,
+      ),
+    );
+  };
+
+  const confirmGameSettings = () => {
+    const nextStandbySeconds = Math.max(1, Number(settingsStandbySeconds) || auctionInitialStandbySeconds);
+    const nextBiddingSeconds = Math.max(1, Number(settingsBiddingSeconds) || auctionBiddingSeconds);
+
+    setAuctionSettings({
+      biddingSeconds: nextBiddingSeconds,
+      isUntimedAuction: isUntimedAuctionChecked,
+      standbySeconds: nextStandbySeconds,
+    });
+    setIsGameSettingsPanelOpen(false);
   };
 
   return (
@@ -325,33 +653,65 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
         <div className="grid w-full max-w-415 gap-3 xl:h-full xl:min-h-0 xl:grid-cols-[minmax(0,26rem)_minmax(0,28.5rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,31rem)_minmax(0,30rem)_minmax(0,1fr)]">
           <AuctionTeamRosterSection
             initialPoints={initialAuctionPageState.initialTeamPoints}
+            onSelectTeam={initialAuctionPageState.isSoloMode ? setSelectedBidTeamId : undefined}
+            selectedTeamId={selectedBidTeamId}
             teamStates={teamStates}
           />
 
-          <div className="grid gap-3 xl:min-h-0 xl:grid-rows-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,10rem)] 2xl:grid-rows-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,10rem)]">
+          <div className="grid gap-3 xl:min-h-0 xl:grid-rows-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,11.5rem)] 2xl:grid-rows-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,11.5rem)]">
             <AuctionMainStageSection
               currentHighestBidAmount={currentHighestBid?.amount ?? 0}
               currentHighestBidTeamName={currentHighestBid?.teamName ?? null}
               currentPhase={currentPhase}
               currentStreamer={currentStreamer}
-              remainSeconds={remainSeconds}
             />
 
             <AuctionBidLogSection logs={auctionLogs} />
             <AuctionBidControlPanel
               currentHighestBidAmount={currentHighestBid?.amount ?? 0}
-              isBidDisabled={currentPhase !== "BIDDING" || !currentStreamer}
+              isBidDisabled={currentPhase !== "BIDDING" || !currentStreamer || !selectedBidTeam}
+              isConfirmSoldDisabled={
+                currentPhase !== "BIDDING" || !currentStreamer || !currentHighestBid
+              }
+              isConsecutiveBidBlocked={isConsecutiveBidBlocked}
+              isLineAlreadyFilled={isSelectedTeamLineAlreadyFilled}
+              isMarkUnbidDisabled={Boolean(currentHighestBid)}
+              isUntimedAuction={auctionSettings.isUntimedAuction}
+              onConfirmSold={
+                initialAuctionPageState.isSoloMode && auctionSettings.isUntimedAuction
+                  ? () => {
+                      finalizeAuctionRound(false);
+                    }
+                  : undefined
+              }
+              onMarkUnbid={
+                initialAuctionPageState.isSoloMode && auctionSettings.isUntimedAuction
+                  ? () => {
+                      finalizeAuctionRound(true);
+                    }
+                  : undefined
+              }
               onSubmitBid={submitBid}
-              remainingPoints={hostTeam?.remainingPoints ?? 0}
+              remainingPoints={selectedBidTeam?.remainingPoints ?? 0}
               remainSeconds={remainSeconds}
+              selectedTeamColorClassNames={selectedBidTeamColorClassNames}
+              selectedTeamName={selectedBidTeam?.teamName ?? null}
             />
           </div>
 
-          <div className="grid gap-3 xl:min-h-0 xl:grid-rows-[minmax(0,1fr)_144px]">
+          <div className="grid gap-3 xl:min-h-0 xl:grid-rows-[minmax(0,1fr)_auto]">
             <AuctionStreamerQueueSection
               isGameStarted={isGameStarted}
-              onOpenCoachOrderPanel={() => {
-                setIsCoachOrderPanelOpen(true);
+              isGameSettingsDisabled={!initialAuctionPageState.isSoloMode}
+              onOpenGameSettings={() => {
+                if (!initialAuctionPageState.isSoloMode) {
+                  return;
+                }
+
+                setSettingsStandbySeconds(String(auctionSettings.standbySeconds));
+                setSettingsBiddingSeconds(String(auctionSettings.biddingSeconds));
+                setIsUntimedAuctionChecked(auctionSettings.isUntimedAuction);
+                setIsGameSettingsPanelOpen(true);
               }}
               onResetAuctionGame={resetAuctionGame}
               onShuffleAuctionOrder={shuffleAuctionQueue}
@@ -363,81 +723,93 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
         </div>
       </div>
 
-      {isCoachOrderPanelOpen ? (
+      {isGameSettingsPanelOpen ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4 py-6">
           <SectionCard
             padding="md"
-            className="w-full max-w-2xl border-violet-100 bg-white"
-            title="감독 순서 변경"
-            description="위에 있는 팀부터 경매 순서가 먼저 적용됩니다."
+            className="w-full max-w-xl border-violet-100 bg-white"
+            title="게임 설정"
             headerEnd={
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setIsCoachOrderPanelOpen(false);
-                }}
-              >
-                닫기
+              <Button type="button" size="sm" onClick={confirmGameSettings}>
+                확인
               </Button>
             }
           >
-            <div className="grid gap-2">
-              {teamStates.map((teamState, teamIndex) => (
-                <div
-                  key={teamState.teamId}
-                  draggable={!isGameStarted}
-                  className="grid cursor-grab grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50/60 px-3 py-3 active:cursor-grabbing"
-                  onDragStart={(event) => {
-                    event.dataTransfer.effectAllowed = "move";
-                    setDraggingTeamId(teamState.teamId);
-                  }}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                  }}
-                  onDrop={() => {
-                    moveCoachOrderByDrag(teamState.teamId);
-                  }}
-                  onDragEnd={() => {
-                    setDraggingTeamId(null);
+            <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-2 rounded-2xl bg-violet-50 p-1">
+                <button
+                  type="button"
+                  className={cn(
+                    "h-10 cursor-pointer rounded-xl text-sm font-bold transition-colors",
+                    !isUntimedAuctionChecked
+                      ? "bg-white text-violet-700 shadow-surface-sm"
+                      : "text-text-secondary",
+                  )}
+                  onClick={() => {
+                    setIsUntimedAuctionChecked(false);
                   }}
                 >
-                  <span className="flex size-8 items-center justify-center rounded-xl bg-violet-600 text-sm font-black text-white">
-                    {teamIndex + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate font-bold text-text-primary">{teamState.teamName}</p>
-                    <p className="truncate text-sm font-semibold text-text-secondary">
-                      {getTeamStaffDescription(teamState)}
-                    </p>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      disabled={teamIndex === 0}
-                      onClick={() => {
-                        moveCoachOrder(teamIndex, "up");
-                      }}
-                    >
-                      위
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      disabled={teamIndex === teamStates.length - 1}
-                      onClick={() => {
-                        moveCoachOrder(teamIndex, "down");
-                      }}
-                    >
-                      아래
-                    </Button>
-                  </div>
+                  시간제한 있음
+                </button>
+                <button
+                  type="button"
+                  className={cn(
+                    "h-10 cursor-pointer rounded-xl text-sm font-bold transition-colors",
+                    isUntimedAuctionChecked
+                      ? "bg-white text-violet-700 shadow-surface-sm"
+                      : "text-text-secondary",
+                  )}
+                  onClick={() => {
+                    setIsUntimedAuctionChecked(true);
+                  }}
+                >
+                  시간제한 없음
+                </button>
+              </div>
+
+              {!isUntimedAuctionChecked ? (
+                <div className="grid gap-4">
+                  <label className="grid gap-1.5">
+                    <span className="text-sm font-bold text-text-primary">게임 시작 전 대기시간</span>
+                    <span className="text-xs font-semibold text-text-secondary">
+                      게임 시작 버튼을 누른 뒤 첫 경매가 열리기 전까지 기다리는 시간입니다.
+                    </span>
+                    <div className="grid h-11 grid-cols-[minmax(0,1fr)_2.5rem] items-center rounded-2xl border border-violet-100 px-4">
+                      <input
+                        inputMode="numeric"
+                        value={settingsStandbySeconds}
+                        onChange={(event) => {
+                          setSettingsStandbySeconds(event.target.value.replace(/\D/g, ""));
+                        }}
+                        className="min-w-0 bg-transparent text-sm font-semibold text-text-primary outline-none"
+                      />
+                      <span className="text-right text-sm font-bold text-text-secondary">초</span>
+                    </div>
+                  </label>
+
+                  <label className="grid gap-1.5">
+                    <span className="text-sm font-bold text-text-primary">경매 시간</span>
+                    <span className="text-xs font-semibold text-text-secondary">
+                      각 선수 경매가 시작된 뒤 입찰을 받을 수 있는 제한 시간입니다.
+                    </span>
+                    <div className="grid h-11 grid-cols-[minmax(0,1fr)_2.5rem] items-center rounded-2xl border border-violet-100 px-4">
+                      <input
+                        inputMode="numeric"
+                        value={settingsBiddingSeconds}
+                        onChange={(event) => {
+                          setSettingsBiddingSeconds(event.target.value.replace(/\D/g, ""));
+                        }}
+                        className="min-w-0 bg-transparent text-sm font-semibold text-text-primary outline-none"
+                      />
+                      <span className="text-right text-sm font-bold text-text-secondary">초</span>
+                    </div>
+                  </label>
                 </div>
-              ))}
+              ) : (
+                <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-4 text-sm font-semibold text-text-secondary">
+                  시간 제한 없이 직접 입찰, 낙찰, 유찰을 진행합니다.
+                </div>
+              )}
             </div>
           </SectionCard>
         </div>

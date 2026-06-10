@@ -5,7 +5,8 @@ import { AuctionStreamerTile } from "./auction-streamer-tile";
 
 interface AuctionStreamerQueueSectionProps {
   isGameStarted: boolean;
-  onOpenCoachOrderPanel: () => void;
+  isGameSettingsDisabled?: boolean;
+  onOpenGameSettings: () => void;
   onResetAuctionGame: () => void;
   onShuffleAuctionOrder: () => void;
   onStartAuctionGame: () => void;
@@ -14,7 +15,8 @@ interface AuctionStreamerQueueSectionProps {
 
 export function AuctionStreamerQueueSection({
   isGameStarted,
-  onOpenCoachOrderPanel,
+  isGameSettingsDisabled = false,
+  onOpenGameSettings,
   onResetAuctionGame,
   onShuffleAuctionOrder,
   onStartAuctionGame,
@@ -43,21 +45,27 @@ export function AuctionStreamerQueueSection({
             variant="secondary"
             size="sm"
             disabled={isGameStarted}
-            onClick={onOpenCoachOrderPanel}
+            onClick={onShuffleAuctionOrder}
           >
-            감독 순서
+            순서 섞기
           </Button>
           <Button
             type="button"
             variant="secondary"
             size="sm"
-            disabled={isGameStarted}
-            onClick={onShuffleAuctionOrder}
+            disabled={isGameStarted || isGameSettingsDisabled}
+            onClick={onOpenGameSettings}
           >
-            순서 변경
+            게임 설정
           </Button>
-          <Button type="button" size="sm" disabled={isGameStarted} onClick={onStartAuctionGame}>
-            시작하기
+          <Button
+            type="button"
+            size="sm"
+            disabled={isGameStarted}
+            className={isGameStarted ? "!shadow-none" : undefined}
+            onClick={onStartAuctionGame}
+          >
+            게임 시작
           </Button>
         </div>
 
@@ -70,7 +78,7 @@ export function AuctionStreamerQueueSection({
           </Badge>
         </div>
 
-        <div className="grid min-h-0 grid-cols-2 content-start gap-x-4 gap-y-2 overflow-y-auto pr-1 md:grid-cols-4 xl:grid-cols-5">
+        <div className="grid min-h-0 grid-cols-2 content-start gap-x-6 gap-y-2 overflow-y-auto pr-1 md:grid-cols-4 xl:grid-cols-5">
           {streamers.map((streamer, index) => {
             const isLastInRow = index % queueColumnCount === queueColumnCount - 1;
             const isLastItem = index === streamers.length - 1;
@@ -79,7 +87,7 @@ export function AuctionStreamerQueueSection({
               <div key={streamer.id} className="relative">
                 <AuctionStreamerTile size="sm" streamer={streamer} />
                 {!isLastInRow && !isLastItem ? (
-                  <span className="pointer-events-none absolute -right-3 top-1/2 hidden -translate-y-1/2 text-violet-300 xl:block">
+                  <span className="pointer-events-none absolute -right-[18px] top-1/2 hidden -translate-y-1/2 text-violet-300 xl:block">
                     <ArrowForwardIcon className="size-3" />
                   </span>
                 ) : null}

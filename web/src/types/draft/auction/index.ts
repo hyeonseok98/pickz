@@ -6,6 +6,7 @@ export type {
 export type { AuctionPageState } from "./auction-page";
 export type {
   AuctionAutoAssignedResult,
+  AuctionChatMessageSegment,
   AuctionChatMessage,
   AuctionFinishPayload,
   AuctionPhasePayload,

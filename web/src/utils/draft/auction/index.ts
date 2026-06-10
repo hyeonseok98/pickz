@@ -14,8 +14,10 @@ export {
   createAuctionPageStateFromStreamerPool,
 } from "./page-state";
 export {
+  applyAuctionAutoAssignedResult,
   applyAuctionSoldResult,
   createAuctionLogTime,
+  getRandomAuctionAssignableTeam,
   resetAuctionTeamStates,
 } from "./game-flow";
 export type { AuctionHighestBid } from "./game-flow";

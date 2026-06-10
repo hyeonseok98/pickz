@@ -38,6 +38,7 @@ export const auctionPageMockState: AuctionPageState = {
   currentPhase: "STANDBY",
   currentStreamer: null,
   initialTeamPoints: auctionInitialTeamPoints,
+  isSoloMode: true,
   remainSeconds: 13,
   roomTitle: `${pickzInvitational2026Name} 경매 드래프트`,
   teamStates: createMockAuctionTeamStates(),
@@ -46,7 +47,7 @@ export const auctionPageMockState: AuctionPageState = {
   logs: [
     {
       id: "log-1",
-      message: "게임 입장 10초 뒤 경매가 시작됩니다",
+      message: "게임 시작 버튼 클릭 후 경매가 시작됩니다.",
       sentAt: "20:31",
       type: "system",
     },

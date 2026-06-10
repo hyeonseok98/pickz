@@ -60,7 +60,7 @@ export function AuctionTeamRosterSection({
                 <div
                   className="h-full rounded-full bg-violet-500"
                   style={{
-                    width: `${Math.max(0, Math.min(100, (teamState.remainingPoints / initialPoints) * 100))}%`,
+                    width: `${initialPoints > 0 ? Math.max(0, Math.min(100, (teamState.remainingPoints / initialPoints) * 100)) : 0}%`,
                   }}
                 />
               </div>

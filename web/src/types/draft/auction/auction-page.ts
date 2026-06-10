@@ -5,9 +5,9 @@ import type { AuctionTeamState } from "./auction-team";
 
 export interface AuctionPageState {
   currentHighestBidAmount: number;
-  currentHighestBidTeamName: string;
+  currentHighestBidTeamName: string | null;
   currentPhase: AuctionPhase;
-  currentStreamer: AuctionStreamer;
+  currentStreamer: AuctionStreamer | null;
   initialTeamPoints: number;
   logs: AuctionChatMessage[];
   remainSeconds: number;

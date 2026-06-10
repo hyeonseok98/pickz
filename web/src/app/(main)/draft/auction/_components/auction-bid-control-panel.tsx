@@ -3,7 +3,7 @@
 import { Button, SectionCard } from "@/components/common/ui";
 import { auctionBidIncrementOptions } from "@/constants/draft";
 import { getAuctionBidAmountAfterIncrement, validateAuctionBidAmount } from "@/utils/draft/auction";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GavelLineIcon } from "./auction-icons";
 
 interface AuctionBidControlPanelProps {
@@ -17,13 +17,18 @@ export function AuctionBidControlPanel({
   remainSeconds,
   remainingPoints,
 }: AuctionBidControlPanelProps) {
-  const [bidInputValue, setBidInputValue] = useState(String(currentHighestBidAmount + 5));
+  const minimumBidAmount = currentHighestBidAmount + 5;
+  const [bidInputValue, setBidInputValue] = useState(String(minimumBidAmount));
   const bidAmount = Number(bidInputValue);
   const validation = validateAuctionBidAmount({
     amount: Number.isFinite(bidAmount) ? bidAmount : 0,
     currentHighestBidAmount,
     remainingPoints,
   });
+
+  useEffect(() => {
+    setBidInputValue(String(minimumBidAmount));
+  }, [minimumBidAmount]);
 
   const updateBidInputByIncrement = (incrementAmount: number) => {
     const currentAmount = Number.isFinite(bidAmount) ? bidAmount : currentHighestBidAmount;
@@ -92,7 +97,7 @@ export function AuctionBidControlPanel({
           </label>
 
           <p className="truncate text-xs font-semibold text-text-secondary">
-            {validation.message ?? `다음 최소 입찰가 ${currentHighestBidAmount + 5}P`}
+            {validation.message ?? `다음 최소 입찰가 ${minimumBidAmount}P`}
           </p>
         </div>
 

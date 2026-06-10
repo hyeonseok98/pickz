@@ -5,7 +5,7 @@ import Image from "next/image";
 
 interface AuctionMainStageSectionProps {
   currentHighestBidAmount: number;
-  currentHighestBidTeamName: string;
+  currentHighestBidTeamName: string | null;
   currentPhase: AuctionPhase;
   currentStreamer: AuctionStreamer;
   remainSeconds: number;
@@ -69,8 +69,12 @@ export function AuctionMainStageSection({
                   {currentHighestBidAmount}
                 </p>
                 <span className="pb-1 text-base font-black text-text-secondary">포인트</span>
-                <Badge tone="brand" variant="soft" size="md">
-                  {currentHighestBidTeamName}
+                <Badge
+                  tone={currentHighestBidTeamName ? "brand" : "neutral"}
+                  variant="soft"
+                  size="md"
+                >
+                  {currentHighestBidTeamName ?? "입찰 없음"}
                 </Badge>
               </div>
             </div>

@@ -18,7 +18,7 @@ interface AuctionRoomStoreState {
   currentHighestBidTeamId: AuctionTeamId | null;
   currentPhase: AuctionPhase;
   currentStreamer: AuctionStreamer | null;
-  isReauctionPhase: boolean;
+  isReAuctionPhase: boolean;
   logs: AuctionChatMessage[];
   remainSeconds: number;
   resetAuctionRoom: () => void;
@@ -42,7 +42,7 @@ const initialAuctionRoomState = {
   currentHighestBidTeamId: null,
   currentPhase: "STANDBY",
   currentStreamer: null,
-  isReauctionPhase: false,
+  isReAuctionPhase: false,
   logs: [],
   remainSeconds: 0,
   roomId: null,
@@ -56,7 +56,7 @@ const initialAuctionRoomState = {
   | "currentHighestBidTeamId"
   | "currentPhase"
   | "currentStreamer"
-  | "isReauctionPhase"
+  | "isReAuctionPhase"
   | "logs"
   | "remainSeconds"
   | "roomId"
@@ -114,8 +114,12 @@ export const useAuctionRoomStore = create<AuctionRoomStoreState>((set) => ({
         ...current.logs,
         createSystemLog(
           roundStatus === "SOLD"
-            ? `${primaryResult?.winningBid ?? 0}포인트에 낙찰되었습니다`
-            : `유찰되었습니다. 자동 배정 ${autoAssignedResults.length}건`,
+            ? primaryResult
+              ? `${primaryResult.winningBid}포인트에 낙찰되었습니다`
+              : "낙찰 결과가 도착했지만 낙찰 정보가 없습니다"
+            : autoAssignedResults.length > 0
+              ? `유찰되었습니다. 자동 배정 ${autoAssignedResults.length}건`
+              : "유찰되었습니다",
         ),
       ],
     }));
@@ -133,7 +137,7 @@ export const useAuctionRoomStore = create<AuctionRoomStoreState>((set) => ({
         currentHighestBidTeamId: payload.currentHighestBidTeamId,
         currentPhase: payload.currentPhase,
         currentStreamer: payload.currentStreamer,
-        isReauctionPhase: payload.isReAuctionPhase,
+        isReAuctionPhase: payload.isReAuctionPhase,
         logs: nextLogs,
         teamStates: payload.teamStates,
         unbidStreamers: payload.unbidStreamers,

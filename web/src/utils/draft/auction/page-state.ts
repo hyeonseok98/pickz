@@ -200,7 +200,7 @@ function createAuctionPageStateBase(
 
   return {
     currentHighestBidAmount: 0,
-    currentHighestBidTeamName: "입찰 없음",
+    currentHighestBidTeamName: null,
     currentPhase: "STANDBY",
     currentStreamer,
     initialTeamPoints: auctionInitialTeamPoints,

@@ -940,7 +940,11 @@ function DraftStreamerSetupContent() {
       return;
     }
 
-    router.push(`/draft/snake?${nextParams.toString()}`);
+    router.push(
+      draftType === "auction"
+        ? `/draft/auction?${nextParams.toString()}`
+        : `/draft/snake?${nextParams.toString()}`,
+    );
   };
 
   return (

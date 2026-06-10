@@ -15,6 +15,7 @@ export function SidebarLayout({ children, collapsed = false }: SidebarLayoutProp
   const pathname = usePathname();
   const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const isWideDraftRoom =
+    pathname.startsWith("/draft/auction") ||
     pathname.startsWith("/draft/snake") ||
     (pathname.startsWith("/drafts/") && pathname.endsWith("/play"));
 

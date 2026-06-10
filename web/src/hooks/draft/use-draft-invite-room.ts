@@ -403,7 +403,11 @@ export function useDraftInviteRoom({
       const startEvent = parseDraftStartEvent(messageBody);
 
       if (startEvent) {
-        router.push(startEvent.redirectUrl);
+        router.push(
+          draftType === "auction" && roomId
+            ? `/draft/auction?roomId=${roomId}`
+            : startEvent.redirectUrl,
+        );
         return;
       }
 

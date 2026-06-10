@@ -23,7 +23,7 @@ export function AuctionStreamerTile({ badge, size = "md", streamer }: AuctionStr
         <Badge
           tone="warning"
           variant="solid"
-          className="absolute -right-1.5 -top-2 z-10 h-5 px-2 text-xs"
+          className="absolute -top-2 -right-1.5 z-10 h-5 px-2 text-xs"
         >
           {badge}
         </Badge>
@@ -31,7 +31,11 @@ export function AuctionStreamerTile({ badge, size = "md", streamer }: AuctionStr
       <AvatarNameCard
         avatarSize="sm"
         avatarClassName={isSmall ? "size-7" : undefined}
-        className={isSmall ? "gap-1 rounded-lg bg-transparent px-0.5 py-0" : "gap-1 rounded-xl bg-transparent px-1 py-0.5"}
+        className={
+          isSmall
+            ? "gap-1 rounded-lg bg-transparent px-0.5 py-0"
+            : "gap-1 rounded-xl bg-transparent px-1 py-0.5"
+        }
         imageUrl={streamer.profileImageUrl}
         name={streamer.name}
         nameClassName="text-xs"

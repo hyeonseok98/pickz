@@ -5,6 +5,7 @@ import {
   createAuctionPageStateFromSnapshot,
   createAuctionPageStateFromStreamerPool,
 } from "@/utils/draft/auction";
+import { cache } from "react";
 import { AuctionBidControlPanel } from "./_components/auction-bid-control-panel";
 import { AuctionBidLogSection } from "./_components/auction-bid-log-section";
 import { AuctionMainStageSection } from "./_components/auction-main-stage-section";
@@ -36,6 +37,10 @@ function parseRoomId(roomIdValue: string | null) {
   return Number.isInteger(roomId) && roomId > 0 ? roomId : null;
 }
 
+const loadAuctionStreamerPool = cache(async (roomId: number) => {
+  return getDraftRoomStreamerPool(roomId);
+});
+
 async function loadAuctionPageState(
   searchParams: Record<string, string | string[] | undefined>,
 ): Promise<AuctionPageState> {
@@ -52,7 +57,7 @@ async function loadAuctionPageState(
   }
 
   try {
-    const streamerPool = await getDraftRoomStreamerPool(roomId);
+    const streamerPool = await loadAuctionStreamerPool(roomId);
 
     return createAuctionPageStateFromStreamerPool({
       roomTitle: `방 ${roomId} 경매 드래프트`,
@@ -74,15 +79,15 @@ export default async function AuctionPage({ searchParams }: AuctionPageProps) {
   const hostTeam = auctionPageState.teamStates[0];
 
   return (
-    <main className="min-h-[calc(100dvh-var(--header-height))] bg-[#f7f5ff] px-1.5 py-2 xl:h-[calc(100dvh-var(--header-height))] xl:overflow-hidden">
-      <div className="mx-auto flex w-full max-w-[1720px] justify-center xl:h-full">
-        <div className="grid w-full max-w-[1660px] gap-3 xl:h-full xl:min-h-0 xl:grid-cols-[500px_360px_612px] 2xl:grid-cols-[520px_458px_640px]">
+    <main className="min-h-[calc(100dvh-var(--header-height))] bg-[#f7f5ff] px-2 py-2 sm:px-3 xl:h-[calc(100dvh-var(--header-height))] xl:overflow-hidden">
+      <div className="mx-auto flex w-full max-w-430 justify-center xl:h-full">
+        <div className="grid w-full max-w-415 gap-3 xl:h-full xl:min-h-0 xl:grid-cols-[minmax(0,26rem)_minmax(0,28.5rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,31rem)_minmax(0,30rem)_minmax(0,1fr)]">
           <AuctionTeamRosterSection
             initialPoints={auctionPageState.initialTeamPoints}
             teamStates={auctionPageState.teamStates}
           />
 
-          <div className="grid gap-3 xl:min-h-0 xl:grid-rows-[280px_minmax(160px,1fr)_150px]">
+          <div className="grid gap-3 xl:min-h-0 xl:grid-rows-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,10rem)] 2xl:grid-rows-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,10rem)]">
             <AuctionMainStageSection
               currentHighestBidAmount={auctionPageState.currentHighestBidAmount}
               currentHighestBidTeamName={auctionPageState.currentHighestBidTeamName}

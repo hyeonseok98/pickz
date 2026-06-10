@@ -4,10 +4,20 @@ import type { AuctionStreamer } from "@/types/draft/auction";
 import { AuctionStreamerTile } from "./auction-streamer-tile";
 
 interface AuctionStreamerQueueSectionProps {
+  isGameStarted: boolean;
+  onOpenCoachOrderPanel: () => void;
+  onResetAuctionGame: () => void;
+  onShuffleAuctionOrder: () => void;
+  onStartAuctionGame: () => void;
   streamers: AuctionStreamer[];
 }
 
 export function AuctionStreamerQueueSection({
+  isGameStarted,
+  onOpenCoachOrderPanel,
+  onResetAuctionGame,
+  onShuffleAuctionOrder,
+  onStartAuctionGame,
   streamers,
 }: AuctionStreamerQueueSectionProps) {
   const queueColumnCount = 5;
@@ -19,14 +29,34 @@ export function AuctionStreamerQueueSection({
       contentClassName="h-full"
     >
       <div className="grid h-full grid-rows-[auto_auto_minmax(0,1fr)] gap-3">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <Button type="button" variant="secondary" size="sm">
-            다시 시작
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={onResetAuctionGame}
+          >
+            다시하기
           </Button>
-          <Button type="button" variant="secondary" size="sm">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={isGameStarted}
+            onClick={onOpenCoachOrderPanel}
+          >
+            감독 순서
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={isGameStarted}
+            onClick={onShuffleAuctionOrder}
+          >
             순서 변경
           </Button>
-          <Button type="button" size="sm">
+          <Button type="button" size="sm" disabled={isGameStarted} onClick={onStartAuctionGame}>
             시작하기
           </Button>
         </div>

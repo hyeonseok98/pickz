@@ -8,12 +8,16 @@ import { GavelLineIcon } from "./auction-icons";
 
 interface AuctionBidControlPanelProps {
   currentHighestBidAmount: number;
+  isBidDisabled?: boolean;
+  onSubmitBid?: (bidAmount: number) => void;
   remainSeconds: number;
   remainingPoints: number;
 }
 
 export function AuctionBidControlPanel({
   currentHighestBidAmount,
+  isBidDisabled = false,
+  onSubmitBid,
   remainSeconds,
   remainingPoints,
 }: AuctionBidControlPanelProps) {
@@ -35,6 +39,14 @@ export function AuctionBidControlPanel({
     setBidInputValue(String(getAuctionBidAmountAfterIncrement(currentAmount, incrementAmount)));
   };
 
+  const submitBid = () => {
+    if (isBidDisabled || !validation.isValid) {
+      return;
+    }
+
+    onSubmitBid?.(bidAmount);
+  };
+
   return (
     <SectionCard
       padding="sm"
@@ -50,6 +62,7 @@ export function AuctionBidControlPanel({
                 type="button"
                 size="sm"
                 variant="secondary"
+                disabled={isBidDisabled}
                 onClick={() => {
                   updateBidInputByIncrement(amount);
                 }}
@@ -64,6 +77,7 @@ export function AuctionBidControlPanel({
               <button
                 type="button"
                 className="flex size-9 cursor-pointer items-center justify-center justify-self-center rounded-xl bg-violet-50 text-xl font-black text-violet-700"
+                disabled={isBidDisabled}
                 onClick={() => {
                   updateBidInputByIncrement(-5);
                 }}
@@ -80,12 +94,14 @@ export function AuctionBidControlPanel({
                   }}
                   className="w-20 min-w-0 bg-transparent text-center text-3xl font-black tracking-[-0.03em] text-text-primary outline-none sm:w-24"
                   aria-label="입찰 금액"
+                  disabled={isBidDisabled}
                 />
                 <span className="text-sm font-bold whitespace-nowrap text-text-secondary">P</span>
               </div>
               <button
                 type="button"
                 className="flex size-9 cursor-pointer items-center justify-center justify-self-center rounded-xl bg-violet-600 text-xl font-black text-white"
+                disabled={isBidDisabled}
                 onClick={() => {
                   updateBidInputByIncrement(5);
                 }}
@@ -109,10 +125,11 @@ export function AuctionBidControlPanel({
             </p>
           </div>
           <Button
-            disabled={!validation.isValid}
+            disabled={isBidDisabled || !validation.isValid}
             size="md"
             className="h-11 w-full px-2 text-sm"
             leadingIcon={<GavelLineIcon className="size-full" />}
+            onClick={submitBid}
           >
             입찰하기
           </Button>

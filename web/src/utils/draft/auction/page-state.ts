@@ -15,6 +15,7 @@ import type {
   DraftRoomStreamerPoolResponse,
 } from "@/types/draft";
 import { createAuctionTeamName } from "./team";
+import { shuffleAuctionStreamers } from "./order";
 
 const auctionPlayerLineKeys: AuctionPlayerLine[] = ["top", "jungle", "mid", "adc", "support"];
 
@@ -191,25 +192,20 @@ function createAuctionPageStateBase(
   auctionOrder: AuctionStreamer[],
   teamStates: AuctionTeamState[],
 ): AuctionPageState {
-  const currentStreamer = auctionOrder[0] ?? {
-    id: "auction-empty-streamer",
-    line: "top",
-    name: "대기 중",
-    profileImageUrl: null,
-  };
+  const shuffledAuctionOrder = shuffleAuctionStreamers(auctionOrder);
 
   return {
     currentHighestBidAmount: 0,
     currentHighestBidTeamName: null,
     currentPhase: "STANDBY",
-    currentStreamer,
+    currentStreamer: null,
     initialTeamPoints: auctionInitialTeamPoints,
     logs: createInitialAuctionLogs(),
     remainSeconds: 10,
     roomTitle,
     teamStates,
     unbidStreamers: [],
-    upcomingStreamers: auctionOrder.slice(1),
+    upcomingStreamers: shuffledAuctionOrder,
   };
 }
 

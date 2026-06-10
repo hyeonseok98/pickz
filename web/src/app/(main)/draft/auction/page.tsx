@@ -1,11 +1,14 @@
+import { getDraftRoomStreamerPool } from "@/apis/draft";
+import type { AuctionPageState } from "@/types/draft";
 import { parseDraftRoomSnapshot } from "@/utils";
+import {
+  createAuctionPageStateFromSnapshot,
+  createAuctionPageStateFromStreamerPool,
+} from "@/utils/draft/auction";
 import { AuctionBidControlPanel } from "./_components/auction-bid-control-panel";
 import { AuctionBidLogSection } from "./_components/auction-bid-log-section";
 import { AuctionMainStageSection } from "./_components/auction-main-stage-section";
-import {
-  auctionPageMockState,
-  createAuctionPageStateFromSnapshot,
-} from "./_components/auction-page.mock";
+import { auctionPageMockState } from "./_components/auction-page.mock";
 import { AuctionStreamerQueueSection } from "./_components/auction-streamer-queue-section";
 import { AuctionTeamRosterSection } from "./_components/auction-team-roster-section";
 import { AuctionUnsoldStreamerSection } from "./_components/auction-unsold-streamer-section";
@@ -23,12 +26,51 @@ function getSearchParamValue(
   return Array.isArray(value) ? value[0] : (value ?? null);
 }
 
+function parseRoomId(roomIdValue: string | null) {
+  if (!roomIdValue) {
+    return null;
+  }
+
+  const roomId = Number(roomIdValue);
+
+  return Number.isInteger(roomId) && roomId > 0 ? roomId : null;
+}
+
+async function loadAuctionPageState(
+  searchParams: Record<string, string | string[] | undefined>,
+): Promise<AuctionPageState> {
+  const snapshot = parseDraftRoomSnapshot(getSearchParamValue(searchParams, "config"));
+
+  if (snapshot) {
+    return createAuctionPageStateFromSnapshot(snapshot);
+  }
+
+  const roomId = parseRoomId(getSearchParamValue(searchParams, "roomId"));
+
+  if (!roomId) {
+    return auctionPageMockState;
+  }
+
+  try {
+    const streamerPool = await getDraftRoomStreamerPool(roomId);
+
+    return createAuctionPageStateFromStreamerPool({
+      roomTitle: `방 ${roomId} 경매 드래프트`,
+      streamerPool,
+    });
+  } catch (error) {
+    console.error("[auction page] failed to load streamer pool", {
+      error,
+      roomId,
+    });
+
+    return auctionPageMockState;
+  }
+}
+
 export default async function AuctionPage({ searchParams }: AuctionPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
-  const snapshot = parseDraftRoomSnapshot(getSearchParamValue(resolvedSearchParams, "config"));
-  const auctionPageState = snapshot
-    ? createAuctionPageStateFromSnapshot(snapshot)
-    : auctionPageMockState;
+  const auctionPageState = await loadAuctionPageState(resolvedSearchParams);
   const hostTeam = auctionPageState.teamStates[0];
 
   return (

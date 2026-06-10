@@ -6,6 +6,7 @@ export type {
   AuctionBidValidationResult,
   AuctionChatMessage,
   AuctionFinishPayload,
+  AuctionPageState,
   AuctionPhase,
   AuctionPhasePayload,
   AuctionPlayerLine,

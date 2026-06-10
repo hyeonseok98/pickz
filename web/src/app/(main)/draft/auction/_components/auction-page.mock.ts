@@ -3,129 +3,20 @@ import {
   pickzInvitational2026AuctionStreamerOrder,
   pickzInvitational2026Name,
   pickzInvitational2026TeamStaffs,
-  STREAMER_DIRECTORY_BY_ID,
 } from "@/constants/draft";
 import type {
   AuctionChatMessage,
   AuctionPhase,
-  AuctionPlayerLine,
-  AuctionStaffMember,
   AuctionStreamer,
-  AuctionTeamStaff,
   AuctionTeamState,
+  AuctionPageState,
 } from "@/types/draft/auction";
-import type { DraftRoomSnapshot } from "@/types/draft";
 import { createInitialAuctionTeamStates } from "@/utils/draft/auction";
-
-export interface AuctionPageMockState {
-  currentHighestBidAmount: number;
-  currentHighestBidTeamName: string;
-  currentPhase: AuctionPhase;
-  currentStreamer: AuctionStreamer;
-  initialTeamPoints: number;
-  remainSeconds: number;
-  roomTitle: string;
-  teamStates: AuctionTeamState[];
-  unbidStreamers: AuctionStreamer[];
-  upcomingStreamers: AuctionStreamer[];
-  logs: AuctionChatMessage[];
-}
 
 const initialTeamStates = createInitialAuctionTeamStates(pickzInvitational2026TeamStaffs);
 const currentStreamer = pickzInvitational2026AuctionStreamerOrder[0];
 const upcomingStreamers = pickzInvitational2026AuctionStreamerOrder.slice(1, 13);
 const unbidStreamers: AuctionStreamer[] = [];
-
-const auctionPlayerLineKeys: AuctionPlayerLine[] = ["top", "jungle", "mid", "adc", "support"];
-
-function createAuctionStreamerFromDirectoryId(
-  streamerId: string | null,
-  line: AuctionPlayerLine,
-): AuctionStreamer | null {
-  if (!streamerId) {
-    return null;
-  }
-
-  const streamer = STREAMER_DIRECTORY_BY_ID.get(streamerId);
-
-  if (!streamer) {
-    return null;
-  }
-
-  return {
-    id: streamer.id,
-    line,
-    name: streamer.name,
-    profileImageUrl: streamer.profileImageUrl,
-  };
-}
-
-function createAuctionStaffFromDirectoryId(
-  streamerId: string | null,
-  role: AuctionStaffMember["role"],
-): AuctionStaffMember | null {
-  if (!streamerId) {
-    return null;
-  }
-
-  const streamer = STREAMER_DIRECTORY_BY_ID.get(streamerId);
-
-  if (!streamer) {
-    return null;
-  }
-
-  return {
-    id: streamer.id,
-    name: streamer.name,
-    profileImageUrl: streamer.profileImageUrl,
-    role,
-  };
-}
-
-function createSnapshotTeamStaff(snapshot: DraftRoomSnapshot, teamIndex: number): AuctionTeamStaff {
-  return {
-    coach: createAuctionStaffFromDirectoryId(snapshot.board.coach[teamIndex] ?? null, "coach"),
-    headCoach: createAuctionStaffFromDirectoryId(
-      snapshot.board.headCoach[teamIndex] ?? null,
-      "headCoach",
-    ),
-    teamSlot: teamIndex + 1,
-  };
-}
-
-function createAuctionTeamStateFromSnapshot(
-  snapshot: DraftRoomSnapshot,
-  teamIndex: number,
-): AuctionTeamState {
-  const staff = createSnapshotTeamStaff(snapshot, teamIndex);
-  const fallbackTeamName = `${teamIndex + 1}팀`;
-  const teamName = staff.headCoach?.name
-    ? `${staff.headCoach.name} 팀`
-    : staff.coach?.name
-      ? `${staff.coach.name} 팀`
-      : fallbackTeamName;
-
-  return {
-    remainingPoints: auctionInitialTeamPoints,
-    roster: Object.fromEntries(
-      auctionPlayerLineKeys
-        .map((line) => [line, createAuctionStreamerFromDirectoryId(snapshot.board[line][teamIndex] ?? null, line)])
-        .filter(([, streamer]) => Boolean(streamer)),
-    ) as AuctionTeamState["roster"],
-    staff,
-    teamId: teamIndex + 1,
-    teamName,
-  };
-}
-
-function createAuctionOrderFromSnapshot(snapshot: DraftRoomSnapshot) {
-  return auctionPlayerLineKeys.flatMap((line) =>
-    snapshot.board[line]
-      .slice(0, Number(snapshot.teamCount))
-      .map((streamerId) => createAuctionStreamerFromDirectoryId(streamerId, line))
-      .filter((streamer): streamer is AuctionStreamer => Boolean(streamer)),
-  );
-}
 
 function createMockAuctionTeamStates() {
   return Object.values(initialTeamStates).map<AuctionTeamState>((teamState, index) => ({
@@ -144,7 +35,7 @@ function createMockAuctionTeamStates() {
   }));
 }
 
-export const auctionPageMockState: AuctionPageMockState = {
+export const auctionPageMockState: AuctionPageState = {
   currentHighestBidAmount: 130,
   currentHighestBidTeamName: "마린 팀",
   currentPhase: "BIDDING",
@@ -182,21 +73,3 @@ export const auctionPageMockState: AuctionPageMockState = {
     },
   ],
 };
-
-export function createAuctionPageStateFromSnapshot(
-  snapshot: DraftRoomSnapshot,
-): AuctionPageMockState {
-  const auctionOrder = createAuctionOrderFromSnapshot(snapshot);
-  const nextCurrentStreamer = auctionOrder[0] ?? currentStreamer;
-
-  return {
-    ...auctionPageMockState,
-    currentStreamer: nextCurrentStreamer,
-    roomTitle: `${snapshot.tournamentName} 경매 드래프트`,
-    teamStates: Array.from({ length: Number(snapshot.teamCount) }, (_, teamIndex) =>
-      createAuctionTeamStateFromSnapshot(snapshot, teamIndex),
-    ),
-    unbidStreamers: [],
-    upcomingStreamers: auctionOrder.slice(1),
-  };
-}

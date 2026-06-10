@@ -3,6 +3,7 @@ export type {
   AuctionBidValidationParams,
   AuctionBidValidationResult,
 } from "./auction-bid";
+export type { AuctionPageState } from "./auction-page";
 export type {
   AuctionAutoAssignedResult,
   AuctionChatMessage,

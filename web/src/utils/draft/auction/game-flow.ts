@@ -1,5 +1,5 @@
 import { auctionInitialTeamPoints } from "@/constants/draft";
-import type { AuctionStreamer, AuctionTeamState } from "@/types/draft/auction";
+import type { AuctionPlayerLine, AuctionStreamer, AuctionTeamState } from "@/types/draft/auction";
 import { addStreamerToAuctionRoster } from "./team";
 
 export interface AuctionHighestBid {
@@ -46,7 +46,10 @@ export function applyAuctionSoldResult({
     return {
       ...teamState,
       remainingPoints: Math.max(0, teamState.remainingPoints - bidAmount),
-      roster: addStreamerToAuctionRoster(teamState.roster, streamer),
+      roster: addStreamerToAuctionRoster(teamState.roster, streamer, {
+        assignmentType: "sold",
+        bidPoint: bidAmount,
+      }),
     };
   });
 }
@@ -84,7 +87,107 @@ export function applyAuctionAutoAssignedResult({
 
     return {
       ...teamState,
-      roster: addStreamerToAuctionRoster(teamState.roster, streamer),
+      roster: addStreamerToAuctionRoster(teamState.roster, streamer, {
+        assignmentType: "autoAssigned",
+        bidPoint: 0,
+      }),
     };
   });
+}
+
+export interface AuctionForcedAssignment {
+  streamer: AuctionStreamer;
+  team: AuctionTeamState;
+}
+
+export interface ResolveAuctionForcedAssignmentsResult {
+  assignments: AuctionForcedAssignment[];
+  queue: AuctionStreamer[];
+  teamStates: AuctionTeamState[];
+  unbidStreamers: AuctionStreamer[];
+}
+
+const auctionPlayerLineOrder: AuctionPlayerLine[] = ["top", "jungle", "mid", "adc", "support"];
+
+function shuffleAuctionItems<T>(items: T[]) {
+  const nextItems = [...items];
+
+  for (let index = nextItems.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [nextItems[index], nextItems[randomIndex]] = [nextItems[randomIndex], nextItems[index]];
+  }
+
+  return nextItems;
+}
+
+function removeAssignedStreamers(
+  streamers: AuctionStreamer[],
+  assignedStreamerIds: Set<string>,
+) {
+  return streamers.filter((streamer) => !assignedStreamerIds.has(streamer.id));
+}
+
+function getUniqueAuctionStreamers(streamers: AuctionStreamer[]) {
+  const seenStreamerIds = new Set<string>();
+
+  return streamers.filter((streamer) => {
+    if (seenStreamerIds.has(streamer.id)) {
+      return false;
+    }
+
+    seenStreamerIds.add(streamer.id);
+    return true;
+  });
+}
+
+/** 특정 라인에 남은 선수와 빈 팀 슬롯이 각각 1개면 0포인트 자동 배정 */
+export function resolveAuctionForcedAssignments({
+  queue,
+  teamStates,
+  unbidStreamers,
+}: {
+  queue: AuctionStreamer[];
+  teamStates: AuctionTeamState[];
+  unbidStreamers: AuctionStreamer[];
+}): ResolveAuctionForcedAssignmentsResult {
+  let nextTeamStates = teamStates;
+  const assignments: AuctionForcedAssignment[] = [];
+  const assignedStreamerIds = new Set<string>();
+  const candidates = getUniqueAuctionStreamers([...queue, ...unbidStreamers]);
+
+  auctionPlayerLineOrder.forEach((line) => {
+    const lineStreamers = candidates.filter(
+      (streamer) => streamer.line === line && !assignedStreamerIds.has(streamer.id),
+    );
+    const assignableTeams = nextTeamStates.filter((teamState) => !teamState.roster[line]);
+
+    if (lineStreamers.length !== 1 || assignableTeams.length !== 1) {
+      return;
+    }
+
+    const shuffledTeams = shuffleAuctionItems(assignableTeams);
+
+    lineStreamers.forEach((streamer, index) => {
+      const team = shuffledTeams[index];
+
+      if (!team) {
+        return;
+      }
+
+      nextTeamStates = applyAuctionAutoAssignedResult({
+        streamer,
+        teamId: team.teamId,
+        teamStates: nextTeamStates,
+      });
+      assignments.push({ streamer, team });
+      assignedStreamerIds.add(streamer.id);
+    });
+  });
+
+  return {
+    assignments,
+    queue: removeAssignedStreamers(queue, assignedStreamerIds),
+    teamStates: nextTeamStates,
+    unbidStreamers: removeAssignedStreamers(unbidStreamers, assignedStreamerIds),
+  };
 }

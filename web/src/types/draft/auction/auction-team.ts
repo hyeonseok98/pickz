@@ -2,7 +2,15 @@ import type { AuctionPlayerLine, AuctionStreamer, AuctionTeamStaff } from "./auc
 
 export type AuctionTeamId = number;
 
-export type AuctionTeamRoster = Partial<Record<AuctionPlayerLine, AuctionStreamer>>;
+export type AuctionRosterAssignmentType = "sold" | "autoAssigned";
+
+export interface AuctionTeamRosterSlot {
+  assignmentType: AuctionRosterAssignmentType;
+  bidPoint: number;
+  streamer: AuctionStreamer;
+}
+
+export type AuctionTeamRoster = Partial<Record<AuctionPlayerLine, AuctionTeamRosterSlot>>;
 
 export interface AuctionTeamState {
   remainingPoints: number;

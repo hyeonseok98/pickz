@@ -22,11 +22,19 @@ function createMockAuctionTeamStates() {
     roster:
       index === 0
         ? {
-            mid: pickzInvitational2026AuctionStreamerOrder[8],
+            mid: {
+              assignmentType: "sold",
+              bidPoint: 130,
+              streamer: pickzInvitational2026AuctionStreamerOrder[8],
+            },
           }
         : index === 2
           ? {
-              adc: pickzInvitational2026AuctionStreamerOrder[12],
+              adc: {
+                assignmentType: "sold",
+                bidPoint: 300,
+                streamer: pickzInvitational2026AuctionStreamerOrder[12],
+              },
             }
           : {},
   }));

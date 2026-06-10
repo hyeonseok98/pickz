@@ -18,9 +18,10 @@ export {
   applyAuctionSoldResult,
   createAuctionLogTime,
   getRandomAuctionAssignableTeam,
+  resolveAuctionForcedAssignments,
   resetAuctionTeamStates,
 } from "./game-flow";
-export type { AuctionHighestBid } from "./game-flow";
+export type { AuctionForcedAssignment, AuctionHighestBid } from "./game-flow";
 export { shuffleAuctionStreamers } from "./order";
 export {
   addStreamerToAuctionRoster,

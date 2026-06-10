@@ -1,5 +1,6 @@
 import { auctionInitialTeamPoints } from "@/constants/draft";
 import type {
+  AuctionRosterAssignmentType,
   AuctionStreamer,
   AuctionTeamRoster,
   AuctionTeamStaff,
@@ -40,10 +41,18 @@ export function createInitialAuctionTeamStates(teamStaffs: AuctionTeamStaff[]) {
 export function addStreamerToAuctionRoster(
   roster: AuctionTeamRoster,
   streamer: AuctionStreamer,
+  options: {
+    assignmentType: AuctionRosterAssignmentType;
+    bidPoint: number;
+  },
 ) {
   return {
     ...roster,
-    [streamer.line]: streamer,
+    [streamer.line]: {
+      assignmentType: options.assignmentType,
+      bidPoint: options.bidPoint,
+      streamer,
+    },
   };
 }
 

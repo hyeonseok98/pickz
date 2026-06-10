@@ -4,6 +4,7 @@ import type { AuctionStreamer } from "@/types/draft/auction";
 import { AuctionStreamerTile } from "./auction-streamer-tile";
 
 interface AuctionStreamerQueueSectionProps {
+  isGameFinished: boolean;
   isGameStarted: boolean;
   isGameSettingsDisabled?: boolean;
   onOpenGameSettings: () => void;
@@ -14,6 +15,7 @@ interface AuctionStreamerQueueSectionProps {
 }
 
 export function AuctionStreamerQueueSection({
+  isGameFinished,
   isGameStarted,
   isGameSettingsDisabled = false,
   onOpenGameSettings,
@@ -44,7 +46,7 @@ export function AuctionStreamerQueueSection({
             type="button"
             variant="secondary"
             size="sm"
-            disabled={isGameStarted}
+            disabled={isGameStarted || isGameFinished}
             onClick={onShuffleAuctionOrder}
           >
             순서 섞기
@@ -53,7 +55,7 @@ export function AuctionStreamerQueueSection({
             type="button"
             variant="secondary"
             size="sm"
-            disabled={isGameStarted || isGameSettingsDisabled}
+            disabled={isGameStarted || isGameFinished || isGameSettingsDisabled}
             onClick={onOpenGameSettings}
           >
             게임 설정
@@ -61,8 +63,8 @@ export function AuctionStreamerQueueSection({
           <Button
             type="button"
             size="sm"
-            disabled={isGameStarted}
-            className={isGameStarted ? "!shadow-none" : undefined}
+            disabled={isGameStarted || isGameFinished}
+            className={isGameStarted || isGameFinished ? "!shadow-none" : undefined}
             onClick={onStartAuctionGame}
           >
             게임 시작

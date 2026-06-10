@@ -24,6 +24,7 @@ import {
   createAuctionTurnAnnouncement,
   getRandomAuctionAssignableTeam,
   resetAuctionTeamStates,
+  resolveAuctionForcedAssignments,
   shuffleAuctionStreamers,
   validateAuctionBidAmount,
 } from "@/utils/draft/auction";
@@ -78,6 +79,19 @@ function normalizeAuctionTeamStates(teamStates: AuctionTeamState[]) {
     ...teamState,
     teamName: createAuctionTeamName(teamState.staff),
   }));
+}
+
+function getUniqueAuctionStreamers(streamers: AuctionStreamer[]) {
+  const seenStreamerIds = new Set<string>();
+
+  return streamers.filter((streamer) => {
+    if (seenStreamerIds.has(streamer.id)) {
+      return false;
+    }
+
+    seenStreamerIds.add(streamer.id);
+    return true;
+  });
 }
 
 function createAuctionLogEntry({
@@ -182,16 +196,15 @@ function createSoldLog(teamId: number, teamName: string, streamerName: string, b
 
 function createAutoAssignedLog(teamId: number, teamName: string, streamerName: string) {
   return createAuctionLogEntry({
-    message: `${teamName} ${streamerName} 자동 배정`,
+    message: `${teamName}-${streamerName}-0포인트-배정`,
     segments: [
-      { text: "재경매", tone: "warning" },
-      { text: " 한도 종료로 " },
-      { text: streamerName, tone: "primary" },
-      { text: " 선수가 " },
       { text: teamName, tone: getTeamTone(teamId) },
-      { text: " 팀에 " },
-      { text: "자동 배정", tone: "success" },
-      { text: "되었습니다." },
+      { text: "-" },
+      { text: streamerName },
+      { text: "-" },
+      { text: "0포인트", tone: "warning" },
+      { text: "-" },
+      { text: "배정", tone: "success" },
     ],
   });
 }
@@ -220,11 +233,23 @@ function createUnbidLog(streamer: AuctionStreamer) {
 
 function createReauctionLog(round: number, streamer: AuctionStreamer) {
   return createAuctionLogEntry({
-    message: `${round}차 재경매 ${streamer.name}`,
+    message: `재경매 ${round}회차-${streamer.name}`,
     segments: [
       { text: `재경매 ${round}회차`, tone: "warning" },
       { text: ": " },
       { text: createTurnAnnouncementLog(streamer).message, tone: "muted" },
+    ],
+  });
+}
+
+function createReauctionAutoAssignNoticeLog() {
+  return createAuctionLogEntry({
+    message: "재경매 2회차 종료 후 남은 선수는 랜덤 배정됩니다",
+    segments: [
+      { text: "재경매 2회차", tone: "warning" },
+      { text: "가 끝나면 남은 선수는 남은 팀에 " },
+      { text: "랜덤 배정", tone: "success" },
+      { text: "됩니다." },
     ],
   });
 }
@@ -309,16 +334,41 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
   const isSelectedTeamLineAlreadyFilled = Boolean(
     currentStreamer && selectedBidTeam?.roster[currentStreamer.line],
   );
-  const queueStreamers = isGameStarted ? remainingAuctionQueue : auctionOrder;
+  const isGameFinished = currentPhase === "FINISHED";
+  const queueStreamers = isGameFinished ? [] : isGameStarted ? remainingAuctionQueue : auctionOrder;
 
   const appendAuctionLog = useCallback((payload: AuctionLogPayload) => {
     setAuctionLogs((currentLogs) => [...currentLogs, createAuctionLogEntry(payload)]);
+  }, []);
+
+  const applyForcedAssignments = useCallback(({
+    queue,
+    teamStates: currentTeamStates,
+    unbidStreamers: currentUnbidStreamers,
+  }: {
+    queue: AuctionStreamer[];
+    teamStates: AuctionTeamState[];
+    unbidStreamers: AuctionStreamer[];
+  }) => {
+    const result = resolveAuctionForcedAssignments({
+      queue,
+      teamStates: currentTeamStates,
+      unbidStreamers: currentUnbidStreamers,
+    });
+
+    return {
+      ...result,
+      logs: result.assignments.map(({ streamer, team }) =>
+        createAutoAssignedLog(team.teamId, team.teamName, streamer.name),
+      ),
+    };
   }, []);
 
   const openNextAuctionRound = useCallback((
     nextQueue: AuctionStreamer[],
     nextUnbidStreamers: AuctionStreamer[],
     nextReauctionCount: number,
+    nextTeamStates = teamStates,
   ) => {
     const nextStreamer = nextQueue[0];
 
@@ -349,10 +399,14 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
 
       setCurrentStreamer(reauctionStreamer);
       setRemainingAuctionQueue(restUnbidStreamers);
-      setUnbidStreamers([]);
+      setUnbidStreamers(restUnbidStreamers);
       setCurrentHighestBid(null);
       setReauctionCount(nextReauctionCount + 1);
       appendAuctionLog(createReauctionLog(nextReauctionCount + 1, reauctionStreamer));
+
+      if (nextReauctionCount + 1 === auctionMaxReauctionCount) {
+        appendAuctionLog(createReauctionAutoAssignNoticeLog());
+      }
 
       if (auctionSettings.isUntimedAuction) {
         setCurrentPhase("BIDDING");
@@ -367,28 +421,28 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
     }
 
     if (nextUnbidStreamers.length > 0 && nextReauctionCount >= auctionMaxReauctionCount) {
-      let nextTeamStates = teamStates;
+      let autoAssignedTeamStates = nextTeamStates;
       const autoAssignmentLogs: AuctionChatMessage[] = [];
 
       nextUnbidStreamers.forEach((streamer) => {
-        const assignableTeam = getRandomAuctionAssignableTeam(nextTeamStates, streamer);
+        const assignableTeam = getRandomAuctionAssignableTeam(autoAssignedTeamStates, streamer);
 
         if (!assignableTeam) {
           autoAssignmentLogs.push(createAutoAssignFailedLog(streamer.name));
           return;
         }
 
-        nextTeamStates = applyAuctionAutoAssignedResult({
+        autoAssignedTeamStates = applyAuctionAutoAssignedResult({
           streamer,
           teamId: assignableTeam.teamId,
-          teamStates: nextTeamStates,
+          teamStates: autoAssignedTeamStates,
         });
         autoAssignmentLogs.push(
           createAutoAssignedLog(assignableTeam.teamId, assignableTeam.teamName, streamer.name),
         );
       });
 
-      setTeamStates(nextTeamStates);
+      setTeamStates(autoAssignedTeamStates);
       setUnbidStreamers([]);
       setRemainingAuctionQueue([]);
       setAuctionLogs((currentLogs) => [...currentLogs, ...autoAssignmentLogs]);
@@ -411,13 +465,33 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
     }
 
     if (shouldMarkUnbid || !currentHighestBid) {
-      const nextUnbidStreamers = [...unbidStreamers, currentStreamer];
+      const unbidLog = createUnbidLog(currentStreamer);
+      const nextUnbidStreamers = getUniqueAuctionStreamers([
+        ...unbidStreamers,
+        currentStreamer,
+      ]);
+      const forcedAssignmentResult = applyForcedAssignments({
+        queue: remainingAuctionQueue,
+        teamStates,
+        unbidStreamers: nextUnbidStreamers,
+      });
 
-      setUnbidStreamers(nextUnbidStreamers);
-      appendAuctionLog(createUnbidLog(currentStreamer));
+      setTeamStates(forcedAssignmentResult.teamStates);
+      setRemainingAuctionQueue(forcedAssignmentResult.queue);
+      setUnbidStreamers(forcedAssignmentResult.unbidStreamers);
+      setAuctionLogs((currentLogs) => [
+        ...currentLogs,
+        unbidLog,
+        ...forcedAssignmentResult.logs,
+      ]);
 
       if (auctionSettings.isUntimedAuction) {
-        openNextAuctionRound(remainingAuctionQueue, nextUnbidStreamers, reauctionCount);
+        openNextAuctionRound(
+          forcedAssignmentResult.queue,
+          forcedAssignmentResult.unbidStreamers,
+          reauctionCount,
+          forcedAssignmentResult.teamStates,
+        );
         return;
       }
 
@@ -427,25 +501,40 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
       return;
     }
 
-    setTeamStates((currentTeamStates) =>
-      applyAuctionSoldResult({
-        bidAmount: currentHighestBid.amount,
-        streamer: currentStreamer,
-        teamId: currentHighestBid.teamId,
-        teamStates: currentTeamStates,
-      }),
+    const soldTeamStates = applyAuctionSoldResult({
+      bidAmount: currentHighestBid.amount,
+      streamer: currentStreamer,
+      teamId: currentHighestBid.teamId,
+      teamStates,
+    });
+    const soldLog = createSoldLog(
+      currentHighestBid.teamId,
+      currentHighestBid.teamName,
+      currentStreamer.name,
+      currentHighestBid.amount,
     );
-    appendAuctionLog(
-      createSoldLog(
-        currentHighestBid.teamId,
-        currentHighestBid.teamName,
-        currentStreamer.name,
-        currentHighestBid.amount,
-      ),
-    );
+    const forcedAssignmentResult = applyForcedAssignments({
+      queue: remainingAuctionQueue,
+      teamStates: soldTeamStates,
+      unbidStreamers,
+    });
+
+    setTeamStates(forcedAssignmentResult.teamStates);
+    setRemainingAuctionQueue(forcedAssignmentResult.queue);
+    setUnbidStreamers(forcedAssignmentResult.unbidStreamers);
+    setAuctionLogs((currentLogs) => [
+      ...currentLogs,
+      soldLog,
+      ...forcedAssignmentResult.logs,
+    ]);
 
     if (auctionSettings.isUntimedAuction) {
-      openNextAuctionRound(remainingAuctionQueue, unbidStreamers, reauctionCount);
+      openNextAuctionRound(
+        forcedAssignmentResult.queue,
+        forcedAssignmentResult.unbidStreamers,
+        reauctionCount,
+        forcedAssignmentResult.teamStates,
+      );
       return;
     }
 
@@ -453,6 +542,7 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
     setRemainSeconds(auctionSettings.standbySeconds);
     appendAuctionLog(createRoundWaitLog(auctionSettings.standbySeconds));
   }, [
+    applyForcedAssignments,
     appendAuctionLog,
     auctionSettings.isUntimedAuction,
     auctionSettings.standbySeconds,
@@ -461,6 +551,7 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
     openNextAuctionRound,
     reauctionCount,
     remainingAuctionQueue,
+    teamStates,
     unbidStreamers,
   ]);
 
@@ -701,6 +792,7 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
 
           <div className="grid gap-3 xl:min-h-0 xl:grid-rows-[minmax(0,1fr)_auto]">
             <AuctionStreamerQueueSection
+              isGameFinished={isGameFinished}
               isGameStarted={isGameStarted}
               isGameSettingsDisabled={!initialAuctionPageState.isSoloMode}
               onOpenGameSettings={() => {
@@ -718,7 +810,11 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
               onStartAuctionGame={startAuctionGame}
               streamers={queueStreamers}
             />
-            <AuctionUnsoldStreamerSection streamers={unbidStreamers} />
+            <AuctionUnsoldStreamerSection
+              isAutoAssignmentReady={reauctionCount >= auctionMaxReauctionCount}
+              reauctionCount={reauctionCount}
+              streamers={unbidStreamers}
+            />
           </div>
         </div>
       </div>

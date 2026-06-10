@@ -76,7 +76,8 @@ export function AuctionTeamRosterSection({
 
                 <div className="mt-2 grid grid-cols-5 gap-1.5">
                   {auctionPlayerLineOrder.map((line) => {
-                    const streamer = teamState.roster[line];
+                    const rosterSlot = teamState.roster[line];
+                    const streamer = rosterSlot?.streamer;
 
                     return (
                       <div
@@ -88,14 +89,19 @@ export function AuctionTeamRosterSection({
                         </span>
                         <div className="flex min-h-20 w-full min-w-0 flex-col items-center justify-center rounded-lg border border-violet-100 bg-violet-50/70 px-1.5 py-1.5 text-center">
                           {streamer ? (
-                            <AvatarNameCard
-                              avatarSize="sm"
-                              avatarClassName="size-9"
-                              className="gap-1 rounded-lg bg-transparent px-0 py-0"
-                              imageUrl={streamer.profileImageUrl}
-                              name={streamer.name}
-                              nameClassName="text-xs"
-                            />
+                            <>
+                              <AvatarNameCard
+                                avatarSize="sm"
+                                avatarClassName="size-9"
+                                className="gap-1 rounded-lg bg-transparent px-0 py-0"
+                                imageUrl={streamer.profileImageUrl}
+                                name={streamer.name}
+                                nameClassName="text-xs"
+                              />
+                              <span className="text-xs font-black text-violet-600">
+                                {rosterSlot.bidPoint}P
+                              </span>
+                            </>
                           ) : (
                             <span className="text-xs font-semibold text-text-muted">대기</span>
                           )}

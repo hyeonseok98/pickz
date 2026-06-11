@@ -90,7 +90,9 @@ export function AuctionBidControlPanel({
                 : "border-violet-100 bg-violet-50/60",
             )}
           >
-            <span className="text-xs font-bold text-text-secondary">현재 입찰 팀</span>
+            <span className="shrink-0 whitespace-nowrap text-xs font-bold text-text-secondary">
+              현재 입찰 팀
+            </span>
             <span
               className={cn(
                 "truncate text-sm font-black",

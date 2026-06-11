@@ -4,7 +4,6 @@ import type { AuctionStreamer } from "@/types/draft/auction";
 import { AuctionStreamerTile } from "./auction-streamer-tile";
 
 interface AuctionStreamerQueueSectionProps {
-  isGameFinished: boolean;
   isGameStarted: boolean;
   isGameSettingsDisabled?: boolean;
   onOpenGameSettings: () => void;
@@ -15,7 +14,6 @@ interface AuctionStreamerQueueSectionProps {
 }
 
 export function AuctionStreamerQueueSection({
-  isGameFinished,
   isGameStarted,
   isGameSettingsDisabled = false,
   onOpenGameSettings,
@@ -34,19 +32,14 @@ export function AuctionStreamerQueueSection({
     >
       <div className="grid h-full grid-rows-[auto_auto_minmax(0,1fr)] gap-3">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={onResetAuctionGame}
-          >
+          <Button type="button" variant="secondary" size="sm" onClick={onResetAuctionGame}>
             다시하기
           </Button>
           <Button
             type="button"
             variant="secondary"
             size="sm"
-            disabled={isGameStarted || isGameFinished}
+            disabled={isGameStarted}
             onClick={onShuffleAuctionOrder}
           >
             순서 섞기
@@ -55,7 +48,7 @@ export function AuctionStreamerQueueSection({
             type="button"
             variant="secondary"
             size="sm"
-            disabled={isGameStarted || isGameFinished || isGameSettingsDisabled}
+            disabled={isGameStarted || isGameSettingsDisabled}
             onClick={onOpenGameSettings}
           >
             게임 설정
@@ -63,8 +56,8 @@ export function AuctionStreamerQueueSection({
           <Button
             type="button"
             size="sm"
-            disabled={isGameStarted || isGameFinished}
-            className={isGameStarted || isGameFinished ? "!shadow-none" : undefined}
+            disabled={isGameStarted}
+            className={isGameStarted ? "shadow-none!" : undefined}
             onClick={onStartAuctionGame}
           >
             게임 시작
@@ -72,9 +65,7 @@ export function AuctionStreamerQueueSection({
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold tracking-[-0.03em] text-text-primary">
-            경매 순서
-          </h2>
+          <h2 className="text-lg font-bold tracking-[-0.03em] text-text-primary">경매 순서</h2>
           <Badge tone="neutral" variant="soft" size="md">
             {streamers.length}명
           </Badge>
@@ -89,7 +80,7 @@ export function AuctionStreamerQueueSection({
               <div key={streamer.id} className="relative">
                 <AuctionStreamerTile size="sm" streamer={streamer} />
                 {!isLastInRow && !isLastItem ? (
-                  <span className="pointer-events-none absolute -right-[18px] top-1/2 hidden -translate-y-1/2 text-violet-300 xl:block">
+                  <span className="pointer-events-none absolute top-1/2 -right-4.5 hidden -translate-y-1/2 text-violet-300 xl:block">
                     <ArrowForwardIcon className="size-3" />
                   </span>
                 ) : null}

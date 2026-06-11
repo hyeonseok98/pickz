@@ -4,15 +4,41 @@ import type { AuctionStreamer } from "@/types/draft/auction";
 import { AuctionStreamerTile } from "./auction-streamer-tile";
 
 interface AuctionUnsoldStreamerSectionProps {
+  currentRoundLabel: string;
   isAutoAssignmentReady?: boolean;
+  nextRoundLabel?: string;
+  nextRoundStreamers?: AuctionStreamer[];
   streamers: AuctionStreamer[];
 }
 
 export function AuctionUnsoldStreamerSection({
+  currentRoundLabel,
   isAutoAssignmentReady = false,
+  nextRoundLabel,
+  nextRoundStreamers = [],
   streamers,
 }: AuctionUnsoldStreamerSectionProps) {
   const queueColumnCount = 5;
+
+  const renderStreamerGrid = (sectionId: string, sectionStreamers: AuctionStreamer[]) => (
+    <div className="grid grid-cols-2 gap-x-6 gap-y-2 md:grid-cols-4 lg:grid-cols-5">
+      {sectionStreamers.map((streamer, index) => {
+        const isLastInRow = index % queueColumnCount === queueColumnCount - 1;
+        const isLastItem = index === sectionStreamers.length - 1;
+
+        return (
+          <div key={`${sectionId}-${streamer.id}-${index}`} className="relative">
+            <AuctionStreamerTile size="sm" streamer={streamer} />
+            {!isLastInRow && !isLastItem ? (
+              <span className="pointer-events-none absolute -right-[18px] top-1/2 hidden -translate-y-1/2 text-violet-300 lg:block">
+                <ArrowForwardIcon className="size-3" />
+              </span>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <SectionCard
@@ -27,30 +53,25 @@ export function AuctionUnsoldStreamerSection({
           </h2>
         </div>
         <div className="min-h-0 overflow-y-auto pr-1">
-          {streamers.length > 0 ? (
+          {streamers.length > 0 || nextRoundStreamers.length > 0 ? (
             <div className="grid gap-2">
               {isAutoAssignmentReady ? (
                 <p className="rounded-xl border border-orange-100 bg-orange-50 px-3 py-2 text-sm font-bold text-orange-700">
                   재경매 2회차가 끝나면 남은 선수는 남은 팀에 랜덤 배정됩니다.
                 </p>
               ) : null}
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2 md:grid-cols-4 lg:grid-cols-5">
-                {streamers.map((streamer, index) => {
-                  const isLastInRow = index % queueColumnCount === queueColumnCount - 1;
-                  const isLastItem = index === streamers.length - 1;
-
-                  return (
-                    <div key={`${streamer.id}-${index}`} className="relative">
-                      <AuctionStreamerTile size="sm" streamer={streamer} />
-                      {!isLastInRow && !isLastItem ? (
-                        <span className="pointer-events-none absolute -right-[18px] top-1/2 hidden -translate-y-1/2 text-violet-300 lg:block">
-                          <ArrowForwardIcon className="size-3" />
-                        </span>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
+              {streamers.length > 0 ? (
+                <div className="grid gap-2">
+                  <p className="text-sm font-bold text-violet-700">{currentRoundLabel}</p>
+                  {renderStreamerGrid("current-reauction", streamers)}
+                </div>
+              ) : null}
+              {nextRoundStreamers.length > 0 ? (
+                <div className="grid gap-2 border-t border-violet-50 pt-2">
+                  <p className="text-sm font-bold text-orange-700">{nextRoundLabel}</p>
+                  {renderStreamerGrid("next-reauction", nextRoundStreamers)}
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="flex min-h-20 items-center justify-center rounded-xl border border-dashed border-violet-100 bg-white/60 text-sm font-semibold text-text-muted">

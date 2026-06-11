@@ -38,11 +38,11 @@ export function AuctionTeamRosterSection({
               <article
                 key={teamState.teamId}
                 className={cn(
-                  "min-h-0 rounded-lg border bg-white/90 px-3 py-2.5 shadow-surface-sm transition-colors",
+                  "min-h-0 overflow-hidden rounded-lg border-2 bg-white/90 px-3 py-2.5 shadow-surface-sm transition-colors",
                   isSelectedTeam
                     ? cn(
                       teamColorClassNames.border,
-                      "ring-2 ring-inset",
+                      "ring-2 ring-offset-1 ring-offset-white",
                       teamColorClassNames.ring,
                     )
                     : "border-violet-100",
@@ -75,7 +75,7 @@ export function AuctionTeamRosterSection({
                   />
                 </div>
 
-                <div className="mt-2 grid grid-cols-5 gap-1.5">
+                <div className="mt-2 grid min-h-0 grid-cols-5 gap-1.5">
                   {auctionPlayerLineOrder.map((line) => {
                     const rosterSlot = teamState.roster[line];
                     const streamer = rosterSlot?.streamer;
@@ -83,31 +83,31 @@ export function AuctionTeamRosterSection({
                     return (
                       <div
                         key={`${teamState.teamId}-${line}`}
-                        className="flex min-w-0 flex-col items-center gap-1"
+                        className="flex min-h-0 min-w-0 flex-col items-center gap-1 overflow-hidden"
                       >
-                        <span className="flex h-6 w-full items-center justify-center rounded-md border border-violet-100 bg-white px-2 text-sm font-bold text-violet-600">
+                        <span className="flex h-5 w-full shrink-0 items-center justify-center rounded-md border border-violet-100 bg-white px-2 text-sm font-bold text-violet-600">
                           {getAuctionLineLabel(line)}
                         </span>
-                        <div className="flex min-h-20 w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-md border border-violet-100 bg-violet-50/70 px-1.5 py-1.5 text-center">
+                        <div className="flex h-16 w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-md border border-violet-100 bg-violet-50/70 px-1.5 py-1 text-center">
                           {streamer ? (
-                            <div className="flex min-w-0 max-w-full flex-col items-center justify-center gap-1 overflow-hidden">
-                              <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-violet-100 bg-white text-text-muted">
+                            <div className="grid min-h-0 max-h-full min-w-0 max-w-full justify-items-center gap-0.5 overflow-hidden">
+                              <div className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-violet-100 bg-white text-text-muted">
                                 {streamer.profileImageUrl ? (
                                   <Image
                                     src={streamer.profileImageUrl}
                                     alt={streamer.name}
-                                    width={32}
-                                    height={32}
+                                    width={28}
+                                    height={28}
                                     className="size-full object-cover"
                                   />
                                 ) : (
-                                  <PersonOutlineIcon className="size-4" />
+                                  <PersonOutlineIcon className="size-3.5" />
                                 )}
                               </div>
-                              <span className="max-w-full truncate whitespace-nowrap text-xs font-bold text-text-primary">
+                              <span className="block max-w-full truncate whitespace-nowrap text-xs leading-4 font-bold text-text-primary">
                                 {streamer.name}
                               </span>
-                              <span className="whitespace-nowrap text-xs font-bold text-violet-600">
+                              <span className="block max-w-full truncate whitespace-nowrap text-xs leading-4 font-bold text-violet-600">
                                 {rosterSlot.bidPoint}P
                               </span>
                             </div>

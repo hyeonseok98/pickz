@@ -1,8 +1,10 @@
-import { AvatarNameCard, SectionCard } from "@/components/common/ui";
+import { PersonOutlineIcon } from "@/components/common/icons";
+import { SectionCard } from "@/components/common/ui";
 import { getAuctionTeamColorClassNames } from "@/constants/draft";
 import type { AuctionPlayerLine, AuctionTeamState } from "@/types/draft/auction";
 import { cn } from "@/utils";
 import { getAuctionLineLabel } from "@/utils/draft/auction";
+import Image from "next/image";
 
 interface AuctionTeamRosterSectionProps {
   initialPoints: number;
@@ -22,7 +24,7 @@ export function AuctionTeamRosterSection({
   return (
     <SectionCard
       padding="sm"
-      className="overflow-hidden border-violet-100/80 bg-white/86 xl:h-full"
+      className="overflow-hidden rounded-2xl border-violet-100/80 bg-white/86 lg:h-full"
       contentClassName="h-full"
     >
       <div className="grid h-full grid-rows-[auto_minmax(0,1fr)] gap-3">
@@ -36,13 +38,12 @@ export function AuctionTeamRosterSection({
               <article
                 key={teamState.teamId}
                 className={cn(
-                  "min-h-0 rounded-xl border bg-white/90 px-3 py-2.5 shadow-surface-sm transition-colors",
+                  "min-h-0 rounded-lg border bg-white/90 px-3 py-2.5 shadow-surface-sm transition-colors",
                   isSelectedTeam
                     ? cn(
                       teamColorClassNames.border,
-                      "ring-2",
+                      "ring-2 ring-inset",
                       teamColorClassNames.ring,
-                      "shadow-surface-md",
                     )
                     : "border-violet-100",
                   onSelectTeam ? "cursor-pointer" : "",
@@ -59,7 +60,7 @@ export function AuctionTeamRosterSection({
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-xs font-bold text-violet-300">잔여 포인트</p>
-                    <p className="text-xl leading-none font-black text-violet-800">
+                    <p className="text-xl leading-none font-bold text-violet-800">
                       {teamState.remainingPoints}
                     </p>
                   </div>
@@ -84,24 +85,32 @@ export function AuctionTeamRosterSection({
                         key={`${teamState.teamId}-${line}`}
                         className="flex min-w-0 flex-col items-center gap-1"
                       >
-                        <span className="flex h-6 w-full items-center justify-center rounded-lg border border-violet-100 bg-white px-2 text-sm font-bold text-violet-600">
+                        <span className="flex h-6 w-full items-center justify-center rounded-md border border-violet-100 bg-white px-2 text-sm font-bold text-violet-600">
                           {getAuctionLineLabel(line)}
                         </span>
-                        <div className="flex min-h-20 w-full min-w-0 flex-col items-center justify-center rounded-lg border border-violet-100 bg-violet-50/70 px-1.5 py-1.5 text-center">
+                        <div className="flex min-h-20 w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-md border border-violet-100 bg-violet-50/70 px-1.5 py-1.5 text-center">
                           {streamer ? (
-                            <>
-                              <AvatarNameCard
-                                avatarSize="sm"
-                                avatarClassName="size-9"
-                                className="gap-1 rounded-lg bg-transparent px-0 py-0"
-                                imageUrl={streamer.profileImageUrl}
-                                name={streamer.name}
-                                nameClassName="text-xs"
-                              />
-                              <span className="text-xs font-black text-violet-600">
+                            <div className="flex min-w-0 max-w-full flex-col items-center justify-center gap-1 overflow-hidden">
+                              <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-violet-100 bg-white text-text-muted">
+                                {streamer.profileImageUrl ? (
+                                  <Image
+                                    src={streamer.profileImageUrl}
+                                    alt={streamer.name}
+                                    width={32}
+                                    height={32}
+                                    className="size-full object-cover"
+                                  />
+                                ) : (
+                                  <PersonOutlineIcon className="size-4" />
+                                )}
+                              </div>
+                              <span className="max-w-full truncate whitespace-nowrap text-xs font-bold text-text-primary">
+                                {streamer.name}
+                              </span>
+                              <span className="whitespace-nowrap text-xs font-bold text-violet-600">
                                 {rosterSlot.bidPoint}P
                               </span>
-                            </>
+                            </div>
                           ) : (
                             <span className="text-xs font-semibold text-text-muted">대기</span>
                           )}

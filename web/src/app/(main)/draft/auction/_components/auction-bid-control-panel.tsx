@@ -41,7 +41,8 @@ export function AuctionBidControlPanel({
   selectedTeamName,
 }: AuctionBidControlPanelProps) {
   const minimumBidAmount = currentHighestBidAmount + 5;
-  const [bidInputValue, setBidInputValue] = useState(String(minimumBidAmount));
+  const defaultBidInputValue = currentHighestBidAmount > 0 ? String(minimumBidAmount) : "0";
+  const [bidInputValue, setBidInputValue] = useState(defaultBidInputValue);
   const bidAmount = Number(bidInputValue);
   const validation = validateAuctionBidAmount({
     amount: Number.isFinite(bidAmount) ? bidAmount : 0,
@@ -57,8 +58,8 @@ export function AuctionBidControlPanel({
     isBidDisabled || isConsecutiveBidBlocked || isLineAlreadyFilled || !validation.isValid;
 
   useEffect(() => {
-    setBidInputValue(String(minimumBidAmount));
-  }, [minimumBidAmount]);
+    setBidInputValue(defaultBidInputValue);
+  }, [defaultBidInputValue]);
 
   const updateBidInputByIncrement = (incrementAmount: number) => {
     const currentAmount = Number.isFinite(bidAmount) ? bidAmount : currentHighestBidAmount;
@@ -76,7 +77,7 @@ export function AuctionBidControlPanel({
   return (
     <SectionCard
       padding="sm"
-      className="min-h-44 border-violet-100/80 bg-white/90 xl:h-full xl:min-h-0"
+      className="min-h-44 rounded-2xl border-violet-100/80 bg-white/90 lg:h-full lg:min-h-0"
       contentClassName="h-full"
     >
       <div className="grid h-full gap-3 md:grid-cols-[minmax(0,1fr)_120px] md:items-center">
@@ -107,6 +108,7 @@ export function AuctionBidControlPanel({
                 type="button"
                 size="sm"
                 variant="secondary"
+                className="shadow-none!"
                 disabled={isBidDisabled}
                 onClick={() => {
                   updateBidInputByIncrement(amount);
@@ -118,10 +120,10 @@ export function AuctionBidControlPanel({
           </div>
 
           <div className="block">
-            <div className="grid h-16 grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center rounded-2xl border border-violet-100 bg-white shadow-surface-sm md:h-14">
+            <div className="grid h-16 grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center rounded-xl border border-violet-100 bg-white md:h-14">
               <button
                 type="button"
-                className="flex size-9 cursor-pointer items-center justify-center justify-self-center rounded-xl bg-violet-50 text-xl font-black text-violet-700"
+                className="flex size-9 cursor-pointer items-center justify-center justify-self-center rounded-lg bg-violet-50 text-xl font-black text-violet-700"
                 disabled={isBidDisabled}
                 onClick={() => {
                   updateBidInputByIncrement(-5);
@@ -139,13 +141,13 @@ export function AuctionBidControlPanel({
                   }}
                   className="w-20 min-w-0 bg-transparent text-center text-3xl font-black tracking-[-0.03em] text-text-primary outline-none sm:w-24"
                   aria-label="입찰 금액"
-                disabled={isBidDisabled}
-              />
+                  disabled={isBidDisabled}
+                />
                 <span className="text-sm font-bold whitespace-nowrap text-text-secondary">P</span>
               </div>
               <button
                 type="button"
-                className="flex size-9 cursor-pointer items-center justify-center justify-self-center rounded-xl bg-violet-600 text-xl font-black text-white"
+                className="flex size-9 cursor-pointer items-center justify-center justify-self-center rounded-lg bg-violet-600 text-xl font-black text-white"
                 disabled={isBidDisabled}
                 onClick={() => {
                   updateBidInputByIncrement(5);
@@ -174,7 +176,7 @@ export function AuctionBidControlPanel({
           <Button
             disabled={isSubmitBidDisabled}
             size="md"
-            className="h-11 w-full px-2 text-sm"
+            className="h-11 w-full px-2 text-sm shadow-none!"
             leadingIcon={<GavelLineIcon className="size-full" />}
             onClick={submitBid}
           >
@@ -186,7 +188,7 @@ export function AuctionBidControlPanel({
                 type="button"
                 variant="secondary"
                 size="md"
-                className="h-11 w-full px-2 text-sm"
+                className="h-11 w-full px-2 text-sm shadow-none!"
                 disabled={isConfirmSoldDisabled}
                 onClick={onConfirmSold}
               >
@@ -196,7 +198,7 @@ export function AuctionBidControlPanel({
                 type="button"
                 variant="secondary"
                 size="md"
-                className="h-11 w-full px-2 text-sm"
+                className="h-11 w-full px-2 text-sm !shadow-none"
                 disabled={isBidDisabled || isMarkUnbidDisabled}
                 onClick={onMarkUnbid}
               >

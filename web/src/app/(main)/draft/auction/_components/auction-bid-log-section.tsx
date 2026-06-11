@@ -43,14 +43,14 @@ export function AuctionBidLogSection({ logs }: AuctionBidLogSectionProps) {
   return (
     <SectionCard
       padding="sm"
-      className="min-h-[180px] border-violet-100/80 bg-white/90 xl:h-full xl:min-h-0"
+      className="min-h-[180px] rounded-2xl border-violet-100/80 bg-white/90 lg:h-full lg:min-h-0"
       contentClassName="h-full"
     >
       <div className="grid h-full grid-rows-[auto_minmax(0,1fr)] gap-2">
         <h2 className="text-base font-black tracking-[-0.03em] text-text-primary">경매 로그</h2>
         <div
           ref={logListRef}
-          className="max-h-[260px] min-h-0 overflow-y-auto rounded-2xl border border-violet-100 bg-white/70 xl:max-h-none"
+          className="max-h-[260px] min-h-0 overflow-y-auto rounded-xl border border-violet-100 bg-white/70 lg:max-h-none"
         >
           <div className="divide-y divide-violet-50">
             {logs.map((log) => (

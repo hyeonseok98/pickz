@@ -141,6 +141,17 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
   const isGameFinished = currentPhase === "FINISHED";
   const queueStreamers = isGameFinished ? [] : isGameStarted ? remainingAuctionQueue : auctionOrder;
   const visibleReauctionRound = currentRoundSource === "unbid" ? reauctionCount : 0;
+  const processedReauctionCount =
+    currentRoundSource === "unbid" ? Math.min(reauctionRoundTurnCount, unbidStreamers.length) : 0;
+  const currentReauctionBoundaryIndex = Math.max(0, unbidStreamers.length - processedReauctionCount);
+  const currentReauctionStreamers = unbidStreamers.slice(0, currentReauctionBoundaryIndex);
+  const nextReauctionStreamers = unbidStreamers.slice(currentReauctionBoundaryIndex);
+  const currentReauctionLabel =
+    reauctionCount > 0
+      ? `${reauctionCount}차 재경매 ${currentRoundSource === "unbid" ? "진행 중" : "대기"}`
+      : "1차 재경매 대기";
+  const nextReauctionLabel =
+    reauctionCount >= auctionMaxReauctionCount ? "랜덤 배정 대기" : `${reauctionCount + 1}차 재경매 대기`;
 
   const appendAuctionLog = useCallback((log: AuctionChatMessage) => {
     setAuctionLogs((currentLogs) => [...currentLogs, log]);
@@ -659,8 +670,11 @@ export function AuctionPageClient({ initialAuctionPageState }: AuctionPageClient
               streamers={queueStreamers}
             />
             <AuctionUnsoldStreamerSection
+              currentRoundLabel={currentReauctionLabel}
               isAutoAssignmentReady={reauctionCount >= auctionMaxReauctionCount}
-              streamers={unbidStreamers}
+              nextRoundLabel={nextReauctionLabel}
+              nextRoundStreamers={nextReauctionStreamers}
+              streamers={currentReauctionStreamers}
             />
           </div>
         </div>

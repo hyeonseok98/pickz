@@ -179,7 +179,10 @@ export function resolveAuctionForcedAssignments({
         teamId: team.teamId,
         teamStates: nextTeamStates,
       });
-      assignments.push({ streamer, team });
+      const updatedTeam =
+        nextTeamStates.find((teamState) => teamState.teamId === team.teamId) ?? team;
+
+      assignments.push({ streamer, team: updatedTeam });
       assignedStreamerIds.add(streamer.id);
     });
   });

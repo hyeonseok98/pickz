@@ -6,6 +6,7 @@ export type {
 export type { AuctionPageState } from "./auction-page";
 export type {
   AuctionAutoAssignedResult,
+  AuctionChatMessageSegment,
   AuctionChatMessage,
   AuctionFinishPayload,
   AuctionPhasePayload,
@@ -21,4 +22,11 @@ export type {
   AuctionStreamer,
   AuctionTeamStaff,
 } from "./auction-streamer";
-export type { AuctionTeamId, AuctionTeamRoster, AuctionTeamState, AuctionTeamStateMap } from "./auction-team";
+export type {
+  AuctionRosterAssignmentType,
+  AuctionTeamId,
+  AuctionTeamRoster,
+  AuctionTeamRosterSlot,
+  AuctionTeamState,
+  AuctionTeamStateMap,
+} from "./auction-team";

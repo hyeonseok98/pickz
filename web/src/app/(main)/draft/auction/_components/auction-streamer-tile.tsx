@@ -15,8 +15,8 @@ export function AuctionStreamerTile({ badge, size = "md", streamer }: AuctionStr
     <div
       className={
         isSmall
-          ? "relative rounded-xl border border-violet-100 bg-white/84 px-1.5 py-1.5 shadow-surface-sm"
-          : "relative rounded-2xl border border-violet-100 bg-white/84 px-2 py-2 shadow-surface-sm"
+          ? "relative rounded-lg border border-violet-100 bg-white/84 px-1.5 py-1.5 shadow-surface-sm"
+          : "relative rounded-xl border border-violet-100 bg-white/84 px-2 py-2 shadow-surface-sm"
       }
     >
       {badge ? (
@@ -33,8 +33,8 @@ export function AuctionStreamerTile({ badge, size = "md", streamer }: AuctionStr
         avatarClassName={isSmall ? "size-7" : undefined}
         className={
           isSmall
-            ? "gap-1 rounded-lg bg-transparent px-0.5 py-0"
-            : "gap-1 rounded-xl bg-transparent px-1 py-0.5"
+            ? "gap-1 rounded-md bg-transparent px-0.5 py-0"
+            : "gap-1 rounded-lg bg-transparent px-1 py-0.5"
         }
         imageUrl={streamer.profileImageUrl}
         name={streamer.name}

@@ -1,5 +1,6 @@
 import { auctionInitialTeamPoints } from "@/constants/draft";
 import type {
+  AuctionRosterAssignmentType,
   AuctionStreamer,
   AuctionTeamRoster,
   AuctionTeamStaff,
@@ -9,7 +10,9 @@ import type {
 
 export function createAuctionTeamName(staff: AuctionTeamStaff) {
   if (staff.headCoach) {
-    return `${staff.headCoach.name} 팀`;
+    const coachLabel = staff.coach ? `(코치: ${staff.coach.name})` : "";
+
+    return `${staff.headCoach.name} 팀${coachLabel}`;
   }
 
   if (staff.coach) {
@@ -38,10 +41,18 @@ export function createInitialAuctionTeamStates(teamStaffs: AuctionTeamStaff[]) {
 export function addStreamerToAuctionRoster(
   roster: AuctionTeamRoster,
   streamer: AuctionStreamer,
+  options: {
+    assignmentType: AuctionRosterAssignmentType;
+    bidPoint: number;
+  },
 ) {
   return {
     ...roster,
-    [streamer.line]: streamer,
+    [streamer.line]: {
+      assignmentType: options.assignmentType,
+      bidPoint: options.bidPoint,
+      streamer,
+    },
   };
 }
 

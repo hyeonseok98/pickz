@@ -5,6 +5,7 @@ export type {
   AuctionBidValidationParams,
   AuctionBidValidationResult,
   AuctionChatMessage,
+  AuctionChatMessageSegment,
   AuctionFinishPayload,
   AuctionPageState,
   AuctionPhase,

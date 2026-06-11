@@ -9,6 +9,7 @@ export interface AuctionPageState {
   currentPhase: AuctionPhase;
   currentStreamer: AuctionStreamer | null;
   initialTeamPoints: number;
+  isSoloMode: boolean;
   logs: AuctionChatMessage[];
   remainSeconds: number;
   roomTitle: string;

@@ -41,9 +41,30 @@ export interface AuctionRoundResultPayload {
 }
 
 /** 입찰 로그와 시스템 로그를 같은 리스트로 다루기 위한 화면 메시지 타입 */
+export interface AuctionChatMessageSegment {
+  text: string;
+  tone?:
+    | "danger"
+    | "muted"
+    | "primary"
+    | "success"
+    | "warning"
+    | "lineTop"
+    | "lineJungle"
+    | "lineMid"
+    | "lineAdc"
+    | "lineSupport"
+    | "teamOne"
+    | "teamTwo"
+    | "teamThree"
+    | "teamFour"
+    | "teamFive";
+}
+
 export interface AuctionChatMessage {
   id: string;
   message: string;
+  segments?: AuctionChatMessageSegment[];
   sentAt: string;
   type: "bid" | "system";
 }

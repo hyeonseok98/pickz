@@ -13,8 +13,11 @@ import team.pickz.api.domain.draft.application.util.RandomNicknameGenerator;
 import team.pickz.api.domain.draft.application.util.RoomSequenceManager;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
+import team.pickz.api.domain.draft.domain.entity.DraftStreamer;
 import team.pickz.api.domain.draft.domain.repository.DraftParticipantRepository;
 import team.pickz.api.domain.draft.domain.repository.DraftRoomRepository;
+import team.pickz.api.domain.draft.domain.repository.DraftStreamerRepository;
+import team.pickz.api.domain.draft.domain.type.Position;
 import team.pickz.api.domain.draft.domain.type.RoomStatus;
 
 import java.util.List;
@@ -27,6 +30,7 @@ public class DraftParticipantService {
     private final DraftRoomRepository draftRoomRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final DraftParticipantRepository draftParticipantRepository;
+    private final DraftStreamerRepository draftStreamerRepository;
 
     @Transactional
     public JoinRoomResponse joinRoom(String inviteCode) {
@@ -58,13 +62,19 @@ public class DraftParticipantService {
                 .map(p -> new ParticipantResponse(
                         p.getId(),
                         p.getRoomId(),
-                        p.getParticipantToken(), // 혹은 프론트가 필요한 필드들
+                        null,
                         p.getNickname(),
                         p.isHost(),
                         p.getSelectedCoachName(),
                         p.getTurnOrder(),
                         p.isReady()
                 ))
+                .toList();
+
+        List<DraftStreamer> headCoaches = draftStreamerRepository.findAllByRoomIdAndPosition(room.getId(), Position.HEAD_COACH);
+        List<String> availableCoaches = headCoaches.stream()
+                .map(DraftStreamer::getStreamerName)
+                .filter(name -> name != null && !name.isBlank())
                 .toList();
 
         ParticipantUpdateEvent event = ParticipantUpdateEvent.builder()
@@ -89,6 +99,7 @@ public class DraftParticipantService {
                 .nickname(participant.getNickname())
                 .isHost(participant.isHost())
                 .participants(participantResponses)
+                .availableCoaches(availableCoaches)
                 .build();
     }
 

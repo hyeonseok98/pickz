@@ -5,10 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team.pickz.api.domain.draft.application.dto.StreamerInfo;
 import team.pickz.api.domain.draft.application.dto.request.DraftRoomStreamerRequest;
-import team.pickz.api.domain.draft.application.dto.response.CoachResponse;
-import team.pickz.api.domain.draft.application.dto.response.DraftConfigResponse;
-import team.pickz.api.domain.draft.application.dto.response.DraftPlayStateResponse;
-import team.pickz.api.domain.draft.application.dto.response.DraftRoomStreamerResponse;
+import team.pickz.api.domain.draft.application.dto.response.*;
 import team.pickz.api.domain.draft.domain.entity.DraftParticipant;
 import team.pickz.api.domain.draft.domain.entity.DraftRoom;
 import team.pickz.api.domain.draft.domain.entity.DraftStreamer;
@@ -31,7 +28,7 @@ public class DraftStreamerService {
     private final DraftStreamerRepository draftStreamerRepository;
 
     @Transactional
-    public void saveDraftRoomStreamers(Long roomId, String participantToken, List<DraftRoomStreamerRequest> requests) {
+    public SaveStreamerPoolResponse saveDraftRoomStreamers(Long roomId, String participantToken, List<DraftRoomStreamerRequest> requests) {
         DraftRoom room = draftRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
 
@@ -57,6 +54,16 @@ public class DraftStreamerService {
             savePositionStreamers(roomId, req.teamSlot(), Position.HEAD_COACH, req.headCoach());
             savePositionStreamers(roomId, req.teamSlot(), Position.COACH, req.coach());
         }
+
+        List<String> coaches = requests.stream()
+                .map(DraftRoomStreamerRequest::headCoach)
+                .filter(info -> info != null && info.name() != null && !info.name().isBlank())
+                .map(StreamerInfo::name)
+                .toList();
+
+        return SaveStreamerPoolResponse.builder()
+                .availableCoaches(coaches)
+                .build();
     }
 
     private void savePositionStreamers(Long roomId, int teamSlot, Position position, StreamerInfo info) {

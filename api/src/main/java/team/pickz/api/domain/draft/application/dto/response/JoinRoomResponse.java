@@ -25,7 +25,9 @@ public record JoinRoomResponse(
 
         boolean isHost,
 
-        List<ParticipantResponse> participants
+        List<ParticipantResponse> participants,
+
+        List<String> availableCoaches
 
 ) {
 }

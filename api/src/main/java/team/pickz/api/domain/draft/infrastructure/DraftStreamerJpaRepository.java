@@ -2,6 +2,7 @@ package team.pickz.api.domain.draft.infrastructure;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import team.pickz.api.domain.draft.domain.entity.DraftStreamer;
+import team.pickz.api.domain.draft.domain.type.Position;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,5 +14,7 @@ public interface DraftStreamerJpaRepository extends JpaRepository<DraftStreamer,
     List<DraftStreamer> findAllByRoomId(Long roomId);
 
     Optional<DraftStreamer> findByRoomIdAndStreamerName(Long roomId, String streamerName);
+
+    List<DraftStreamer> findAllByRoomIdAndPosition(Long roomId, Position position);
 
 }

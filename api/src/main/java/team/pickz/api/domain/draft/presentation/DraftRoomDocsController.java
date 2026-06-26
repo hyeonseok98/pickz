@@ -47,7 +47,7 @@ public interface DraftRoomDocsController {
             @ApiResponse(responseCode = "400", description = "방장이 아니거나 유효하지 않은 방 정보", content = @Content(schema = @Schema(implementation = String.class)))
     })
     @PostMapping("/{roomId}/streamers")
-    ResponseEntity<Void> saveDraftRoomStreamers(
+    ResponseEntity<SaveStreamerPoolResponse> saveDraftRoomStreamers(
             @Parameter(description = "드래프트 방 ID", example = "1")
             @PathVariable("roomId") Long roomId,
 

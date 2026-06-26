@@ -44,14 +44,14 @@ public class DraftRoomController implements DraftRoomDocsController {
     }
 
     @PostMapping("/{roomId}/streamers")
-    public ResponseEntity<Void> saveDraftRoomStreamers(
+    public ResponseEntity<SaveStreamerPoolResponse> saveDraftRoomStreamers(
             @PathVariable("roomId") Long roomId,
             @RequestHeader("X-Participant-Token") String participantToken,
             @Valid @RequestBody List<DraftRoomStreamerRequest> requests
     ) {
-        draftStreamerService.saveDraftRoomStreamers(roomId, participantToken, requests);
+        SaveStreamerPoolResponse response = draftStreamerService.saveDraftRoomStreamers(roomId, participantToken, requests);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{roomId}/streamers")

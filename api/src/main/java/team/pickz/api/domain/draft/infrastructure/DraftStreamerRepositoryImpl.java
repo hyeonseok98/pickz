@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import team.pickz.api.domain.draft.domain.entity.DraftStreamer;
 import team.pickz.api.domain.draft.domain.repository.DraftStreamerRepository;
+import team.pickz.api.domain.draft.domain.type.Position;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +33,11 @@ public class DraftStreamerRepositoryImpl implements DraftStreamerRepository {
     @Override
     public Optional<DraftStreamer> findByRoomIdAndStreamerName(Long roomId, String streamerName) {
         return draftRoomStreamerJpaRepository.findByRoomIdAndStreamerName(roomId, streamerName);
+    }
+
+    @Override
+    public List<DraftStreamer> findAllByRoomIdAndPosition(Long roomId, Position position) {
+        return draftRoomStreamerJpaRepository.findAllByRoomIdAndPosition(roomId, position);
     }
 
 }

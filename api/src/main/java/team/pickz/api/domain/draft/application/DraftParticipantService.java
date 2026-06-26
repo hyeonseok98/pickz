@@ -58,7 +58,7 @@ public class DraftParticipantService {
                 .map(p -> new ParticipantResponse(
                         p.getId(),
                         p.getRoomId(),
-                        p.getParticipantToken(), // 혹은 프론트가 필요한 필드들
+                        null,
                         p.getNickname(),
                         p.isHost(),
                         p.getSelectedCoachName(),
